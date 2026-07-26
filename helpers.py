@@ -1,6 +1,6 @@
 from flask import redirect, url_for
 from bijoy2unicode.converter import Unicode, conversionMap
-
+from urllib.parse import urlparse, parse_qs
 
 def redirect_dashboard(role):
     if role == "Admin":
@@ -28,3 +28,17 @@ def convert_bangla_text(text):
 
     except Exception:
         return text
+
+
+def youtube_embed_url(url):
+    parsed = urlparse(url)
+
+    if parsed.hostname in ("youtu.be", "www.youtu.be"):
+        video_id = parsed.path.lstrip("/")
+    else:
+        video_id = parse_qs(parsed.query).get("v", [None])[0]
+
+    return f"https://www.youtube.com/embed/{video_id}"
+
+
+

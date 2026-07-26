@@ -663,7 +663,7 @@ def upload_videos():
 
         for index, row in df.iterrows():
             video_id = str(row["ID"])
-            video_link = row["Link"]
+            video_link = helpers.youtube_embed_url(row["Link"]),
             video_obj = Video(id=video_id, class_name=class_name, link=video_link)
             db.session.add(video_obj)
 
