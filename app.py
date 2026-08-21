@@ -490,6 +490,13 @@ def notice_board_management():
     return render_template("notice_board_management.html", srcs=images[::-1])
 
 
+@app.route("/branch-management")
+@login_required
+@roles_required(ADMIN_ROLE)
+def branch_management():
+    return render_template("admin/branch_management.html")
+
+
 @app.route("/log-info")
 @login_required
 @roles_required(ADMIN_ROLE)
@@ -1401,6 +1408,33 @@ def delete_notice():
 
     return {"success": True}
 
+@app.route("/api/add-branch", methods=["POST"])
+@login_required
+@roles_required(ADMIN_ROLE)
+def add_branch():
+    data = request.json
+
+    # Extract fields
+    code = data.get("code")
+    branch = data.get("branch")
+    director = data.get("director")
+
+    # Simple validation
+    if not code or not branch or not director:
+        return jsonify({"success": False, "error": "Missing required fields"}), 400
+
+    # Add user
+    branch = Branch(
+        code=code,
+        name=branch,
+        director=director,
+
+    )
+
+    db.session.add(branch)
+    db.session.commit()
+
+    return jsonify({"success": True})
 
 # Others ---------------------------------------------------------------------------------------------------------------
 @app.route("/video/<int:video_id>")
