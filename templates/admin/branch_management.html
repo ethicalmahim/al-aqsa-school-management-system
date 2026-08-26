@@ -124,10 +124,37 @@
                         <th>Code</th>
                         <th>Branch</th>
                         <th>Director</th>
+                        <th>Phone</th>
                         <th class="text-end">Actions</th>
                     </tr>
                     </thead>
-                    <tbody id="userTable"></tbody>
+                    <tbody id="userTable">
+                    {% for branch in branches: %}
+                    <tr>
+                        <td>{{branch.code}}</td>
+                        <td>{{branch.name}}</td>
+                        <td>{{branch.director}}</td>
+                        <td>{{branch.phone}}</td>
+                        <td class="text-end">
+                            <button class="btn btn-light btn-sm me-1"
+                                    onclick='openEdit({ branch_id: {{ branch.id|tojson }},
+                                                        code: {{ branch.code|tojson }},
+                                                        name: {{ branch.name|tojson }},
+                                                        director: {{ branch.director|tojson }},
+                                                        phone: {{ branch.phone|tojson }}})'>
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+
+                            <button class="btn btn-light btn-sm text-danger"
+                                    onclick='deleteBranch({{ branch.id|tojson }})'>
+                                <i class="bi bi-trash3"></i>
+                            </button>
+
+
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -159,11 +186,17 @@
 
                     <div class="mb-2">
                         <label class="form-label">Director</label>
-                        <input id="director" name="director" placeholder="e.g. Md Atikur Rahman Sharif" class="form-control" required>
+                        <input id="director" name="director" placeholder="e.g. Md Atikur Rahman Sharif"
+                               class="form-control" required>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label">Phone</label>
+                        <input id="phone" name="phone" placeholder="e.g. 01711484011" class="form-control" required>
                     </div>
 
 
-                    <button class="btn btn-success w-100 mt-2">Add Branch</button>
+                    <button type="submit" class="btn btn-success w-100 mt-2">Add Branch</button>
                 </form>
             </div>
         </div>
@@ -181,91 +214,29 @@
 
             <div class="modal-body">
                 <form id="editUserForm">
-
-                    <input type="hidden" id="db_id" name="db_id">
+                    <input type="hidden" name="branch_id" id="branch_id">
                     <div class="mb-2">
-                        <label for="edit_branch" class="form-label">Branch</label>
-                        <select id="edit_branch" class="form-select">
-                            <option>Netrakona</option>
-                            <option>Purbadhala</option>
-                            <option>Kalmakanda</option>
-                        </select>
+                        <label class="form-label">Code</label>
+                        <input id="edit_code" name="edit_code" class="form-control" required>
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label">ID</label>
-                        <input id="edit_id" name="id" placeholder="ID" class="form-control" required>
+                        <label class="form-label">Branch</label>
+                        <input id="edit_branch" name="edit_branch" class="form-control" required>
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label">Username</label>
-                        <input id="edit_username" class="form-control">
+                        <label class="form-label">Director</label>
+                        <input id="edit_director" name="edit_director" class="form-control" required>
                     </div>
 
+                    <div class="mb-2">
+                        <label class="form-label">Phone</label>
+                        <input name="edit_phone" id="edit_phone" class="form-control">
+                    </div>
 
-                    <!--                    <label class="form-label">Option Permission</label>-->
-                    <!--                    <div class="row g-2 mb-3">-->
-                    <!--                        <div class="col-6">-->
-                    <!--                            <div class="form-check">-->
-                    <!--                                <input class="form-check-input" type="checkbox" name="options" value="lesson_schedule"-->
-                    <!--                                       id="edit_opt_lesson">-->
-                    <!--                                <label class="form-check-label" for="edit_opt_lesson">Lesson Schedule</label>-->
-                    <!--                            </div>-->
-                    <!--                        </div>-->
-                    <!--                        <div class="col-6">-->
-                    <!--                            <div class="form-check">-->
-                    <!--                                <input class="form-check-input" type="checkbox" name="options" value="attendance"-->
-                    <!--                                       id="edit_opt_attendance">-->
-                    <!--                                <label class="form-check-label" for="edit_opt_attendance">Attendance</label>-->
-                    <!--                            </div>-->
-                    <!--                        </div>-->
-                    <!--                        <div class="col-6">-->
-                    <!--                            <div class="form-check">-->
-                    <!--                                <input class="form-check-input" type="checkbox" name="options" value="accounts"-->
-                    <!--                                       id="edit_opt_accounts">-->
-                    <!--                                <label class="form-check-label" for="edit_opt_accounts">Accounts</label>-->
-                    <!--                            </div>-->
-                    <!--                        </div>-->
-                    <!--                        <div class="col-6">-->
-                    <!--                            <div class="form-check">-->
-                    <!--                                <input class="form-check-input" type="checkbox" name="options" value="result"-->
-                    <!--                                       id="edit_opt_result">-->
-                    <!--                                <label class="form-check-label" for="edit_opt_result">Result</label>-->
-                    <!--                            </div>-->
-                    <!--                        </div>-->
-                    <!--                        <div class="col-6">-->
-                    <!--                            <div class="form-check">-->
-                    <!--                                <input class="form-check-input" type="checkbox" name="options" value="qr_code"-->
-                    <!--                                       id="edit_opt_qr">-->
-                    <!--                                <label class="form-check-label" for="edit_opt_qr">QR Code</label>-->
-                    <!--                            </div>-->
-                    <!--                        </div>-->
-                    <!--                    </div>-->
 
                     <button class="btn btn-success w-100">Update</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-<!-- CHANGE PASSWORD MODAL -->
-<div class="modal fade" id="passwordModal">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Change Password</h5>
-                <button class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body">
-                <form id="passwordForm">
-                    <input type="hidden" id="password_user_id">
-                    <div class="mb-3">
-                        <input type="password" id="new_password" placeholder="New Password" class="form-control">
-                    </div>
-                    <button class="btn btn-success w-100">Confirm</button>
                 </form>
             </div>
         </div>
@@ -285,11 +256,11 @@
         const code = form.code.value.trim();
         const branch = form.branch.value.trim();
         const director = form.director.value.trim();
-
+        const phone = form.phone.value.trim();
 
 
         // Validate required fields
-        if (!code || !branch || !director) {
+        if (!code || !branch || !director || !phone) {
             alert("অনুগ্রহ করে সকল তথ্য পূরণ করুন!");
             return;
         }
@@ -299,7 +270,7 @@
             const res = await fetch("/api/add-branch", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({code, branch, director})
+                body: JSON.stringify({code, branch, director, phone})
             });
 
             const data = await res.json();
@@ -314,67 +285,16 @@
                 // Reset form
                 form.reset();
 
-                // Refresh table
-                document.getElementById("searchBtn").click();
+                // Refresh tab
+                window.location.reload();
             } else {
                 alert("Error: " + (data.error || "দুঃখিত, শাখা যোগ করা সম্ভব হয়নি!"));
             }
         } catch (err) {
             console.error(err);
-            alert("একটি অপ্রত্যাশিত ত্রুটির জন্য শাখা যোগ করা সম্ভব হয়নি!);
+            alert("একটি অপ্রত্যাশিত ত্রুটির জন্য শাখা যোগ করা সম্ভব হয়নি!");
         }
     });
-
-
-    document.getElementById("searchBtn").addEventListener("click", async function () {
-
-        const branch = document.getElementById("branchFilter").value
-        const role = document.getElementById("roleFilter").value
-        const studentClass = document.getElementById("classFilter").value
-        const id = document.getElementById("idFilter").value
-
-        const res = await fetch("/api/search-users", {
-
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({branch, role, studentClass, id})
-
-        })
-
-        const data = await res.json()
-        document.getElementById("tableSection").classList.remove("d-none")
-
-        const table = document.getElementById("userTable")
-        table.innerHTML = ""
-
-        data.users.forEach(u => {
-
-            table.innerHTML += `
-
-    <tr>
-        <td>${u.id}</td>
-        <td>${u.username}</td>
-        <td>${u.branch}</td>
-        <td class="text-end">
-
-            <button class="btn btn-light btn-sm me-1" onclick="openPassword('${u.db_id}')">
-            <i class="bi bi-shield-lock"></i>
-            </button>
-
-            <button class="btn btn-light btn-sm me-1" onclick='openEdit(${JSON.stringify(u)})'>
-            <i class="bi bi-pencil-square"></i>
-            </button>
-
-            <button class="btn btn-light btn-sm text-danger" onclick="deleteUser('${u.db_id}')">
-            <i class="bi bi-trash3"></i>
-            </button>
-
-        </td>
-    </tr>
-    `
-        })
-
-    })
 
 
     function deleteUser(id) {
@@ -387,11 +307,12 @@
     }
 
 
-    function openEdit(user) {
-        document.getElementById("db_id").value = user.db_id
-        document.getElementById("edit_id").value = user.id
-        document.getElementById("edit_username").value = user.username
-        document.getElementById("edit_branch").value = user.branch
+    function openEdit(branch) {
+        document.getElementById("branch_id").value = branch.branch_id
+        document.getElementById("edit_code").value = branch.code
+        document.getElementById("edit_branch").value = branch.name
+        document.getElementById("edit_director").value = branch.director
+        document.getElementById("edit_phone").value = branch.phone
 
 
         new bootstrap.Modal(document.getElementById("editUserModal")).show()
@@ -404,24 +325,25 @@
         const form = e.target;
 
         // Collect form data
-        const db_id = document.getElementById("db_id").value.trim();
-        const id = document.getElementById("edit_id").value.trim();
-        const username = document.getElementById("edit_username").value.trim();
-        const branch = document.getElementById("edit_branch").value;
+        const branch_id = document.getElementById("branch_id").value.trim();
+        const new_code = document.getElementById("edit_code").value.trim();
+        const new_branch_name = document.getElementById("edit_branch").value.trim();
+        const new_director_name = document.getElementById("edit_director").value.trim();
+        const new_phone = document.getElementById("edit_phone").value;
 
 
         // Send data to the server
         try {
-            const res = await fetch("/api/update-user", {
+            const res = await fetch("/api/update-branch", {
                 method: "PATCH",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({db_id, id, username, branch})
+                body: JSON.stringify({branch_id, new_code, new_branch_name, new_director_name, new_phone})
             });
 
             const data = await res.json();
 
             if (data.success) {
-                alert("User Updated successfully!");
+                alert("ব্রাঞ্চ সফলভাবে আপডেট করা হয়েছে!");
 
                 // Close modal
                 const editModal = bootstrap.Modal.getInstance(document.getElementById("editUserModal"));
@@ -430,14 +352,13 @@
                 // Reset form
                 form.reset();
 
-                // Refresh table
-                document.getElementById("searchBtn").click();
+                window.location.reload()
             } else {
-                alert("Error: " + (data.error || "Could not add user"));
+                alert("Error: " + (data.error || "ব্রাঞ্চ আপডেট সফল হয়নি!"));
             }
         } catch (err) {
             console.error(err);
-            alert("An unexpected error occurred");
+            alert("অপ্রত্যাশিত ত্রুটির জন্য ব্রাঞ্চ আপডেট করা সম্ভব হয়নি!");
         }
     });
 
@@ -477,6 +398,15 @@
         }
 
     });
+
+     function deleteBranch(id){
+
+    if(!confirm("আপনি কি নিশ্চিতভাবে ব্রাঞ্চটি মুছতে চান?")) return
+
+    fetch("/api/delete-branch/"+id,{method:"DELETE"})
+    .then(()=>window.location.reload())
+
+    }
 
 </script>
 

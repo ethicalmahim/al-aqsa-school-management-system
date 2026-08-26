@@ -77,9 +77,10 @@ class User(db.Model, UserMixin):
 class Branch(db.Model):
     __tablename__ = "branches"
     id: Mapped[int] = mapped_column(primary_key=True)
+    code: Mapped[str] = mapped_column()
     name: Mapped[str] = mapped_column()
-    office_phone: Mapped[str] = mapped_column()
-    head_teacher_phone: Mapped[str] = mapped_column()
+    director: Mapped[str] = mapped_column()
+    phone: Mapped[str] = mapped_column()
     user = relationship("User", back_populates="branch")
 
 
@@ -244,11 +245,11 @@ with app.app_context():
     db.create_all()
 
     if not db.session.execute(db.select(User).where(User.username == 'al-aqsa-sharif')).scalar():
-        branch = Branch(name="Netrakona", office_phone="01811114400", head_teacher_phone="01710500660")
+        branch = Branch(code="NK", name="Netrakona", director="Md. Atikur Rahman Sharif", phone="01811114400")
         db.session.add(branch)
-        branch_1 = Branch(name="Purbadhala", office_phone="01811114400", head_teacher_phone="01710500660")
+        branch_1 = Branch(code="PD", name="Purbadhala", director="Md. Atikur Rahman Sharif", phone="01811114400")
         db.session.add(branch_1)
-        branch_2 = Branch(name="Kalmakanda", office_phone="01811114400", head_teacher_phone="01710500660")
+        branch_2 = Branch(code="KK", name="Kalmakanda", director="Md. Atikur Rahman Sharif", phone="01811114400")
         db.session.add(branch_2)
         db.session.commit()
 
@@ -494,7 +495,8 @@ def notice_board_management():
 @login_required
 @roles_required(ADMIN_ROLE)
 def branch_management():
-    return render_template("admin/branch_management.html")
+    branches = db.session.execute(db.select(Branch)).scalars().all()
+    return render_template("admin/branch_management.html", branches=branches)
 
 
 @app.route("/log-info")
@@ -1408,6 +1410,7 @@ def delete_notice():
 
     return {"success": True}
 
+
 @app.route("/api/add-branch", methods=["POST"])
 @login_required
 @roles_required(ADMIN_ROLE)
@@ -1418,9 +1421,10 @@ def add_branch():
     code = data.get("code")
     branch = data.get("branch")
     director = data.get("director")
+    phone = data.get("phone")
 
     # Simple validation
-    if not code or not branch or not director:
+    if not code or not branch or not director or not phone:
         return jsonify({"success": False, "error": "Missing required fields"}), 400
 
     # Add user
@@ -1428,13 +1432,51 @@ def add_branch():
         code=code,
         name=branch,
         director=director,
-
+        phone=phone,
     )
 
     db.session.add(branch)
     db.session.commit()
 
     return jsonify({"success": True})
+
+
+@app.route("/api/update-branch", methods=["PATCH"])
+@login_required
+@roles_required(ADMIN_ROLE)
+def update_branch():
+    data = request.json
+
+    # Extract fields
+    branch_id = data.get("branch_id")
+    branch_code = data.get("new_code")
+    branch_name = data.get("new_branch_name")
+    branch_director = data.get("new_director_name")
+    branch_phone = data.get("new_phone")
+
+    branch_obj = db.session.get(Branch, branch_id)
+
+    branch_obj.code = branch_code
+    branch_obj.name = branch_name
+    branch_obj.director = branch_director
+    branch_obj.phone = branch_phone
+
+    db.session.commit()
+    return jsonify({"success": True})
+
+
+@app.route("/api/delete-branch/<id>", methods=["DELETE"])
+@login_required
+@roles_required(ADMIN_ROLE)
+def delete_branch(id):
+    try:
+        branch = db.session.get(Branch, id)
+        db.session.delete(branch)
+        db.session.commit()
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 
 # Others ---------------------------------------------------------------------------------------------------------------
 @app.route("/video/<int:video_id>")
