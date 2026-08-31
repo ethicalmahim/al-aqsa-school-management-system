@@ -239,10 +239,18 @@ class CommentReply(db.Model):
     comment = relationship("Comment", back_populates="reply")
 
 
+@app.template_global()
+def get_branches():
+    return db.session.execute(
+        db.select(Branch)
+    ).scalars().all()
+
+
 # End of DB Models------------------------------------------------------------------------------------------------------
 
 with app.app_context():
     db.create_all()
+  
 
     if not db.session.execute(db.select(User).where(User.username == 'al-aqsa-sharif')).scalar():
         branch = Branch(code="NK", name="Netrakona", director="Md. Atikur Rahman Sharif", phone="01811114400")

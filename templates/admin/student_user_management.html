@@ -12,56 +12,56 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
-        body{
-        background:#f4f6fb;
-        font-family:Inter,sans-serif;
-        margin:0;
+        body {
+            background: #f4f6fb;
+            font-family: Inter, sans-serif;
+            margin: 0;
         }
 
         /* HEADER */
-        .header{
-        position:fixed;
-        top:0;
-        left:0;
-        right:0;
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        padding:14px 16px;
-        background:white;
-        box-shadow:0 2px 10px rgba(0,0,0,.06);
-        z-index:1000;
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+            z-index: 1000;
         }
 
-        .title{
-        font-weight:600;
-        font-size:18px;
+        .title {
+            font-weight: 600;
+            font-size: 18px;
         }
 
-        .page{
-        margin-top:70px;
-        padding:14px;
-        max-width:1100px;
-        margin:auto;
+        .page {
+            margin-top: 70px;
+            padding: 14px;
+            max-width: 1100px;
+            margin: auto;
         }
 
         .filter-card,
-        .table-card{
-        background:white;
-        padding:16px;
-        border-radius:16px;
-        box-shadow:0 4px 15px rgba(0,0,0,.05);
-        margin-bottom:16px;
+        .table-card {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, .05);
+            margin-bottom: 16px;
         }
 
-        .option-check{
-        transform:scale(1.2);
+        .option-check {
+            transform: scale(1.2);
         }
 
-        .action-icon{
-        cursor:pointer;
-        font-size:18px;
-        margin-left:10px;
+        .action-icon {
+            cursor: pointer;
+            font-size: 18px;
+            margin-left: 10px;
         }
     </style>
 </head>
@@ -119,9 +119,9 @@
                 <div class="col-md-3">
                     <select id="branchFilter" class="form-select">
                         <option value="">Select Branch</option>
-                        <option value="Netrakona">Netrakona</option>
-                        <option value="Purbadhala">Purbadhala</option>
-                        <option value="Kalmakanda">Kalmakanda</option>
+                        {% for branch in get_branches():%}
+                        <option value="{{branch.name}}">{{ branch.name}}</option>
+                        {% endfor %}
                     </select>
                 </div>
 
@@ -187,9 +187,9 @@
                     <div class="mb-2">
                         <label class="form-label">Branch</label>
                         <select name="branch" class="form-select">
-                            <option>Netrakona</option>
-                            <option>Purbadhala</option>
-                            <option>Kalmakanda</option>
+                            {% for branch in get_branches():%}
+                            <option>{{ branch.name}}</option>
+                            {% endfor %}
                         </select>
                     </div>
 
@@ -360,81 +360,81 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    document.getElementById("addUserForm").addEventListener("submit", async function(e) {
-    e.preventDefault(); // Prevent the form from refreshing the page
+    document.getElementById("addUserForm").addEventListener("submit", async function (e) {
+        e.preventDefault(); // Prevent the form from refreshing the page
 
-    const form = e.target;
+        const form = e.target;
 
-    // Collect form data
-    const id = form.id.value.trim();
-    const username = form.username.value.trim();
-    const password = form.password.value.trim();
-    const role = form.role.value;
-    const branch = form.branch.value;
+        // Collect form data
+        const id = form.id.value.trim();
+        const username = form.username.value.trim();
+        const password = form.password.value.trim();
+        const role = form.role.value;
+        const branch = form.branch.value;
 
 
-    // Validate required fields
-    if (!id || !username || !password || !role) {
-        alert("Please fill all required fields");
-        return;
-    }
-
-    // Send data to the server
-    try {
-        const res = await fetch("/api/add-user", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id, username, password, role, branch })
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-            alert("User added successfully!");
-
-            // Close modal
-            const addModal = bootstrap.Modal.getInstance(document.getElementById("addUserModal"));
-            addModal.hide();
-
-            // Reset form
-            form.reset();
-
-            // Refresh table
-            document.getElementById("searchBtn").click();
-        } else {
-            alert("Error: " + (data.error || "Could not add user"));
+        // Validate required fields
+        if (!id || !username || !password || !role) {
+            alert("Please fill all required fields");
+            return;
         }
-    } catch (err) {
-        console.error(err);
-        alert("An unexpected error occurred");
-    }
-});
+
+        // Send data to the server
+        try {
+            const res = await fetch("/api/add-user", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({id, username, password, role, branch})
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                alert("User added successfully!");
+
+                // Close modal
+                const addModal = bootstrap.Modal.getInstance(document.getElementById("addUserModal"));
+                addModal.hide();
+
+                // Reset form
+                form.reset();
+
+                // Refresh table
+                document.getElementById("searchBtn").click();
+            } else {
+                alert("Error: " + (data.error || "Could not add user"));
+            }
+        } catch (err) {
+            console.error(err);
+            alert("An unexpected error occurred");
+        }
+    });
 
 
-    document.getElementById("searchBtn").addEventListener("click",async function(){
+    document.getElementById("searchBtn").addEventListener("click", async function () {
 
-    const branch=document.getElementById("branchFilter").value
-    const role=document.getElementById("roleFilter").value
-    const studentClass=document.getElementById("classFilter").value
-    const id=document.getElementById("idFilter").value
+        const branch = document.getElementById("branchFilter").value
+        const role = document.getElementById("roleFilter").value
+        const studentClass = document.getElementById("classFilter").value
+        const id = document.getElementById("idFilter").value
 
-    const res=await fetch("/api/search-users",{
+        const res = await fetch("/api/search-users", {
 
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({branch,role, studentClass, id})
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({branch, role, studentClass, id})
 
-    })
+        })
 
-    const data=await res.json()
-    document.getElementById("tableSection").classList.remove("d-none")
+        const data = await res.json()
+        document.getElementById("tableSection").classList.remove("d-none")
 
-    const table=document.getElementById("userTable")
-    table.innerHTML=""
+        const table = document.getElementById("userTable")
+        table.innerHTML = ""
 
-    data.users.forEach(u=>{
+        data.users.forEach(u => {
 
-    table.innerHTML+=`
+            table.innerHTML += `
 
     <tr>
         <td>${u.id}</td>
@@ -457,115 +457,111 @@
         </td>
     </tr>
     `
-    })
+        })
 
     })
 
 
+    function deleteUser(id) {
 
-    function deleteUser(id){
+        if (!confirm("Delete user?")) return
 
-    if(!confirm("Delete user?")) return
-
-    fetch("/api/delete-user/"+id,{method:"DELETE"})
-    .then(()=>document.getElementById("searchBtn").click())
-
-    }
-
-
-   function openEdit(user){
-    document.getElementById("db_id").value = user.db_id
-    document.getElementById("edit_id").value = user.id
-    document.getElementById("edit_username").value = user.username
-    document.getElementById("edit_branch").value = user.branch
-
-
-
-
-    new bootstrap.Modal(document.getElementById("editUserModal")).show()
+        fetch("/api/delete-user/" + id, {method: "DELETE"})
+            .then(() => document.getElementById("searchBtn").click())
 
     }
 
-    document.getElementById("editUserForm").addEventListener("submit", async function(e) {
-    e.preventDefault(); // Prevent the form from refreshing the page
 
-    const form = e.target;
-
-    // Collect form data
-    const db_id = document.getElementById("db_id").value.trim();
-    const id = document.getElementById("edit_id").value.trim();
-    const username = document.getElementById("edit_username").value.trim();
-    const branch = document.getElementById("edit_branch").value;
+    function openEdit(user) {
+        document.getElementById("db_id").value = user.db_id
+        document.getElementById("edit_id").value = user.id
+        document.getElementById("edit_username").value = user.username
+        document.getElementById("edit_branch").value = user.branch
 
 
+        new bootstrap.Modal(document.getElementById("editUserModal")).show()
 
-    // Send data to the server
-    try {
-        const res = await fetch("/api/update-user", {
+    }
+
+    document.getElementById("editUserForm").addEventListener("submit", async function (e) {
+        e.preventDefault(); // Prevent the form from refreshing the page
+
+        const form = e.target;
+
+        // Collect form data
+        const db_id = document.getElementById("db_id").value.trim();
+        const id = document.getElementById("edit_id").value.trim();
+        const username = document.getElementById("edit_username").value.trim();
+        const branch = document.getElementById("edit_branch").value;
+
+
+        // Send data to the server
+        try {
+            const res = await fetch("/api/update-user", {
+                method: "PATCH",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({db_id, id, username, branch})
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                alert("User Updated successfully!");
+
+                // Close modal
+                const editModal = bootstrap.Modal.getInstance(document.getElementById("editUserModal"));
+                editModal.hide();
+
+                // Reset form
+                form.reset();
+
+                // Refresh table
+                document.getElementById("searchBtn").click();
+            } else {
+                alert("Error: " + (data.error || "Could not add user"));
+            }
+        } catch (err) {
+            console.error(err);
+            alert("An unexpected error occurred");
+        }
+    });
+
+    function openPassword(id) {
+
+        document.getElementById("password_user_id").value = id
+
+        new bootstrap.Modal(document.getElementById("passwordModal")).show()
+
+    }
+
+    document.getElementById("passwordForm").addEventListener("submit", async function (e) {
+        e.preventDefault()
+
+        const id = document.getElementById("password_user_id").value
+        const password = document.getElementById("new_password").value
+
+        const res = await fetch("/api/change-password", {
             method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({db_id, id, username, branch })
-        });
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({id, password})
+        })
 
         const data = await res.json();
 
         if (data.success) {
-            alert("User Updated successfully!");
+            alert("Password Changed successfully!");
 
-            // Close modal
-            const editModal = bootstrap.Modal.getInstance(document.getElementById("editUserModal"));
-            editModal.hide();
+            const passwordModal = bootstrap.Modal.getInstance(
+                document.getElementById("passwordModal")
+            );
+            document.getElementById("new_password").value = "";
+            passwordModal.hide();
 
-            // Reset form
-            form.reset();
-
-            // Refresh table
-            document.getElementById("searchBtn").click();
         } else {
-            alert("Error: " + (data.error || "Could not add user"));
+            alert("Error changing password");
         }
-    } catch (err) {
-        console.error(err);
-        alert("An unexpected error occurred");
-    }
-});
 
-    function openPassword(id){
-
-    document.getElementById("password_user_id").value=id
-
-    new bootstrap.Modal(document.getElementById("passwordModal")).show()
-
-    }
-
-    document.getElementById("passwordForm").addEventListener("submit", async function(e){
-    e.preventDefault()
-
-    const id = document.getElementById("password_user_id").value
-    const password = document.getElementById("new_password").value
-
-    const res = await fetch("/api/change-password",{
-        method:"PATCH",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({id,password})
-    })
-
-    const data = await res.json();
-
-    if (data.success) {
-        alert("Password Changed successfully!");
-
-        const passwordModal = bootstrap.Modal.getInstance(
-            document.getElementById("passwordModal")
-        );
-        document.getElementById("new_password").value = "";
-        passwordModal.hide();
-
-    } else {
-        alert("Error changing password");
-    }
-
-});
+    });
 
 </script>
 
