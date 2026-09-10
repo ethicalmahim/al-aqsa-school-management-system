@@ -66,6 +66,8 @@ class User(db.Model, UserMixin):
     has_accounts_option_access: Mapped[bool] = mapped_column(default=True)
     has_results_option_access: Mapped[bool] = mapped_column(default=True)
     has_qr_code_access: Mapped[bool] = mapped_column(default=True)
+    has_comment_access: Mapped[bool] = mapped_column(default=True)
+    has_notice_access: Mapped[bool] = mapped_column(default=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -517,9 +519,9 @@ def log_info():
 
 @app.route("/submitted-comments")
 @login_required
-@roles_required(ADMIN_ROLE)
 def submitted_comments():
     comments = db.session.query(Comment).all()[::-1]
+
     return render_template("admin/comments.html", comments=comments)
 
 
@@ -734,6 +736,8 @@ def add_user():
     accounts_access = data.get("accounts", False)
     result_access = data.get("result", False)
     qr_code_access = data.get("qr_code", False)
+    comment_access = data.get("comments", False)
+    notice_access = data.get("notice", False)
 
     # Simple validation
     if not school_id or not username or not password or not role:
@@ -750,8 +754,9 @@ def add_user():
         has_attendance_option_access=attendance_access,
         has_accounts_option_access=accounts_access,
         has_results_option_access=result_access,
-        has_qr_code_access=qr_code_access
-
+        has_qr_code_access=qr_code_access,
+        has_comment_access=comment_access,
+        has_notice_access=notice_access,
     )
     user.set_password(password)
 
