@@ -823,6 +823,8 @@ def search_users():
             "accounts": u.has_accounts_option_access,
             "result": u.has_results_option_access,
             "qr_code": u.has_qr_code_access,
+            "comments": u.has_comment_access,
+            "notice": u.has_notice_access,
         }
 
     users_serialized = [serialize_user(u) for u in users]
@@ -848,6 +850,8 @@ def update_user():
     accounts_access = data.get("accounts", False)
     result_access = data.get("result", False)
     qr_code_access = data.get("qr_code", False)
+    comments_access = data.get("comments", False)
+    notice_access = data.get("notice", False)
 
     # Simple validation
     if not school_id or not username:
@@ -865,6 +869,8 @@ def update_user():
     user.has_accounts_option_access = accounts_access
     user.has_results_option_access = result_access
     user.has_qr_code_access = qr_code_access
+    user.has_comment_access = comments_access
+    user.has_notice_access = notice_access
 
     db.session.commit()
     return jsonify({"success": True})

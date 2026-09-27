@@ -196,13 +196,7 @@
 
                     <label class="form-label">Option Permission</label>
                     <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="options" value="lesson_schedule"
-                                       id="opt_lesson">
-                                <label class="form-check-label" for="opt_lesson">Lesson Schedule</label>
-                            </div>
-                        </div>
+
                         <div class="col-6">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="options" value="attendance"
@@ -224,13 +218,7 @@
                                 <label class="form-check-label" for="opt_result">Result</label>
                             </div>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="options" value="qr_code"
-                                       id="opt_qr">
-                                <label class="form-check-label" for="opt_qr">QR Code</label>
-                            </div>
-                        </div>
+
 
                         <div class="col-6">
                             <div class="form-check">
@@ -293,13 +281,6 @@
                     <div class="row g-2 mb-3">
                         <div class="col-6">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="options" value="lesson_schedule"
-                                       id="edit_opt_lesson">
-                                <label class="form-check-label" for="edit_opt_lesson">Lesson Schedule</label>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="options" value="attendance"
                                        id="edit_opt_attendance">
                                 <label class="form-check-label" for="edit_opt_attendance">Attendance</label>
@@ -321,9 +302,16 @@
                         </div>
                         <div class="col-6">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="options" value="qr_code"
-                                       id="edit_opt_qr">
-                                <label class="form-check-label" for="edit_opt_qr">QR Code</label>
+                                <input class="form-check-input" type="checkbox" name="options" value="comments"
+                                       id="edit_opt_comments">
+                                <label class="form-check-label" for="edit_opt_comments">Comments</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="options" value="notice"
+                                       id="edit_opt_notice">
+                                <label class="form-check-label" for="edit_opt_notice">Notice</label>
                             </div>
                         </div>
                     </div>
@@ -483,11 +471,11 @@
         document.getElementById("edit_id").value = user.id
         document.getElementById("edit_username").value = user.username
         document.getElementById("edit_branch").value = user.branch
-        document.getElementById("edit_opt_lesson").checked = user.lesson_schedule
         document.getElementById("edit_opt_attendance").checked = user.attendance
         document.getElementById("edit_opt_accounts").checked = user.accounts
         document.getElementById("edit_opt_result").checked = user.result
-        document.getElementById("edit_opt_qr").checked = user.qr_code
+        document.getElementById("edit_opt_comments").checked = user.comments
+        document.getElementById("edit_opt_notice").checked = user.notice
 
 
         new bootstrap.Modal(document.getElementById("editUserModal")).show()
