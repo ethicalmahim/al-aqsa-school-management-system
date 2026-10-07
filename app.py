@@ -1456,6 +1456,7 @@ def add_branch():
 
     db.session.add(branch)
     db.session.commit()
+    os.mkdir(f"static/img/notices/{branch.name}") # creates branch directory for notices
 
     return jsonify({"success": True})
 

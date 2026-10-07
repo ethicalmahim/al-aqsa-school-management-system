@@ -260,9 +260,9 @@
                     <div class="mb-2">
                         <label for="edit_branch" class="form-label">Branch</label>
                         <select id="edit_branch" class="form-select">
-                            <option>Netrakona</option>
-                            <option>Purbadhala</option>
-                            <option>Kalmakanda</option>
+                            {% for branch in get_branches():%}
+                            <option value="{{branch.name}}">{{ branch.name}}</option>
+                            {% endfor %}
                         </select>
                     </div>
 
