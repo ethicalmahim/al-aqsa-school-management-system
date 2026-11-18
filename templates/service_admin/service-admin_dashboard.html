@@ -154,8 +154,12 @@
             background: linear-gradient(135deg, #fb7185, #e11d48);
         }
 
-         .comment {
+        .comment {
             background: linear-gradient(135deg, #22d3ee, #0891b2);
+        }
+
+        .registration {
+            background: linear-gradient(135deg, #2dd4bf, #0d9488);
         }
 
         /* TITLE */
@@ -290,6 +294,13 @@
         </a>
         {% endif %}
 
+        <a href="{{ url_for('internal_accounts') }}" class="card-link">
+            <div class="card-btn">
+                <div class="icon-circle accounts"><i class="bi bi-cash-stack"></i></div>
+                <div class="card-title">Internal Accounts</div>
+            </div>
+        </a>
+
         {% if current_user.has_results_option_access: %}
         <a href="{{ url_for('result') }}" class="card-link">
             <div class="card-btn">
@@ -335,6 +346,13 @@
             <div class="card-btn">
                 <div class="icon-circle about"><i class="bi bi-info-circle"></i></div>
                 <div class="card-title">About</div>
+            </div>
+        </a>
+
+        <a href="{{ url_for('student_registration') }}" class="card-link">
+            <div class="card-btn">
+                <div class="icon-circle registration"><i class="bi bi-person-plus-fill"></i></div>
+                <div class="card-title">Student Registration</div>
             </div>
         </a>
     </div>

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+    <title>আয়</title>
+
+    <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background: #f4f6fb;
+            font-family: Inter, sans-serif;
+            margin: 0;
+        }
+
+        /* HEADER */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 16px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .title {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        /* PAGE */
+        .page {
+            margin-top: 70px;
+            padding: 14px;
+            max-width: 1100px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* CARD */
+        .filter-card,
+        .accounts-card {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, .05);
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eef0f5;
+        }
+
+        .sub-title {
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        /* MOBILE IMPROVEMENTS */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px;
+            }
+
+            .title {
+                font-size: 16px;
+            }
+
+        }
+    </style>
+</head>
+
+<body>
+<div class="container p-0">
+    <!-- HEADER -->
+    <div class="header">
+        <div class="d-flex align-items-center gap-2">
+
+            {% if current_user.role == "Admin" %}
+            <a href="{{ url_for('admin_dashboard') }}"
+               class="btn btn-light border rounded-3">
+                <i class="bi bi-house-door-fill"></i>
+            </a>
+
+            {% elif current_user.role == "Service Admin" %}
+            <a href="{{ url_for('service_admin_dashboard') }}"
+               class="btn btn-light border rounded-3">
+                <i class="bi bi-house-door-fill"></i>
+            </a>
+
+            {% elif current_user.role == "Teacher" %}
+            <a href="{{ url_for('teacher_dashboard') }}"
+               class="btn btn-light border rounded-3">
+                <i class="bi bi-house-door-fill"></i>
+            </a>
+
+            {% elif current_user.role == "Student" %}
+            <a href="{{ url_for('student_dashboard') }}"
+               class="btn btn-light border rounded-3">
+                <i class="bi bi-house-door-fill"></i>
+            </a>
+            {% endif %}
+            <div class="title">
+                অভ্যন্তরীণ হিসাব - আয়
+            </div>
+        </div>
+    </div>
+
+    <div class="page">
+
+        <!-- FILTERS -->
+        <div class="filter-card">
+            <div class="row g-2">
+                <div class="col-md">
+                    <select id="branchFilter" class="form-select" aria-label="ব্রাঞ্চ">
+                        <option value="">Select Branch</option>
+                        {% for branch in get_branches() %}
+                        <option value="{{ branch.name }}">{{ branch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md">
+                    <select class="form-select" id="classFilter" aria-label="শ্রেণী">
+                        <option value="">Select Class</option>
+                        <option value="Play">Play</option>
+                        <option value="Nursery">Nursery</option>
+                        <option value="One">One</option>
+                        <option value="Two">Two</option>
+                        <option value="Three">Three</option>
+                        <option value="Four">Four</option>
+                        <option value="Five">Five</option>
+                    </select>
+                </div>
+
+                <div class="col-md">
+                    <input type="text" id="roll" placeholder="Roll" class="form-control" aria-label="রোল">
+                </div>
+
+                <div class="col-md-3">
+                    <button type="button" id="searchBtn" class="btn btn-success w-100">Search</button>
+                </div>
+
+                <div class="col-12">
+                    <input type="text" id="studentName" placeholder="Name" class="form-control" aria-label="নাম">
+                </div>
+
+                <input type="hidden" name="role" value="Student">
+            </div>
+        </div>
+
+        <!-- SALARY FEE -->
+        <div class="accounts-card">
+            <div class="section-title">বেতন ফি</div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-12">
+                    <div class="sub-title">আদায় বিবরণ</div>
+                </div>
+
+                <div class="col-6 col-md-3 d-flex align-items-center">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="feeMonthly" name="fee_types"
+                               value="monthly_fee">
+                        <label class="form-check-label" for="feeMonthly">মাসিক বেতন</label>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3 d-flex align-items-center">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="feeExam" name="fee_types"
+                               value="exam_fee">
+                        <label class="form-check-label" for="feeExam">পরীক্ষার ফি</label>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <input type="text" id="feeOther" name="fee_other" class="form-control" placeholder="অন্যান্য"
+                           aria-label="অন্যান্য">
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label" for="monthSelect">মাস</label>
+                    <select id="monthSelect" name="month" class="form-select">
+                        <option value="">মাস নির্বাচন</option>
+                        <option value="1">জানুয়ারী</option>
+                        <option value="2">ফেব্রুয়ারী</option>
+                        <option value="3">মার্চ</option>
+                        <option value="4">এপ্রিল</option>
+                        <option value="5">মে</option>
+                        <option value="6">জুন</option>
+                        <option value="7">জুলাই</option>
+                        <option value="8">আগস্ট</option>
+                        <option value="9">সেপ্টেম্বর</option>
+                        <option value="10">অক্টোবর</option>
+                        <option value="11">নভেম্বর</option>
+                        <option value="12">ডিসেম্বর</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-12">
+                    <div class="sub-title">বেতন বিবরণ</div>
+                </div>
+
+                {% for key, label in [
+                ("january", "জানুয়ারী"), ("february", "ফেব্রুয়ারী"), ("march", "মার্চ"),
+                ("april", "এপ্রিল"), ("may", "মে"), ("june", "জুন"),
+                ("july", "জুলাই"), ("august", "আগস্ট"), ("september", "সেপ্টেম্বর"),
+                ("october", "অক্টোবর"), ("november", "নভেম্বর"), ("december", "ডিসেম্বর")
+                ] %}
+                <div class="col-4 col-md-2">
+                    <label class="form-label" for="month_{{ key }}">{{ label }}</label>
+                    <input type="text" id="month_{{ key }}" name="{{ key }}" class="form-control">
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="row g-2">
+                <div class="col-6 col-md-3">
+                    <label class="form-label" for="salaryPreviousDue">পূর্বের বকেয়া</label>
+                    <input type="text" id="salaryPreviousDue" name="salary_previous_due" class="form-control">
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <label class="form-label" for="salaryTotal">মোট টাকা</label>
+                    <input type="text" id="salaryTotal" name="salary_total" class="form-control">
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <label class="form-label" for="salaryPaid">পরিশোধিত টাকা</label>
+                    <input type="text" id="salaryPaid" name="salary_paid" class="form-control">
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <label class="form-label" for="salaryDue">বকেয়া</label>
+                    <input type="text" id="salaryDue" name="salary_due" class="form-control">
+                </div>
+            </div>
+        </div>
+
+        <!-- MISC INCOME -->
+        <div class="accounts-card">
+            <div class="section-title">বিবিধ আয়</div>
+
+            <div id="student-info" class="text-center"></div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-12">
+                    <div class="sub-title">আদায় বিবরণ</div>
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <label class="form-label" for="miscAdmission">ভর্তি ফি</label>
+                    <input type="text" id="miscAdmission" name="admission_fee" class="form-control">
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <label class="form-label" for="miscBook">বই</label>
+                    <input type="text" id="miscBook" name="book_fee" class="form-control">
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <label class="form-label" for="miscNotebook">খাতা</label>
+                    <input type="text" id="miscNotebook" name="notebook_fee" class="form-control">
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <label class="form-label" for="miscIdCard">আইডি কার্ড</label>
+                    <input type="text" id="miscIdCard" name="id_card_fee" class="form-control">
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label" for="miscOtherName">অন্যান্য</label>
+                    <div class="row g-2">
+                        <div class="col-7 col-md-9">
+                            <input type="text" id="miscOtherName" name="misc_other_name" class="form-control"
+                                   placeholder="বিবরণ">
+                        </div>
+                        <div class="col-5 col-md-3">
+                            <input type="text" id="miscOtherAmount" name="misc_other_amount" class="form-control"
+                                   placeholder="টাকা" aria-label="অন্যান্য টাকা">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-2">
+                <div class="col-6 col-md">
+                    <label class="form-label" for="miscSubtotal">মোট</label>
+                    <input type="text" id="miscSubtotal" name="misc_subtotal" class="form-control">
+                </div>
+
+                <div class="col-6 col-md">
+                    <label class="form-label" for="miscPreviousDue">পূর্বের বকেয়া</label>
+                    <input type="text" id="miscPreviousDue" name="misc_previous_due" class="form-control">
+                </div>
+
+                <div class="col-6 col-md">
+                    <label class="form-label" for="miscTotal">মোট টাকা</label>
+                    <input type="text" id="miscTotal" name="misc_total" class="form-control">
+                </div>
+
+                <div class="col-6 col-md">
+                    <label class="form-label" for="miscPaid">পরিশোধিত টাকা</label>
+                    <input type="text" id="miscPaid" name="misc_paid" class="form-control">
+                </div>
+
+                <div class="col-12 col-md">
+                    <label class="form-label" for="miscDue">বকেয়া</label>
+                    <input type="text" id="miscDue" name="misc_due" class="form-control">
+                </div>
+
+                <input type="hidden" name="role" id="roleFilter" value="Student">
+            </div>
+        </div>
+
+        <button type="button" id="saveBtn" class="btn btn-success w-100 mb-3">Save</button>
+    </div>
+
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const MONTHS = ["january", "february", "march", "april", "may", "june",
+        "july", "august", "september", "october", "november", "december"]
+
+    const searchBtn = document.getElementById("searchBtn")
+
+    // The API sends amounts as text like "500.0"; show them as "500"
+    function formatAmount(value) {
+        if (value === null || value === undefined || value === "") return ""
+        const number = Number(value)
+        return Number.isFinite(number) ? String(number) : String(value)
+    }
+
+    // Remove the previous student's data so it is never mistaken for the new one
+    function clearStudent() {
+        document.getElementById("studentName").value = ""
+        MONTHS.forEach(month => {
+            document.getElementById("month_" + month).value = ""
+        })
+        document.getElementById("salaryPreviousDue").value = ""
+        document.getElementById("miscPreviousDue").value = ""
+        updateSalaryTotal()
+    }
+
+    async function getStudent() {
+
+        const branchName = document.getElementById("branchFilter").value
+        const className = document.getElementById("classFilter").value
+        const studentId = document.getElementById("roll").value.trim()
+
+        if (!branchName || !className || !studentId) {
+            alert("Please select branch and class, and enter the roll!")
+            return
+        }
+
+        if (!/^\d+$/.test(studentId)) {
+            alert("Roll must be a number!")
+            return
+        }
+
+        clearStudent()
+        searchBtn.disabled = true
+        searchBtn.textContent = "Searching..."
+
+        let result
+        try {
+            const response = await fetch("/api/search-accounts", {
+
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    branch: branchName,
+                    class: className,
+                    student_id: studentId,
+                })
+            })
+
+            if (!response.ok) {
+                throw new Error("Request failed: " + response.status)
+            }
+
+            result = await response.json()
+        } catch (error) {
+            console.error(error)
+            alert("Could not load the student. Please try again.")
+            return
+        } finally {
+            searchBtn.disabled = false
+            searchBtn.textContent = "Search"
+        }
+
+        // The API returns a list of matching records
+        const record = result.data && result.data[0]
+
+        if (!record) {
+            alert("No student found!")
+            return
+        }
+
+        document.getElementById("studentName").value = record.student_name
+
+        MONTHS.forEach(month => {
+            document.getElementById("month_" + month).value = formatAmount(record[month])
+        })
+
+        const previousDue = formatAmount(record.due)
+        document.getElementById("salaryPreviousDue").value = previousDue
+        document.getElementById("miscPreviousDue").value = previousDue
+        updateSalaryTotal()
+    }
+
+    // FEE TOTAL: previous due + monthly fee + exam fee + other amount -> salaryTotal
+    const MONTHLY_FEE = 1000
+    const EXAM_FEE = 350
+
+    // Accepts English or Bengali digits; anything that is not a number counts as 0
+    function parseAmount(text) {
+        const normalized = text.trim().replace(/[০-৯]/g, digit => "০১২৩৪৫৬৭৮৯".indexOf(digit))
+        const number = Number(normalized)
+        return Number.isFinite(number) ? number : 0
+    }
+
+    function updateSalaryTotal() {
+        let total = 0
+        if (document.getElementById("feeMonthly").checked) total += MONTHLY_FEE
+        if (document.getElementById("feeExam").checked) total += EXAM_FEE
+        total += parseAmount(document.getElementById("feeOther").value)
+        total += parseAmount(document.getElementById("salaryPreviousDue").value)
+
+        document.getElementById("salaryTotal").value = total === 0 ? "" : total
+        updateSalaryDue()
+    }
+
+    // DUE / ADVANCE: salaryTotal - salaryPaid -> salaryDue
+    // One signed number: positive = still due, negative = paid in advance, 0 = settled.
+    function updateSalaryDue() {
+        const dueInput = document.getElementById("salaryDue")
+        const paidText = document.getElementById("salaryPaid").value.trim()
+
+        // Nothing paid in yet, so there is nothing to work out
+        if (paidText === "") {
+            dueInput.value = ""
+            return
+        }
+
+        const total = parseAmount(document.getElementById("salaryTotal").value)
+        dueInput.value = Math.round((total - parseAmount(paidText)) * 100) / 100
+    }
+
+    // MISC SUBTOTAL: sum the five misc income amount fields.
+    function updateMiscSubtotal() {
+        const amountIds = ["miscAdmission", "miscBook", "miscNotebook", "miscIdCard", "miscOtherAmount"]
+        const subtotal = amountIds.reduce((sum, id) => {
+            return sum + parseAmount(document.getElementById(id).value)
+        }, 0)
+
+        document.getElementById("miscSubtotal").value = subtotal === 0 ? "" : subtotal
+        updateMiscTotal()
+    }
+
+    function updateMiscTotal() {
+        const subtotal = parseAmount(document.getElementById("miscSubtotal").value)
+        const previousDue = parseAmount(document.getElementById("miscPreviousDue").value)
+        const total = subtotal + previousDue
+
+        document.getElementById("miscTotal").value = total === 0 ? "" : total
+        updateMiscDue()
+    }
+
+    function updateMiscDue() {
+        const dueInput = document.getElementById("miscDue")
+        const paidText = document.getElementById("miscPaid").value.trim()
+
+        if (paidText === "") {
+            dueInput.value = ""
+            return
+        }
+
+        const total = parseAmount(document.getElementById("miscTotal").value)
+        dueInput.value = Math.round((total - parseAmount(paidText)) * 100) / 100
+    }
+
+    ["miscAdmission", "miscBook", "miscNotebook", "miscIdCard", "miscOtherAmount"].forEach(id => {
+        document.getElementById(id).addEventListener("input", updateMiscSubtotal)
+    })
+    document.getElementById("miscSubtotal").addEventListener("input", updateMiscTotal)
+    document.getElementById("miscPreviousDue").addEventListener("input", updateMiscTotal)
+    document.getElementById("miscPaid").addEventListener("input", updateMiscDue)
+    document.getElementById("miscTotal").addEventListener("input", updateMiscDue)
+    updateMiscSubtotal()
+
+    document.getElementById("salaryPaid").addEventListener("input", updateSalaryDue)
+    document.getElementById("salaryTotal").addEventListener("input", updateSalaryDue)
+
+    document.getElementById("feeMonthly").addEventListener("change", updateSalaryTotal)
+    document.getElementById("feeExam").addEventListener("change", updateSalaryTotal)
+    document.getElementById("feeOther").addEventListener("input", updateSalaryTotal)
+    document.getElementById("salaryPreviousDue").addEventListener("input", updateSalaryTotal)
+
+    searchBtn.addEventListener("click", getStudent)
+
+    // Pressing Enter in the roll box searches too
+    document.getElementById("roll").addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+            event.preventDefault()
+            getStudent()
+        }
+    })
+</script>
+
+
+</body>
+</html>

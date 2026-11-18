@@ -241,6 +241,17 @@ class CommentReply(db.Model):
     comment = relationship("Comment", back_populates="reply")
 
 
+class StudentRecord(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    branch: Mapped[str] = mapped_column()
+    student_name: Mapped[str] = mapped_column()
+    fathers_name: Mapped[str] = mapped_column()
+    guardian_phone: Mapped[str] = mapped_column()
+    address: Mapped[str] = mapped_column()
+    class_name: Mapped[str] = mapped_column()
+    roll: Mapped[str] = mapped_column()
+
+
 @app.template_global()
 def get_branches():
     return db.session.execute(
@@ -252,7 +263,6 @@ def get_branches():
 
 with app.app_context():
     db.create_all()
-  
 
     if not db.session.execute(db.select(User).where(User.username == 'al-aqsa-sharif')).scalar():
         branch = Branch(code="NK", name="Netrakona", director="Md. Atikur Rahman Sharif", phone="01811114400")
@@ -368,6 +378,17 @@ def student_attendance():
 @login_required
 def accounts():
     return render_template("accounts.html")
+
+
+@app.route("/internal-accounts")
+@login_required
+def internal_accounts():
+    return render_template("internal_accounts.html")
+
+@app.route("/internal-accounts-income")
+@login_required
+def internal_accounts_income():
+    return render_template("income.html")
 
 
 @app.route("/student-accounts")
@@ -537,6 +558,13 @@ def student_comment():
 def call_services():
     phone_numbers = db.session.query(PhoneNumber).filter_by(branch_name=current_user.branch.name).all()
     return render_template("call_service.html", phone_numbers=phone_numbers)
+
+
+@app.route("/student-registration")
+@login_required
+@roles_required(SERVICE_ADMIN_ROLE)
+def student_registration():
+    return render_template("service_admin/student_registration.html")
 
 
 @app.route("/about")
@@ -768,12 +796,12 @@ def add_user():
 
 @app.route("/api/search-users", methods=["POST"])
 @login_required
-@roles_required(ADMIN_ROLE)
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def search_users():
     filters = request.json or {}
     branch_name = filters.get("branch")
     role = filters.get("role")
-    school_id = filters.get("id")  # coming from the client
+    school_id = filters.get("id")  # comes from the client
     class_ = filters.get("studentClass")
     stmt = db.select(User)
 
@@ -1456,7 +1484,7 @@ def add_branch():
 
     db.session.add(branch)
     db.session.commit()
-    os.mkdir(f"static/img/notices/{branch.name}") # creates branch directory for notices
+    os.mkdir(f"static/img/notices/{branch.name}")  # creates branch directory for notices
 
     return jsonify({"success": True})
 
@@ -1496,6 +1524,98 @@ def delete_branch(id):
         return {"success": True}
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+@app.route("/api/add-student", methods=["POST"])
+@login_required
+@roles_required(SERVICE_ADMIN_ROLE)
+def add_student():
+    data = request.json
+
+    # Extract fields
+    branch = data.get("branch")
+    student_name = data.get("student_name")
+    fathers_name = data.get("fathers_name")
+    guardian_phone = data.get("guardian_phone")
+    address = data.get("address")
+    class_name = data.get("class_name")
+    roll = data.get("roll")
+
+    # Simple validation
+    if not student_name or not fathers_name or not guardian_phone or not address or not class_name or not roll:
+        return jsonify({"success": False, "error": "Missing required fields"}), 400
+
+    # Add user
+    student = StudentRecord(
+        branch=branch,
+        student_name=student_name,
+        fathers_name=fathers_name,
+        guardian_phone=guardian_phone,
+        address=address,
+        class_name=class_name,
+        roll=roll,
+    )
+
+    db.session.add(student)
+    db.session.commit()
+
+    return jsonify({"success": True})
+
+
+@app.route("/api/search-students", methods=["POST"])
+@login_required
+@roles_required(SERVICE_ADMIN_ROLE)
+def search_students():
+    filters = request.json or {}
+    branch_name = filters.get("branch")
+    school_id = filters.get("id")  # coming from the client
+    class_ = filters.get("studentClass")
+    stmt = db.select(StudentRecord)
+
+    # filter by branch if provided
+    if branch_name:
+        # find branch first
+        branch_obj = db.session.execute(
+            db.select(Branch).where(Branch.name == branch_name)
+        ).scalar_one_or_none()
+
+        # if branch not found, return empty result
+        if branch_obj is None:
+            return jsonify({"users": []})
+
+        stmt = stmt.where(StudentRecord.branch == branch_obj.name)
+
+    # filter by school_id if provided
+    if school_id:
+        try:
+            school_id_int = int(school_id)
+            stmt = stmt.where(StudentRecord.roll == school_id_int)
+        except ValueError:
+            # invalid numeric id; return empty result or ignore
+            return jsonify({"users": []})
+
+    # execute query
+    students = db.session.execute(stmt).scalars().all()
+
+    if class_:
+        students = filter(lambda student: str(student.roll).startswith(class_), students)
+
+    # serialize cleanly
+    def serialize_user(student):
+        return {
+            "id": student.id,  # adjust field names to your model
+            "roll": student.roll,
+            "branch": student.branch,
+            "student_name": student.student_name,
+            "fathers_name": student.fathers_name,
+            "guardian_phone": student.guardian_phone,
+            "address": student.address,
+            "class_name": student.class_name,
+        }
+
+    users_serialized = [serialize_user(student) for student in students]
+
+    return jsonify({"users": users_serialized})
 
 
 # Others ---------------------------------------------------------------------------------------------------------------
