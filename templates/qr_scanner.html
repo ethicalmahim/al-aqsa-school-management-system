@@ -270,13 +270,39 @@
         })
     }
 
+    // The camera that should be running: the back camera, or the one picked with the switch button
+    function currentCameraConfig() {
+        return currentCamera < 0 ? {facingMode: "environment"} : {deviceId: {exact: cameras[currentCamera].id}}
+    }
+
     async function start(camera) {
         scanner = scanner || new Html5Qrcode("reader")
         await scanner.start(camera, {fps: 15, qrbox: {width: 240, height: 240}}, onScan, () => {})
         wrapper.classList.add("scanning")
         flashOn = false
         flashBtn.classList.remove("active")
+        updateFlashButton()
         showMessage("QR কোড খোঁজা হচ্ছে...")
+    }
+
+    // Only the main back camera of most Android phones has a torch; iPhone browsers don't allow it at all
+    function torchSupported() {
+        try {
+            const caps = scanner && scanner.getRunningTrackCapabilities()
+            return !!(caps && caps.torch)
+        } catch (e) {
+            return false
+        }
+    }
+
+    function updateFlashButton() {
+        const supported = torchSupported()
+        flashBtn.disabled = !supported
+        flashBtn.title = supported ? "Flash" : "এই ক্যামেরায় ফ্ল্যাশ নেই"
+    }
+
+    function isRunning() {
+        return !!(scanner && scanner.isScanning)
     }
 
     function cameraError(error) {
@@ -301,13 +327,17 @@
         }
         try {
             // Back camera first; this is what you want for scanning a book on a phone
-            await start({facingMode: "environment"})
+            await start(currentCameraConfig())
         } catch (error) {
             cameraError(error)
             return
         }
+        // List cameras WITHOUT opening one. Html5Qrcode.getCameras() opens a second camera stream,
+        // and on most phones that takes the camera away from the scanner: the preview goes black
+        // and the flash stops working.
         try {
-            cameras = await Html5Qrcode.getCameras()
+            const devices = await navigator.mediaDevices.enumerateDevices()
+            cameras = devices.filter(d => d.kind === "videoinput" && d.deviceId)
         } catch (e) {
             cameras = []
         }
@@ -318,21 +348,42 @@
         if (cameras.length < 2 || !scanner) return
         currentCamera = (currentCamera + 1) % cameras.length
         try {
-            await scanner.stop()
-            await start({deviceId: {exact: cameras[currentCamera].id}})
+            if (isRunning()) await scanner.stop()
+            await start(currentCameraConfig())
         } catch (error) {
             cameraError(error)
         }
     })
 
     flashBtn.addEventListener("click", async () => {
-        if (!scanner) return
+        if (!isRunning()) return
+        if (!torchSupported()) {
+            updateFlashButton()
+            showMessage("এই ক্যামেরায় ফ্ল্যাশ সাপোর্ট করে না।", "error")
+            return
+        }
         try {
             await scanner.applyVideoConstraints({advanced: [{torch: !flashOn}]})
             flashOn = !flashOn
             flashBtn.classList.toggle("active", flashOn)
         } catch (e) {
-            showMessage("এই ক্যামেরায় ফ্ল্যাশ সাপোর্ট করে না।", "error")
+            showMessage("ফ্ল্যাশ চালু করা যায়নি। আবার চেষ্টা করুন।", "error")
+        }
+    })
+
+    // Phones cut the camera when you switch apps or lock the screen, which leaves a black box.
+    // Stop cleanly when the page is hidden and start again when it comes back.
+    document.addEventListener("visibilitychange", async () => {
+        if (!scanner || handling) return
+        try {
+            if (document.hidden) {
+                if (isRunning()) await scanner.stop()
+                wrapper.classList.remove("scanning")
+            } else if (!isRunning()) {
+                await start(currentCameraConfig())
+            }
+        } catch (error) {
+            cameraError(error)
         }
     })
 
