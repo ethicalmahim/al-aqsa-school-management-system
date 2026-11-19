@@ -10,7 +10,7 @@
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Baloo+Da+2:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         body {
@@ -115,46 +115,99 @@
         }
 
 
+
+        /* WIDE SCREENS: table cards use the full screen width, so wide tables
+           (all months / all days / all subjects) are shown without side-scrolling */
+        @media (min-width: 1200px) {
+            .page {
+                max-width: none;
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+        }
+        /* RESULT TABLE */
+        .result-card {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, .05);
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eef0f5;
+        }
+
+        .form-label {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .result-table {
+            margin-bottom: 0;
+            font-size: 13px;
+        }
+
+        .result-table thead th {
+            background: #f8f9fc;
+            color: #666;
+            font-weight: 600;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .result-table td {
+            vertical-align: middle;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .result-table td.col-name {
+            text-align: left;
+            white-space: normal;
+            min-width: 180px;
+        }
+
+        .result-table td.col-strong {
+            font-weight: 600;
+        }
+
+        .result-table td.grade-fail {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 24px 0;
+        }
     </style>
+    <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
 </head>
 
-<body>
+<body class="kids t-indigo">
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;">
-
     {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-
     {% for category, message in messages %}
-
-    <div class="toast align-items-center text-bg-{{ category }} border-0 show mb-2"
-         role="alert">
-
+    <div class="toast align-items-center text-bg-{{ category }} border-0 show mb-2" role="alert">
         <div class="d-flex">
-
-            <div class="toast-body">
-                {{ message }}
-            </div>
-
-            <button type="button"
-                    class="btn-close btn-close-white me-2 m-auto"
-                    data-bs-dismiss="toast">
-            </button>
-
+            <div class="toast-body">{{ message }}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
         </div>
-
     </div>
-
     {% endfor %}
-
-    {% endif %}
     {% endwith %}
-
 </div>
 
-<div class="container p-0">
+<div class="container-fluid p-0">
     <!-- HEADER -->
     <div class="header">
-
         <div class="d-flex align-items-center gap-2">
 
             {% if current_user.role == "Admin" %}
@@ -174,268 +227,260 @@
                class="btn btn-light border rounded-3">
                 <i class="bi bi-house-door-fill"></i>
             </a>
-
-            {% elif current_user.role == "Student" %}
-            <a href="{{ url_for('student_dashboard') }}"
-               class="btn btn-light border rounded-3">
-                <i class="bi bi-house-door-fill"></i>
-            </a>
             {% endif %}
 
             <div class="title">
-                Result Management - Class Assessment
+                Class Assessment
             </div>
-
         </div>
 
-        {% if current_user.role not in ("Student", "Teacher") %}
-        <button class="btn btn-success add-btn"
-                data-bs-toggle="modal"
-                data-bs-target="#uploadModal">
-
-            <i class="bi bi-plus-lg"></i>
-
+        {% if current_user.role in ("Admin", "Service Admin") %}
+        <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#uploadModal"
+                aria-label="Upload result">
+            <i class="bi bi-upload"></i><span class="d-none d-sm-inline ms-1">Upload</span>
         </button>
         {% endif %}
-
     </div>
 
     <div class="page">
         <!-- FILTERS -->
         <div class="filter-card">
-            <div class="row g-2">
-                {% if current_user.role in ("Service Admin", "Teacher") %}
-                <input type="hidden" id="branchSelect" value="{{current_user.branch.name}}">
-                {% else %}
-                <div class="col-md">
-                    <select id="branchSelect" class="form-select" required>
-                        <option>Select Branch</option>
-                        {% for branch in get_branches():%}
-                        <option>{{ branch.name}}</option>
+            <div class="row g-2 align-items-end">
+                {% if current_user.role == "Admin" %}
+                <div class="col-12 col-md">
+                    <label class="form-label" for="branchSelect">ব্রাঞ্চ</label>
+                    <select id="branchSelect" class="form-select">
+                        <option value="">Select Branch</option>
+                        {% for branch in get_branches() %}
+                        <option value="{{ branch.name }}">{{ branch.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
+                {% else %}
+                <input type="hidden" id="branchSelect" value="{{ current_user.branch.name }}">
                 {% endif %}
-                <div class="col-md">
-                    <select id="classSelect" class="form-select" required>
-                        <option>Select Class</option>
-                        <option>Play</option>
-                        <option>Nursery</option>
-                        <option>One</option>
-                        <option>Two</option>
-                        <option>Three</option>
-                        <option>Four</option>
-                        <option>Five</option>
+
+                <div class="col-12 col-md">
+                    <label class="form-label" for="classSelect">শ্রেণী</label>
+                    <select id="classSelect" class="form-select">
+                        <option value="">Select Class</option>
+                        {% for class_name in classes %}
+                        <option value="{{ class_name }}">{{ class_name }}</option>
+                        {% endfor %}
                     </select>
                 </div>
 
-                <div class="col-md">
-                    <select id="monthSelect" class="form-select" required>
-                        <option>Select Month</option>
-                        <option>January {{ year }}</option>
-                        <option>February {{ year }}</option>
-                        <option>March {{ year }}</option>
-                        <option>April {{ year }}</option>
-                        <option>May {{ year }}</option>
-                        <option>June {{ year }}</option>
-                        <option>July {{ year }}</option>
-                        <option>August {{ year }}</option>
-                        <option>September {{ year }}</option>
-                        <option>October {{ year }}</option>
-                        <option>November {{ year }}</option>
-                        <option>December {{ year }}</option>
-
+                <div class="col-7 col-md">
+                    <label class="form-label" for="periodSelect">মাস</label>
+                    <select id="periodSelect" class="form-select">
+                        {% for month in months %}
+                        <option value="{{ month }}" {% if month == current_month %}selected{% endif %}>{{ month }}</option>
+                        {% endfor %}
                     </select>
                 </div>
 
-                <div class="col-md-3">
-                    <button id="searchBtn" class="btn btn-success w-100">
-                        Search
-                    </button>
+                <div class="col-5 col-md-2">
+                    <label class="form-label" for="yearSelect">বছর</label>
+                    <select id="yearSelect" class="form-select">
+                        {% for year in years %}
+                        <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-2">
+                    <button type="button" id="searchBtn" class="btn btn-success w-100">Search</button>
                 </div>
             </div>
         </div>
 
-        <!-- CLASS ASSESSMENT TABLE -->
-        <div id="class-resultCard" class="class-result-card d-none">
+        <!-- RESULT TABLE -->
+        <div id="resultCard" class="result-card d-none">
+            <div class="section-title" id="sheetTitle"></div>
             <div class="table-responsive">
-                <table class="table class-result-table align-middle">
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Student Name</th>
-                        <th>Arabic</th>
-                        <th>Quran</th>
-                        <th>Bengali</th>
-                        <th>English</th>
-                        <th>Math</th>
-                        <th>Aqaid & Fiqh</th>
-                        <th>Science</th>
-                        <th>BGS</th>
-                        <th>Total</th>
-                    </tr>
-                    </thead>
-                    <tbody id="class-resultBody"></tbody>
+                <table class="table table-bordered table-hover result-table">
+                    <thead id="resultHead"></thead>
+                    <tbody id="resultBody"></tbody>
                 </table>
             </div>
         </div>
+
+        <div id="emptyCard" class="result-card d-none">
+            <div class="empty-state" id="emptyText"></div>
+        </div>
     </div>
 
+    {% if current_user.role in ("Admin", "Service Admin") %}
     <!-- UPLOAD MODAL -->
-    <div class="modal fade" id="uploadModal">
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">
-                        Upload Result - Class Assessment
-                    </h5>
-                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="uploadTitle">Upload Result - Class Assessment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
                 <div class="modal-body">
-                    <form method="POST" action="{{ url_for('upload_class_result') }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ url_for('upload_class_result') }}" enctype="multipart/form-data" id="uploadForm">
 
-                        {% if current_user.role in ("Service Admin", "Teacher") %}
-                        <input type="hidden" name="branch_name" value="{{current_user.branch.name}}">
-                        {% else %}
+                        {% if current_user.role == "Admin" %}
                         <div class="mb-3">
-                            <label class="form-label">Branch</label>
-                            <select name="branch_name" class="form-select">
-                                {% for branch in get_branches():%}
-                                <option>{{ branch.name}}</option>
+                            <label class="form-label" for="uploadBranch">ব্রাঞ্চ</label>
+                            <select id="uploadBranch" name="branch_name" class="form-select" required>
+                                <option value="">Select Branch</option>
+                                {% for branch in get_branches() %}
+                                <option value="{{ branch.name }}">{{ branch.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         {% endif %}
 
                         <div class="mb-3">
-                            <label class="form-label">Class</label>
-                            <select name="class_name" class="form-select">
-                                <option>Play</option>
-                                <option>Nursery</option>
-                                <option>One</option>
-                                <option>Two</option>
-                                <option>Three</option>
-                                <option>Four</option>
-                                <option>Five</option>
+                            <label class="form-label" for="uploadClass">শ্রেণী</label>
+                            <select id="uploadClass" name="class_name" class="form-select" required>
+                                <option value="">Select Class</option>
+                                {% for class_name in classes %}
+                                <option value="{{ class_name }}">{{ class_name }}</option>
+                                {% endfor %}
                             </select>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Month</label>
-                            <select name="month_name" class="form-select">
-                                <option>January {{ year }}</option>
-                                <option>February {{ year }}</option>
-                                <option>March {{ year }}</option>
-                                <option>April {{ year }}</option>
-                                <option>May {{ year }}</option>
-                                <option>June {{ year }}</option>
-                                <option>July {{ year }}</option>
-                                <option>August {{ year }}</option>
-                                <option>September {{ year }}</option>
-                                <option>October {{ year }}</option>
-                                <option>November {{ year }}</option>
-                                <option>December {{ year }}</option>
-                            </select>
+                        <div class="row g-2 mb-3">
+                            <div class="col-7">
+                                <label class="form-label" for="uploadPeriod">মাস</label>
+                                <select id="uploadPeriod" class="form-select">
+                                    {% for month in months %}
+                                    <option value="{{ month }}" {% if month == current_month %}selected{% endif %}>{{ month }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-5">
+                                <label class="form-label" for="uploadYear">বছর</label>
+                                <select id="uploadYear" class="form-select">
+                                    {% for year in years %}
+                                    <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
                         </div>
+                        <input type="hidden" name="month_name" id="uploadPeriodName">
 
                         <div class="mb-3">
-                            <label class="form-label">Upload Excel (Must contain 'ID', 'Student Name', 'Arabic',
-                                'Quran', 'Bengali', 'English', 'Math' & 'Total' Column)</label>
-                            <input type="file" name="excel_file" accept=".xlsx,.xls" class="form-control" required>
+                            <label class="form-label" for="excelFile">Excel ফাইল (.xlsx)</label>
+                            <input type="file" id="excelFile" name="excel_file" accept=".xlsx" class="form-control"
+                                   required>
+                            <div class="form-text">আবশ্যক কলাম: 'ID', 'Student Name', 'Total'। অন্যান্য কলাম: 'Arabic', 'Quran', 'Bengali', 'English', 'Math', 'Science', 'BGS', 'Aqaid &amp; Fiqh'। একই মাসের আগের আপলোড প্রতিস্থাপিত হবে।</div>
                         </div>
 
-                        <button class="btn btn-success w-100">
-                            Submit
-                        </button>
+                        <button type="submit" id="uploadBtn" class="btn btn-success w-100">Submit</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-
+    {% endif %}
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    document.getElementById("searchBtn").addEventListener("click", async function () {
-        const branchName = document.getElementById("branchSelect").value
-        const className = document.getElementById("classSelect").value
-        const monthName = document.getElementById("monthSelect").value
+    // Every possible column; columns that are empty for the whole class are hidden
+    const COLUMNS = [{"key": "ID", "label": "ID", "always": true}, {"key": "student_name", "label": "Student Name", "always": true, "className": "col-name"}, {"key": "arabic", "label": "Arabic"}, {"key": "quran", "label": "Quran"}, {"key": "bengali", "label": "Bengali"}, {"key": "english", "label": "English"}, {"key": "math", "label": "Math"}, {"key": "aqaid_and_fiqh", "label": "Aqaid & Fiqh"}, {"key": "science", "label": "Science"}, {"key": "bgs", "label": "BGS"}, {"key": "total", "label": "Total", "always": true, "className": "col-strong"}]
+    const SEARCH_URL = "/api/search-class-result"
+    const PERIOD_KEY = "month"
 
-        if (className === "Select Class" || branchName === "Select Branch" || monthName === "Select Month") {
-            alert("Please select branch, class and month!")
+    const searchBtn = document.getElementById("searchBtn")
+    const card = document.getElementById("resultCard")
+    const emptyCard = document.getElementById("emptyCard")
+
+    function cell(tag, text, className) {
+        const el = document.createElement(tag)
+        el.textContent = text ?? ""
+        if (className) el.className = className
+        return el
+    }
+
+    function showEmpty(text) {
+        card.classList.add("d-none")
+        emptyCard.classList.remove("d-none")
+        document.getElementById("emptyText").textContent = text
+    }
+
+    function render(rows, period, className) {
+        if (rows.length === 0) {
+            showEmpty(`${className} শ্রেণীর ${period} এর ফলাফল পাওয়া যায়নি !`)
             return
         }
 
-        const response = await fetch("/api/search-class-result", {
+        emptyCard.classList.add("d-none")
+        card.classList.remove("d-none")
+        document.getElementById("sheetTitle").textContent = `${className} · ${period} · ${rows.length} জন`
 
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+        const visible = COLUMNS.filter(col => col.always || rows.some(row => row[col.key] !== null && row[col.key] !== ""))
 
-            body: JSON.stringify({
-                branch: branchName,
-                class: className,
-                month: monthName,
+        const head = document.getElementById("resultHead")
+        head.innerHTML = ""
+        const headRow = document.createElement("tr")
+        visible.forEach(col => headRow.appendChild(cell("th", col.label)))
+        head.appendChild(headRow)
+
+        const body = document.getElementById("resultBody")
+        body.innerHTML = ""
+        rows.forEach(row => {
+            const tr = document.createElement("tr")
+            visible.forEach(col => {
+                const td = cell("td", row[col.key], col.className)
+                if (col.key === "letter_grade" && row[col.key] === "F") td.classList.add("grade-fail")
+                tr.appendChild(td)
             })
-        })
-
-        const result = await response.json()
-
-        const tbody = document.getElementById("class-resultBody")
-        const card = document.getElementById("class-resultCard")
-
-        tbody.innerHTML = ""
-
-        if (result.data.length === 0) {
-            tbody.innerHTML = `
-    <tr>
-        <td colspan="3" class="text-center text-muted">
-        No accounts history  found!
-        </td>
-    </tr>`
-        }
-
-        if (result.data.length > 0) {
-            card.classList.remove("d-none")
-        } else {
-            card.classList.add("d-none")
-        }
-
-
-        result.data.forEach(row => {
-            tbody.innerHTML += `
-    <tr>
-         <td>${row.ID}</td>
-        <td>${row.student_name}</td>
-        <td>${row.arabic ?? ""}</td>
-        <td>${row.quran ?? ""}</td>
-        <td>${row.bengali ?? ""}</td>
-        <td>${row.english ?? ""}</td>
-        <td>${row.math ?? ""}</td>
-        <td>${row.aqaid_and_fiqh ?? ""}</td>
-        <td>${row.science ?? ""}</td>
-        <td>${row.bgs ?? ""}</td>
-        <td>${row.total ?? ""}</td>
-    </tr>
-    `
-
-        })
-        attachEditEvents()
-    })
-
-
-    function attachEditEvents() {
-        document.querySelectorAll(".editBtn").forEach(btn => {
-            btn.addEventListener("click", function () {
-                document.getElementById("edit_id").value = this.dataset.id
-                document.getElementById("edit_topic").value = this.dataset.topic
-            })
+            body.appendChild(tr)
         })
     }
 
+    function selectedPeriod(firstId, yearId) {
+        return document.getElementById(firstId).value + " " + document.getElementById(yearId).value
+    }
 
+    async function search() {
+        const branch = document.getElementById("branchSelect").value
+        const className = document.getElementById("classSelect").value
+        const period = selectedPeriod("periodSelect", "yearSelect")
+
+        if (!branch || !className) {
+            alert("Please select branch and class!")
+            return
+        }
+
+        searchBtn.disabled = true
+        searchBtn.textContent = "Searching..."
+        try {
+            const response = await fetch(SEARCH_URL, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({branch, class: className, [PERIOD_KEY]: period})
+            })
+            const result = await response.json().catch(() => ({}))
+            if (!response.ok || !result.success) throw new Error(result.error || "Request failed: " + response.status)
+            render(result.data, period, className)
+        } catch (error) {
+            console.error(error)
+            showEmpty("ফলাফল লোড করা যায়নি: " + error.message)
+        } finally {
+            searchBtn.disabled = false
+            searchBtn.textContent = "Search"
+        }
+    }
+
+    searchBtn.addEventListener("click", search)
+
+    const uploadForm = document.getElementById("uploadForm")
+    if (uploadForm) {
+        uploadForm.addEventListener("submit", () => {
+            document.getElementById("uploadPeriodName").value = selectedPeriod("uploadPeriod", "uploadYear")
+            const btn = document.getElementById("uploadBtn")
+            btn.disabled = true
+            btn.textContent = "Uploading..."
+        })
+    }
 </script>
 </body>
 </html>

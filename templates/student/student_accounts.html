@@ -10,117 +10,156 @@
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Baloo+Da+2:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        body{
-        background:#f4f6fb;
-        font-family:Inter,sans-serif;
-        margin:0;
+        body {
+            background: #f4f6fb;
+            font-family: Inter, sans-serif;
+            margin: 0;
         }
 
         /* HEADER */
-         .header{
-        position:fixed;
-        top:0;
-        left:0;
-        right:0;
-        padding:16px 14px;
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        background:white;
-        z-index:1000;
-        box-shadow:0 2px 10px rgba(0,0,0,0.05);
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 16px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
-        .title{
-        font-weight:600;
-        font-size:18px;
-        }
-
-        .add-btn{
-        border-radius:10px;
+        .title {
+            font-weight: 600;
+            font-size: 18px;
         }
 
         /* PAGE */
-        .page{
-        margin-top:70px;
-        padding:14px;
-        max-width:1100px;
-        margin-left:auto;
-        margin-right:auto;
+        .page {
+            margin-top: 70px;
+            padding: 14px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         /* CARD */
-        .filter-card,
-        .accounts-card{
-        background:white;
-        padding:16px;
-        border-radius:16px;
-        box-shadow:0 4px 15px rgba(0,0,0,.05);
-        margin-bottom:16px;
+        .accounts-card {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, .05);
+            margin-bottom: 16px;
+        }
+
+        .report-head {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .report-head h4 {
+            font-size: 18px;
+            margin-bottom: 2px;
+        }
+
+        .report-head h5 {
+            font-size: 15px;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .report-head .meta {
+            font-size: 13px;
+            color: #888;
+        }
+
+        /* SUMMARY TILES */
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .summary-tile {
+            border: 1px solid #eef0f5;
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .summary-tile .value {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .summary-tile .label {
+            font-size: 12px;
+            color: #666;
         }
 
         /* TABLE */
-        .table-responsive{
-        overflow-x:auto;
-        }
-
         .accounts-table {
-        min-width: 300px;   /* 🔥 force horizontal scroll */
-        table-layout: auto;  /* allow natural width */
+            margin-bottom: 0;
+            font-size: 14px;
         }
 
-        .accounts-table th,
+        .accounts-table th {
+            background: #f8f9fc;
+            color: #666;
+            font-weight: 600;
+        }
+
         .accounts-table td {
-        white-space: nowrap; /* 🔥 prevent wrapping */
+            vertical-align: middle;
         }
 
-        .accounts-table th{
-        font-size:14px;
-        color:#666;
-        font-weight:600;
+        .accounts-table .col-amount {
+            text-align: right;
         }
 
-        .accounts-table td{
-        vertical-align:middle;
+        .text-due {
+            color: #dc2626;
+            font-weight: 600;
         }
 
-        .edit-btn{
-        border-radius:8px;
+        .text-paid {
+            color: #059669;
         }
 
-        /* DROP AREA */
-        .drop-area{
-        border:2px dashed #cbd5e1;
-        border-radius:12px;
-        padding:30px;
-        text-align:center;
-        cursor:pointer;
-        background:#f9fafc;
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 24px 0;
         }
 
         /* MOBILE IMPROVEMENTS */
-        @media (max-width:768px){
-        .header{
-        padding:12px;
-        }
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px;
+            }
 
-        .title{
-        font-size:16px;
+            .title {
+                font-size: 16px;
+            }
         }
-
-        }
+        /* Bootstrap's table cell colour would otherwise override these */
+        .accounts-table td.text-due { color: #dc2626; }
+        .accounts-table td.text-paid { color: #059669; }
     </style>
+    <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
 </head>
 
-<body>
+<body class="kids t-yellow">
 <div class="container p-0">
     <!-- HEADER -->
-   <div class="header">
+    <div class="header">
         <div class="d-flex align-items-center gap-2">
-
             <a href="{{ url_for('student_dashboard') }}"
                class="btn btn-light border rounded-3">
                 <i class="bi bi-house-door-fill"></i>
@@ -133,175 +172,117 @@
     </div>
 
     <div class="page">
+        <div class="accounts-card">
+            <div class="report-head">
+                <h4>আল-আকসা ইসলামী একাডেমী</h4>
+                <h5>বেতন কার্ড</h5>
+                <div class="meta">রোলঃ {{ current_user.school_id }}{% if student_class %} · {{ student_class }}{% endif %}</div>
+            </div>
 
-        <input type="hidden" id="studentID" value="{{current_user.school_id}}">
-        <input type="hidden" id="branchSelect" class="form-select" value="{{current_user.branch.name}}" required>
-        <input type="hidden" id="classSelect" class="form-select" value="{{student_class}}" required>
-
-
-        <!-- ACCOUNTS TABLE -->
-        <div id="accountsCard" class="accounts-card">
-            <div class="table-responsive">
-                <div id="student-info" class="text-center"></div>
-                <table class="table accounts-table align-middle">
-
-                    <thead>
-                    <tr>
-                        <th><b>মাসের নাম</b></th>
-                        <th><b>প্রদানকৃত টাকা</b></th>
-
-                    </tr>
-                    </thead>
-                    <tbody id="accountsBody">
-                    </tbody>
-                </table>
+            <div id="reportBody">
+                <div class="empty-state">Loading...</div>
             </div>
         </div>
     </div>
-
-
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    const STUDENT_CLASS = {{ student_class | tojson }}
+    const MONTHS = [
+        ["january", "জানুয়ারী"], ["february", "ফেব্রুয়ারী"], ["march", "মার্চ"], ["april", "এপ্রিল"],
+        ["may", "মে"], ["june", "জুন"], ["july", "জুলাই"], ["august", "আগস্ট"],
+        ["september", "সেপ্টেম্বর"], ["october", "অক্টোবর"], ["november", "নভেম্বর"], ["december", "ডিসেম্বর"],
+    ]
+    const reportBody = document.getElementById("reportBody")
 
-    async function get_account_info() {
+    function element(tag, text, className) {
+        const el = document.createElement(tag)
+        if (text !== undefined) el.textContent = text
+        if (className) el.className = className
+        return el
+    }
 
-        const branchName = document.getElementById("branchSelect").value;
-        const className = document.getElementById("classSelect").value;
-        const studentID = document.getElementById("studentID").value;
+    function formatValue(value) {
+        if (value === null || value === undefined || value === "") return "-"
+        return typeof value === "number" ? String(Math.round(value * 100) / 100) + " ৳" : value
+    }
+
+    function showMessage(text) {
+        reportBody.innerHTML = ""
+        reportBody.appendChild(element("div", text, "empty-state"))
+    }
+
+    function summaryTile(value, label, className) {
+        const tile = element("div", undefined, "summary-tile")
+        tile.appendChild(element("div", value, "value " + (className || "")))
+        tile.appendChild(element("div", label, "label"))
+        return tile
+    }
+
+    function render(row) {
+        reportBody.innerHTML = ""
+
+        let paid = 0
+        const table = element("table", undefined, "table table-bordered accounts-table")
+        table.innerHTML = '<thead><tr><th>মাসের নাম</th><th class="col-amount">প্রদানকৃত টাকা</th></tr></thead>'
+        const tbody = element("tbody")
+
+        MONTHS.forEach(([key, label]) => {
+            const value = row[key]
+            if (typeof value === "number") paid += value
+
+            const tr = element("tr")
+            tr.appendChild(element("td", label))
+            tr.appendChild(element("td", formatValue(value), "col-amount" + (value ? " text-paid" : "")))
+            tbody.appendChild(tr)
+        })
+
+        const due = typeof row.due === "number" ? row.due : 0
+        const dueRow = element("tr")
+        dueRow.appendChild(element("td", "বকেয়া", "text-due"))
+        dueRow.appendChild(element("td", formatValue(row.due), "col-amount" + (due > 0 ? " text-due" : "")))
+        tbody.appendChild(dueRow)
+        table.appendChild(tbody)
+
+        const summary = element("div", undefined, "summary")
+        summary.appendChild(summaryTile(formatValue(paid || 0), "মোট প্রদান", "text-paid"))
+        summary.appendChild(summaryTile(formatValue(due), "বকেয়া", due > 0 ? "text-due" : ""))
+
+        const wrap = element("div", undefined, "table-responsive")
+        wrap.appendChild(table)
+        reportBody.appendChild(summary)
+        reportBody.appendChild(wrap)
+    }
+
+    async function loadAccount() {
+        if (!STUDENT_CLASS) {
+            showMessage("আপনার শ্রেণী নির্ধারণ করা যায়নি। অনুগ্রহ করে অফিসে যোগাযোগ করুন।")
+            return
+        }
 
         try {
-
+            // The server uses the logged-in student's own branch, class and ID
             const response = await fetch("/api/search-accounts", {
                 method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify({
-                    branch: branchName,
-                    class: className,
-                    student_id: studentID,
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to fetch account data");
-            }
-
-            const result = await response.json();
-
-            const tbody = document.getElementById("accountsBody");
-
-            tbody.innerHTML = "";
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({})
+            })
+            const result = await response.json().catch(() => ({}))
+            if (!response.ok || !result.success) throw new Error(result.error || "Request failed: " + response.status)
 
             if (result.data.length === 0) {
-
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="2" class="text-center text-danger">
-                            No account records found
-                        </td>
-                    </tr>
-                `;
-
-                return;
+                showMessage("কোন হিসাবের তথ্য পাওয়া যায়নি")
+            } else {
+                render(result.data[0])
             }
-
-            result.data.forEach(row => {
-                document.getElementById("student-info").innerHTML = `
-                <h4>আল-আকসা ইসলামী একাডেমী</h4>
-                <h5>বেতন কার্ড</h5>
-<!--                <h6>নামঃ ${row.student_name}</h6>-->
-                <h6>রোলঃ ${row.ID}</h6>`
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td>জানুয়ারী:</td>
-                        <td>${row.january ?? ""}</td>
-                    </tr>
-
-                    <tr>
-                        <td>ফেব্রুয়ারী:</td>
-                        <td>${row.february ?? ""}</td>
-                    </tr>
-
-                    <tr>
-                        <td>মার্চ:</td>
-                        <td>${row.march ?? ""}</td>
-                    </tr>
-
-                    <tr>
-                        <td>এপ্রিল:</td>
-                        <td>${row.april ?? ""}</td>
-                    </tr>
-
-                    <tr>
-                        <td>মে:</td>
-                        <td>${row.may ?? ""}</td>
-                    </tr>
-
-                    <tr>
-                        <td>জুন:</td>
-                        <td>${row.june ?? ""}</td>
-                    </tr>
-
-                    <tr>
-                        <td>জুলাই:</td>
-                        <td>${row.july ?? ""}</td>
-                    </tr>
-
-                    <tr>
-                        <td>আগস্ট:</td>
-                        <td>${row.august ?? ""}</td>
-                    </tr>
-
-                    <tr>
-                        <td>সেপ্টেম্বর:</td>
-                        <td>${row.september ?? ""}</td>
-                    </tr>
-
-                    <tr>
-                        <td>অক্টোবর:</td>
-                        <td>${row.october ?? ""}</td>
-                    </tr>
-
-                    <tr>
-                        <td>নভেম্বর:</td>
-                        <td>${row.november ?? ""}</td>
-                    </tr>
-
-                    <tr>
-                        <td>ডিসেম্বর:</td>
-                        <td>${row.december ?? ""}</td>
-                    </tr>
-                     <tr>
-                        <td style="color:red;"><b>বকেয়া:</b></td>
-                        <td style="color:red;">${row.due ?? ""}</td>
-                    </tr>
-                `;
-            });
-
         } catch (error) {
-
-            console.error(error);
-
-            document.getElementById("accountsBody").innerHTML = `
-                <tr>
-                    <td colspan="2" class="text-center text-danger">
-                        Error loading account information
-                    </td>
-                </tr>
-            `;
+            console.error(error)
+            showMessage("হিসাবের তথ্য লোড করা যায়নি: " + error.message)
         }
     }
 
-    // Load automatically when page opens
-    window.onload = get_account_info;
-
+    loadAccount()
 </script>
-
-
 </body>
 </html>

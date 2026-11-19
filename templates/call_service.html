@@ -10,186 +10,175 @@
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Baloo+Da+2:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        body{
-        background:#f4f6fb;
-        font-family:Inter,sans-serif;
-        margin:0;
+        body {
+            background: #f4f6fb;
+            font-family: Inter, sans-serif;
+            margin: 0;
         }
 
         /* HEADER */
-         .header{
-        position:fixed;
-        top:0;
-        left:0;
-        right:0;
-        padding:16px 14px;
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        background:white;
-        z-index:1000;
-        box-shadow:0 2px 10px rgba(0,0,0,0.05);
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 16px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
-        .title{
-        font-weight:600;
-        font-size:18px;
-        }
-
-        .add-btn{
-        border-radius:10px;
+        .title {
+            font-weight: 600;
+            font-size: 18px;
         }
 
         /* PAGE */
-        .page{
-        margin-top:70px;
-        padding:14px;
-        max-width:1100px;
-        margin-left:auto;
-        margin-right:auto;
+        .page {
+            margin-top: 70px;
+            padding: 14px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         /* CARD */
-        .filter-card,
-        .tutorial-card{
-        background:white;
-        padding:16px;
-        border-radius:16px;
-        box-shadow:0 4px 15px rgba(0,0,0,.05);
-        margin-bottom:16px;
+        .contact-card {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, .05);
+            margin-bottom: 16px;
         }
 
-        /* TABLE */
-        .table-responsive{
-        overflow-x:auto;
+        .section-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 4px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eef0f5;
         }
 
-        .tutorial-table {
-        min-width: 1200px;   /* 🔥 force horizontal scroll */
-        table-layout: auto;  /* allow natural width */
+        .form-label {
+            font-size: 14px;
+            margin-bottom: 4px;
         }
 
-        .tutorial-table th,
-        .tutorial-table td {
-        white-space: nowrap; /* 🔥 prevent wrapping */
+        /* CONTACT ROW */
+        .contact-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #eef0f5;
         }
 
-        .tutorial-table th{
-        font-size:14px;
-        color:#666;
-        font-weight:600;
+        .contact-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
         }
 
-        .tutorial-table td{
-        vertical-align:middle;
+        .contact-avatar {
+            width: 42px;
+            height: 42px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            background: linear-gradient(135deg, #818cf8, #4338ca);
         }
 
-        .edit-btn{
-        border-radius:8px;
+        .contact-info {
+            flex: 1;
+            min-width: 0;
         }
 
-        /* DROP AREA */
-        .drop-area{
-        border:2px dashed #cbd5e1;
-        border-radius:12px;
-        padding:30px;
-        text-align:center;
-        cursor:pointer;
-        background:#f9fafc;
+        .contact-name {
+            font-weight: 600;
+            font-size: 15px;
+            overflow-wrap: anywhere;
+        }
+
+        .contact-phone {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .contact-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        /* Big enough to tap comfortably on a phone */
+        .action-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 24px 0;
         }
 
         /* MOBILE IMPROVEMENTS */
-        @media (max-width:768px){
-        .header{
-        padding:12px;
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px;
+            }
+
+            .title {
+                font-size: 16px;
+            }
         }
 
-        .title{
-        font-size:16px;
+        @media (max-width: 420px) {
+            .contact-row {
+                flex-wrap: wrap;
+            }
+
+            .contact-actions {
+                width: 100%;
+                padding-left: 54px;
+            }
         }
-
-        }
-        /* NOTICE IMAGE */
-.notice-wrapper{
-display:flex;
-justify-content:center;
-align-items:center;
-width:100%;
-margin-bottom:20px;
-}
-
-.notice-img{
-max-width:100%;
-width:900px;
-height:auto;
-border-radius:14px;
-box-shadow:0 4px 12px rgba(0,0,0,0.08);
-object-fit:contain;
-}
-
-/* MOBILE */
-@media (max-width:768px){
-
-.notice-img{
-width:100%;
-border-radius:10px;
-}
-
-}
-        .btn.rounded-circle {
-    width: 22px;
-    height: 22px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn.rounded-circle i {
-    font-size: 0.7rem;
-}
     </style>
+    <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
 </head>
 
-<body>
+<body class="kids t-indigo">
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;">
-
     {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-
     {% for category, message in messages %}
-
-    <div class="toast align-items-center text-bg-{{ category }} border-0 show mb-2"
-         role="alert">
-
+    <div class="toast align-items-center text-bg-{{ category }} border-0 show mb-2" role="alert">
         <div class="d-flex">
-
-            <div class="toast-body">
-                {{ message }}
-            </div>
-
-            <button type="button"
-                    class="btn-close btn-close-white me-2 m-auto"
-                    data-bs-dismiss="toast">
-            </button>
-
+            <div class="toast-body">{{ message }}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
         </div>
-
     </div>
-
     {% endfor %}
-
-    {% endif %}
     {% endwith %}
-
 </div>
 
 <div class="container p-0">
     <!-- HEADER -->
     <div class="header">
-
         <div class="d-flex align-items-center gap-2">
 
             {% if current_user.role == "Admin" %}
@@ -220,185 +209,180 @@ border-radius:10px;
             <div class="title">
                 Call Service
             </div>
-
         </div>
 
-        {% if current_user.role not in ("Student", "Teacher") %}
-        <button class="btn btn-success add-btn"
-                data-bs-toggle="modal"
-                data-bs-target="#uploadModal">
-
-            <i class="bi bi-plus-lg"></i>
-
+        {% if can_manage %}
+        <button type="button" class="btn btn-success" id="addBtn" aria-label="নতুন নাম্বার">
+            <i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline ms-1">নতুন নাম্বার</span>
         </button>
         {% endif %}
-
     </div>
 
     <div class="page">
-        <div class="tutorial-card">
-            <div class="table-responsive">
-                <table class="table accounts-table align-middle">
-
-                    <tbody id="accountsBody">
-                    {% for phone_number in phone_numbers %}
-                    <tr>
-                        <td>{{ phone_number.name }}</td>
-                        <td>:</td>
-                        <td>{{ phone_number.phone_number }}</td>
-
-                        <!-- Call -->
-                        <td>
-                            <a href="tel:{{phone_number.phone_number}}"
-                               class="btn btn-dark btn-sm rounded-circle"
-                               title="Call">
-                                <i class="bi bi-telephone-fill"></i>
-                            </a>
-                        </td>
-
-                        <!-- SMS -->
-                        <td>
-                            <a href="sms:{{phone_number.phone_number}}"
-                               class="btn btn-primary btn-sm rounded-circle"
-                               title="Message">
-                                <i class="bi bi-chat-dots-fill"></i>
-                            </a>
-                        </td>
-
-                        <!-- WhatsApp -->
-                        <td>
-                            <a href="https://wa.me/88{{phone_number.phone_number}}"
-                               target="_blank"
-                               class="btn btn-success btn-sm rounded-circle"
-                               title="WhatsApp">
-                                <i class="bi bi-whatsapp"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+        {% for branch_name, numbers in grouped.items() %}
+        <div class="contact-card">
+            <div class="section-title">
+                <i class="bi bi-geo-alt"></i> {{ branch_name }}
+                <span class="badge text-bg-light border">{{ numbers | length }}</span>
             </div>
-        </div>
 
-        <!-- UPLOAD MODAL -->
-        <div class="modal fade" id="uploadModal">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            Upload Phone Number
-                        </h5>
-                        <button class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
+            {% for phone in numbers %}
+            <div class="contact-row">
+                <div class="contact-avatar"><i class="bi bi-person-fill"></i></div>
 
-                    <div class="modal-body">
-                        <form method="POST" action="{{ url_for('upload_phone_number') }}" enctype="multipart/form-data">
+                <div class="contact-info">
+                    <div class="contact-name">{{ phone.name }}</div>
+                    <div class="contact-phone">{{ phone.phone_number }}</div>
+                </div>
 
-                            {% if current_user.role in ("Service Admin",) %}
-                            <input type="hidden" name="branch_name" value="{{current_user.branch.name}}">
-                            {% else %}
-                            <div class="mb-3">
-                                <label class="form-label">Branch</label>
-                                <select name="branch_name" class="form-select">
-                                    <option>Netrakona</option>
-                                    <option>Purbadhala</option>
-                                    <option>Kalmakanda</option>
-                                </select>
-                            </div>
-                            {% endif %}
+                <div class="contact-actions">
+                    <a href="tel:{{ phone.phone_number }}" class="btn btn-dark action-btn"
+                       title="Call" aria-label="Call {{ phone.name }}">
+                        <i class="bi bi-telephone-fill"></i>
+                    </a>
+                    <a href="sms:{{ phone.phone_number }}" class="btn btn-primary action-btn"
+                       title="Message" aria-label="Message {{ phone.name }}">
+                        <i class="bi bi-chat-dots-fill"></i>
+                    </a>
+                    <a href="https://wa.me/{{ phone.phone_number | whatsapp_number }}" target="_blank"
+                       rel="noopener" class="btn btn-success action-btn"
+                       title="WhatsApp" aria-label="WhatsApp {{ phone.name }}">
+                        <i class="bi bi-whatsapp"></i>
+                    </a>
 
-                            <div class="mb-3">
-                                <label class="form-label">Name</label>
-                                <input name="name" class="form-control">
-                            </div>
-
-
-                            <div class="mb-3">
-                                <label class="form-label">Phone Number</label>
-                                <input name="phone_number" class="form-control">
-                            </div>
-
-
-                            <button class="btn btn-success w-100">
-                                Upload
-                            </button>
-                        </form>
-                    </div>
+                    {% if can_manage %}
+                    <button type="button" class="btn btn-light border action-btn edit-btn" title="Edit"
+                            aria-label="Edit {{ phone.name }}"
+                            data-id="{{ phone.id }}" data-name="{{ phone.name }}"
+                            data-phone="{{ phone.phone_number }}" data-branch="{{ phone.branch_name }}">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button type="button" class="btn btn-light border text-danger action-btn delete-btn"
+                            title="Delete" aria-label="Delete {{ phone.name }}"
+                            data-id="{{ phone.id }}" data-name="{{ phone.name }}">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                    {% endif %}
                 </div>
             </div>
+            {% endfor %}
         </div>
-
+        {% else %}
+        <div class="contact-card">
+            <div class="empty-state">
+                <i class="bi bi-telephone-x fs-3 d-block mb-2"></i>
+                কোন ফোন নাম্বার যোগ করা হয়নি
+            </div>
+        </div>
+        {% endfor %}
     </div>
 </div>
+
+{% if can_manage %}
+<!-- ADD / EDIT MODAL -->
+<div class="modal fade" id="phoneModal" tabindex="-1" aria-labelledby="phoneModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="phoneModalTitle">নতুন ফোন নাম্বার</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <form method="POST" id="phoneForm" action="{{ url_for('upload_phone_number') }}">
+
+                    {% if current_user.role == "Admin" %}
+                    <div class="mb-3">
+                        <label class="form-label" for="phoneBranch">ব্রাঞ্চ</label>
+                        <select id="phoneBranch" name="branch_name" class="form-select" required>
+                            <option value="">Select Branch</option>
+                            {% for branch in get_branches() %}
+                            <option value="{{ branch.name }}">{{ branch.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label" for="phoneName">নাম / পদবি</label>
+                        <input id="phoneName" name="name" class="form-control" placeholder="যেমন: অফিস, প্রধান শিক্ষক"
+                               required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="phoneNumber">ফোন নাম্বার</label>
+                        <input id="phoneNumber" name="phone_number" type="tel" inputmode="tel"
+                               placeholder="01XXXXXXXXX" class="form-control" required>
+                    </div>
+
+                    <button type="submit" id="phoneSubmit" class="btn btn-success w-100">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+{% if can_manage %}
 <script>
-    document.getElementById("searchBtn").addEventListener("click", async function(){
-    const className = document.getElementById("classSelect").value
+    const modalEl = document.getElementById("phoneModal")
+    const form = document.getElementById("phoneForm")
+    const branchSelect = document.getElementById("phoneBranch")  // only exists for Admins
+    const ADD_URL = {{ url_for('upload_phone_number') | tojson }}
+    const UPDATE_URL = {{ url_for('update_phone_number', phone_id=0) | tojson }}.replace(/0$/, "")
 
-    if(className === "Select Class"){
-    alert("Please select class!")
-    return
-}
-
-    const response = await fetch("/api/search-video-links",{
-
-    method:"POST",
-    headers:{
-    "Content-Type":"application/json"
-    },
-
-    body:JSON.stringify({
-    class:className,
-    })
-    })
-
-    const result = await response.json()
-
-    const tbody = document.getElementById("tutorialBody")
-    const card = document.getElementById("tutorialCard")
-
-    tbody.innerHTML = ""
-
-    if(result.data.length === 0){
-    tbody.innerHTML = `
-    <tr>
-        <td colspan="3" class="text-center text-muted">
-        No tutorial link found!
-        </td>
-    </tr>`
+    function openModal(title, action, values) {
+        document.getElementById("phoneModalTitle").textContent = title
+        form.action = action
+        document.getElementById("phoneName").value = values.name || ""
+        document.getElementById("phoneNumber").value = values.phone || ""
+        if (branchSelect) branchSelect.value = values.branch || ""
+        bootstrap.Modal.getOrCreateInstance(modalEl).show()
     }
 
-    if(result.data.length > 0){
-        card.classList.remove("d-none")
-    }else{
-        card.classList.add("d-none")
-    }
-
-
-    result.data.forEach(row=>{
-    tbody.innerHTML += `
-    <tr>
-        <td>${row.id}</td>
-        <td>${row.link}</td>
-    </tr>
-    `
-
-    })
-    attachEditEvents()
+    document.getElementById("addBtn").addEventListener("click", () => {
+        openModal("নতুন ফোন নাম্বার", ADD_URL, {})
     })
 
-
-    function attachEditEvents(){
-    document.querySelectorAll(".editBtn").forEach(btn=>{
-    btn.addEventListener("click",function(){
-    document.getElementById("edit_id").value=this.dataset.id
-    document.getElementById("edit_topic").value=this.dataset.topic
+    document.querySelectorAll(".edit-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const d = btn.dataset
+            openModal("ফোন নাম্বার সম্পাদনা", UPDATE_URL + d.id, {name: d.name, phone: d.phone, branch: d.branch})
+        })
     })
+
+    modalEl.addEventListener("shown.bs.modal", () => document.getElementById("phoneName").focus())
+
+    // Light check before sending; the server validates again
+    form.addEventListener("submit", event => {
+        const phone = document.getElementById("phoneNumber").value
+            .replace(/[০-৯]/g, d => "০১২৩৪৫৬৭৮৯".indexOf(d)).replace(/[^\d]/g, "")
+        if (phone.length < 6 || phone.length > 15) {
+            event.preventDefault()
+            alert("সঠিক ফোন নাম্বার লিখুন!")
+            return
+        }
+        document.getElementById("phoneSubmit").disabled = true
     })
-    }
 
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            if (!confirm(`"${btn.dataset.name}" নাম্বারটি মুছে ফেলতে চান?`)) return
 
+            try {
+                const res = await fetch({{ url_for('delete_phone_number', phone_id=0) | tojson }}.replace(/0$/, btn.dataset.id),
+                    {method: "DELETE"})
+                const data = await res.json().catch(() => ({}))
+                if (!res.ok || !data.success) throw new Error(data.error || "Request failed: " + res.status)
+                window.location.reload()
+            } catch (error) {
+                console.error(error)
+                alert("মুছে ফেলা যায়নি: " + error.message)
+            }
+        })
+    })
 </script>
+{% endif %}
 </body>
 </html>

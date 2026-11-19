@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+    <title>ব্যয়</title>
+
+    <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Baloo+Da+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background: #f4f6fb;
+            font-family: Inter, sans-serif;
+            margin: 0;
+        }
+
+        /* HEADER */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 16px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .title {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        /* PAGE */
+        .page {
+            margin-top: 70px;
+            padding: 14px;
+            max-width: 1100px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* CARD */
+        .accounts-card {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, .05);
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eef0f5;
+        }
+
+        .sub-title {
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        /* EXPENSE ITEMS TABLE */
+        .items-table {
+            margin-bottom: 0;
+            font-size: 14px;
+        }
+
+        .items-table th {
+            background: #f8f9fc;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .items-table td,
+        .items-table th {
+            vertical-align: middle;
+        }
+
+        .items-table .col-serial {
+            width: 70px;
+            text-align: center;
+        }
+
+        .items-table .col-amount {
+            width: 160px;
+        }
+
+        .items-table .col-action {
+            width: 48px;
+            text-align: center;
+        }
+
+        .items-table tfoot td {
+            background: #f8f9fc;
+            font-weight: 600;
+        }
+
+        /* MOBILE IMPROVEMENTS */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px;
+            }
+
+            .title {
+                font-size: 16px;
+            }
+
+            .items-table .col-serial {
+                width: 44px;
+            }
+
+            .items-table .col-amount {
+                width: 100px;
+            }
+        }
+    </style>
+    <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+</head>
+
+<body class="kids t-green">
+<div class="container p-0">
+    <!-- HEADER -->
+    <div class="header">
+        <div class="d-flex align-items-center gap-2">
+
+            {% if current_user.role == "Admin" %}
+            <a href="{{ url_for('admin_dashboard') }}"
+               class="btn btn-light border rounded-3">
+                <i class="bi bi-house-door-fill"></i>
+            </a>
+
+            {% elif current_user.role == "Service Admin" %}
+            <a href="{{ url_for('service_admin_dashboard') }}"
+               class="btn btn-light border rounded-3">
+                <i class="bi bi-house-door-fill"></i>
+            </a>
+
+            {% elif current_user.role == "Teacher" %}
+            <a href="{{ url_for('teacher_dashboard') }}"
+               class="btn btn-light border rounded-3">
+                <i class="bi bi-house-door-fill"></i>
+            </a>
+
+            {% elif current_user.role == "Student" %}
+            <a href="{{ url_for('student_dashboard') }}"
+               class="btn btn-light border rounded-3">
+                <i class="bi bi-house-door-fill"></i>
+            </a>
+            {% endif %}
+            <div class="title">
+                অভ্যন্তরীণ হিসাব - ব্যয়
+            </div>
+        </div>
+    </div>
+
+    <div class="page">
+
+        <!-- MISC EXPENSE -->
+        <div class="accounts-card">
+            <div class="section-title">বিবিধ ব্যয়</div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-12 col-md-6">
+                    <label class="form-label" for="branchFilter">ব্রাঞ্চ</label>
+                    <select id="branchFilter" name="branch" class="form-select">
+                        <option value="">Select Branch</option>
+                        {% for branch in get_branches() %}
+                        <option value="{{ branch.name }}">{{ branch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label" for="voucherNo">ভাউচার নম্বর</label>
+                    <input type="text" id="voucherNo" name="voucher_no" class="form-control">
+                </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-12">
+                    <div class="sub-title">ব্যয়ের ধরন</div>
+                </div>
+
+                <div class="col-6 col-md-3 d-flex align-items-center">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="typeDaily" name="expense_types"
+                               value="daily_expense">
+                        <label class="form-check-label" for="typeDaily">দৈনিক খরচ</label>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3 d-flex align-items-center">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="typeRentBills" name="expense_types"
+                               value="all_rent_and_bills">
+                        <label class="form-check-label" for="typeRentBills">সকল ভাড়া এবং বিল</label>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <input type="text" id="typeOther" name="other_expense_type" class="form-control"
+                           placeholder="অন্যান্য" aria-label="অন্যান্য">
+                </div>
+            </div>
+
+            <div class="row g-2">
+                <div class="col-12">
+                    <div class="sub-title">ব্যয়ের বিবরণ</div>
+                </div>
+
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table class="table table-bordered items-table">
+                            <thead>
+                            <tr>
+                                <th class="col-serial">ক্রমিক নং</th>
+                                <th>ব্যয়ের বিবরণ</th>
+                                <th class="col-amount">টাকা</th>
+                                <th class="col-action"><span class="visually-hidden">Remove</span></th>
+                            </tr>
+                            </thead>
+                            <tbody id="itemsBody"></tbody>
+                            <tfoot>
+                            <tr>
+                                <td colspan="2" class="text-end">মোট</td>
+                                <td>
+                                    <input type="text" id="expenseTotal" name="expense_total"
+                                           class="form-control" readonly aria-label="মোট">
+                                </td>
+                                <td></td>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <button type="button" id="addRowBtn" class="btn btn-outline-success btn-sm">
+                        <i class="bi bi-plus-lg"></i> নতুন সারি
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STAFF SALARY -->
+        <div class="accounts-card">
+            <div class="section-title">স্টাফ বেতন</div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-12">
+                    <label class="form-label" for="staffBranch">ব্রাঞ্চ</label>
+                    <select id="staffBranch" name="staff_branch" class="form-select">
+                        <option value="">Select Branch</option>
+                        {% for branch in get_branches() %}
+                        <option value="{{ branch.name }}">{{ branch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-12">
+                    <div class="sub-title">বেতন বিবরণ</div>
+                </div>
+
+                <div class="col-6 col-md-3 d-flex align-items-center">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="salaryStaff" name="salary_types"
+                               value="staff_salary">
+                        <label class="form-check-label" for="salaryStaff">স্টাফ বেতন</label>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-9">
+                    <input type="text" id="salaryOther" name="salary_other" class="form-control"
+                           placeholder="অন্যান্য বেতন" aria-label="অন্যান্য বেতন">
+                </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-12 col-md-4">
+                    <label class="form-label" for="staffName">স্টাফের নাম</label>
+                    <input type="text" id="staffName" name="staff_name" class="form-control">
+                </div>
+
+                <div class="col-6 col-md-4">
+                    <label class="form-label" for="staffId">স্টাফ আইডি</label>
+                    <input type="text" id="staffId" name="staff_id" class="form-control">
+                </div>
+
+                <div class="col-6 col-md-4">
+                    <label class="form-label" for="staffMonthSelect">মাস</label>
+                    <select id="staffMonthSelect" name="month" class="form-select">
+                        <option value="">মাস নির্বাচন</option>
+                        <option value="1">জানুয়ারী</option>
+                        <option value="2">ফেব্রুয়ারী</option>
+                        <option value="3">মার্চ</option>
+                        <option value="4">এপ্রিল</option>
+                        <option value="5">মে</option>
+                        <option value="6">জুন</option>
+                        <option value="7">জুলাই</option>
+                        <option value="8">আগস্ট</option>
+                        <option value="9">সেপ্টেম্বর</option>
+                        <option value="10">অক্টোবর</option>
+                        <option value="11">নভেম্বর</option>
+                        <option value="12">ডিসেম্বর</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-12">
+                    <div class="sub-title">বেতন বিবরণ</div>
+                </div>
+
+                {% for key, label in [
+                ("january", "জানুয়ারী"), ("february", "ফেব্রুয়ারী"), ("march", "মার্চ"),
+                ("april", "এপ্রিল"), ("may", "মে"), ("june", "জুন"),
+                ("july", "জুলাই"), ("august", "আগস্ট"), ("september", "সেপ্টেম্বর"),
+                ("october", "অক্টোবর"), ("november", "নভেম্বর"), ("december", "ডিসেম্বর")
+                ] %}
+                <div class="col-4 col-md-2">
+                    <label class="form-label" for="staffMonth_{{ key }}">{{ label }}</label>
+                    <input type="text" id="staffMonth_{{ key }}" name="staff_{{ key }}" class="form-control">
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="row g-2">
+                <div class="col-6 col-md">
+                    <label class="form-label" for="staffSubtotal">মোট</label>
+                    <input type="text" id="staffSubtotal" name="staff_subtotal" class="form-control">
+                </div>
+
+                <div class="col-6 col-md">
+                    <label class="form-label" for="staffPreviousDue">পূর্বের বকেয়া</label>
+                    <input type="text" id="staffPreviousDue" name="staff_previous_due" class="form-control">
+                </div>
+
+                <div class="col-6 col-md">
+                    <label class="form-label" for="staffTotal">মোট টাকা</label>
+                    <input type="text" id="staffTotal" name="staff_total" class="form-control">
+                </div>
+
+                <div class="col-6 col-md">
+                    <label class="form-label" for="staffPaid">পরিশোধিত টাকা</label>
+                    <input type="text" id="staffPaid" name="staff_paid" class="form-control">
+                </div>
+
+                <div class="col-12 col-md">
+                    <label class="form-label" for="staffDue">বকেয়া</label>
+                    <input type="text" id="staffDue" name="staff_due" class="form-control">
+                </div>
+            </div>
+        </div>
+
+        <button type="button" id="saveBtn" class="btn btn-success w-100 mb-3">Save</button>
+    </div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const itemsBody = document.getElementById("itemsBody")
+    const STARTING_ROWS = 3
+
+    // Accepts English or Bengali digits; anything that is not a number counts as 0
+    function parseAmount(text) {
+        const normalized = text.trim().replace(/[০-৯]/g, digit => "০১২৩৪৫৬৭৮৯".indexOf(digit))
+        const number = Number(normalized)
+        return Number.isFinite(number) ? number : 0
+    }
+
+    // TOTAL: sum of every amount in the expense rows
+    function updateTotal() {
+        const total = [...itemsBody.querySelectorAll(".item-amount")]
+            .reduce((sum, input) => sum + parseAmount(input.value), 0)
+        document.getElementById("expenseTotal").value = total === 0 ? "" : Math.round(total * 100) / 100
+    }
+
+    // Keep serial numbers 1, 2, 3... after rows are added or removed
+    function renumberRows() {
+        const rows = itemsBody.querySelectorAll("tr")
+        rows.forEach((row, index) => {
+            row.querySelector(".item-serial").textContent = index + 1
+            // There must always be at least one row
+            row.querySelector(".remove-row").disabled = rows.length === 1
+        })
+    }
+
+    function addRow() {
+        const row = document.createElement("tr")
+        row.innerHTML = `
+            <td class="col-serial item-serial"></td>
+            <td><input type="text" class="form-control item-description" aria-label="ব্যয়ের বিবরণ"></td>
+            <td class="col-amount"><input type="text" class="form-control item-amount" inputmode="decimal" aria-label="টাকা"></td>
+            <td class="col-action">
+                <button type="button" class="btn btn-sm btn-outline-danger remove-row" aria-label="Remove row">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </td>`
+
+        row.querySelector(".item-amount").addEventListener("input", updateTotal)
+        row.querySelector(".remove-row").addEventListener("click", () => {
+            row.remove()
+            renumberRows()
+            updateTotal()
+        })
+
+        itemsBody.appendChild(row)
+        renumberRows()
+        return row
+    }
+
+    document.getElementById("addRowBtn").addEventListener("click", () => {
+        addRow().querySelector(".item-description").focus()
+    })
+
+    for (let i = 0; i < STARTING_ROWS; i++) addRow()
+    updateTotal()
+
+    // STAFF SALARY
+    // Pre-select the current month (option values are 1-12)
+    document.getElementById("staffMonthSelect").value = String(new Date().getMonth() + 1)
+
+    // মোট = অন্যান্য বেতন typed above; it stays editable so the staff salary amount can be added
+    function updateStaffSubtotal() {
+        const other = parseAmount(document.getElementById("salaryOther").value)
+        document.getElementById("staffSubtotal").value = other === 0 ? "" : other
+        updateStaffTotal()
+    }
+
+    // মোট টাকা = মোট + পূর্বের বকেয়া
+    function updateStaffTotal() {
+        const subtotal = parseAmount(document.getElementById("staffSubtotal").value)
+        const previousDue = parseAmount(document.getElementById("staffPreviousDue").value)
+        const total = subtotal + previousDue
+
+        document.getElementById("staffTotal").value = total === 0 ? "" : total
+        updateStaffDue()
+    }
+
+    // বকেয়া = মোট টাকা - পরিশোধিত টাকা
+    // One signed number: positive = still due, negative = paid in advance, 0 = settled.
+    function updateStaffDue() {
+        const dueInput = document.getElementById("staffDue")
+        const paidText = document.getElementById("staffPaid").value.trim()
+
+        // Nothing paid yet, so there is nothing to work out
+        if (paidText === "") {
+            dueInput.value = ""
+            return
+        }
+
+        const total = parseAmount(document.getElementById("staffTotal").value)
+        dueInput.value = Math.round((total - parseAmount(paidText)) * 100) / 100
+    }
+
+    document.getElementById("salaryOther").addEventListener("input", updateStaffSubtotal)
+    document.getElementById("staffSubtotal").addEventListener("input", updateStaffTotal)
+    document.getElementById("staffPreviousDue").addEventListener("input", updateStaffTotal)
+    document.getElementById("staffTotal").addEventListener("input", updateStaffDue)
+    document.getElementById("staffPaid").addEventListener("input", updateStaffDue)
+</script>
+
+</body>
+</html>

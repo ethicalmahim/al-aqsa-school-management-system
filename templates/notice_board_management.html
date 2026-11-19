@@ -10,7 +10,7 @@
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Baloo+Da+2:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         body {
@@ -140,10 +140,70 @@
             }
 
         }
+        /* NOTICE CARDS */
+        .notice-card {
+            background: white;
+            padding: 14px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, .05);
+            margin-bottom: 16px;
+        }
+
+        .notice-card .notice-wrapper {
+            margin-bottom: 10px;
+        }
+
+        .notice-card .notice-img {
+            box-shadow: none;
+            border: 1px solid #eef0f5;
+            cursor: zoom-in;
+        }
+
+        .notice-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #888;
+        }
+
+        .notice-badge {
+            background: #ecfdf5;
+            color: #047857;
+            font-weight: 600;
+            border-radius: 999px;
+            padding: 2px 10px;
+            font-size: 12px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 30px 0;
+        }
+
+        .empty-state i {
+            font-size: 40px;
+            display: block;
+            margin-bottom: 6px;
+            color: #cbd5e1;
+        }
+
+        .form-label {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .viewer-img {
+            width: 100%;
+            height: auto;
+        }
     </style>
+    <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
 </head>
 
-<body>
+<body class="kids t-orange">
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;">
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -213,13 +273,10 @@
 
         </div>
 
-        {% if current_user.role not in ("Student", "Teacher") %}
-        <button class="btn btn-success add-btn"
-                data-bs-toggle="modal"
-                data-bs-target="#uploadModal">
-
-            <i class="bi bi-plus-lg"></i>
-
+        {% if can_manage %}
+        <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#uploadModal"
+                aria-label="Upload notice">
+            <i class="bi bi-upload"></i><span class="d-none d-sm-inline ms-1">Upload</span>
         </button>
         {% endif %}
 
@@ -227,153 +284,166 @@
 
     <div class="page">
 
-        {% for src in srcs %}
-        <div class="notice-wrapper">
-            <img src="{{src}}" class="notice-img" alt="Notice Image">
-        </div>
-        {% if current_user.role in ("Admin", "Service Admin")%}
-        <div class="text-center">
-            <button type="button" onclick="deleteNotice('{{src}}')" class="btn btn-danger " aria-label="Delete">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>
+        {% if current_user.role == "Admin" %}
+        <!-- BRANCH (Admins can view every branch's board) -->
+        <form class="filter-card" method="GET" action="{{ url_for('notice_board_management') }}">
+            <label class="form-label" for="branchSelect">শাখা</label>
+            <select id="branchSelect" name="branch" class="form-select" onchange="this.form.submit()">
+                {% for name in branches %}
+                <option value="{{ name }}" {% if name == branch %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+            </select>
+        </form>
         {% endif %}
-        <hr/>
+
+        {% for notice in notices %}
+        <div class="notice-card">
+            <div class="notice-wrapper">
+                <img src="{{ notice.url }}" class="notice-img" alt="Notice {{ notice.date }}" loading="lazy"
+                     data-view="{{ notice.url }}">
+            </div>
+            <div class="notice-meta">
+                <span>
+                    {% if loop.first %}<span class="notice-badge me-1">নতুন</span>{% endif %}
+                    <i class="bi bi-calendar3 me-1"></i>{{ notice.date }}
+                </span>
+                {% if can_manage %}
+                <button type="button" class="btn btn-outline-danger btn-sm delete-btn" data-src="{{ notice.url }}"
+                        aria-label="Delete notice">
+                    <i class="bi bi-trash"></i> Delete
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="notice-card">
+            <div class="empty-state">
+                <i class="bi bi-megaphone"></i>
+                {% if branch %}{{ branch }} শাখায় এখনো কোন নোটিশ নেই।{% else %}কোন শাখা পাওয়া যায়নি।{% endif %}
+            </div>
+        </div>
         {% endfor %}
+    </div>
 
-        <!-- UPLOAD MODAL -->
-        <div class="modal fade" id="uploadModal">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            Upload Notice
-                        </h5>
-                        <button class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-
-                    <div class="modal-body">
-                        <form method="POST" action="{{ url_for('upload_notice') }}" enctype="multipart/form-data">
-
-                            {% if current_user.role in ("Service Admin",) %}
-                            <input type="hidden" name="branch_name" value="{{current_user.branch.name}}">
-                            {% else %}
-                            <div class="mb-3">
-                                <label class="form-label">Branch</label>
-                                <select name="branch_name" class="form-select">
-                                    {% for branch in get_branches():%}
-                                    <option>{{ branch.name}}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            {% endif %}
-
-                            <div class="mb-3">
-                                <label class="form-label">Notice Image</label>
-                                <input type="file" accept=".png,.jpeg,.jpg,.pdf" name="img" class="form-control">
-                            </div>
-
-
-                            <button class="btn btn-success w-100">
-                                Upload
-                            </button>
-                        </form>
-                    </div>
+    <!-- FULL-SIZE VIEWER -->
+    <div class="modal fade" id="viewerModal" tabindex="-1" aria-label="Notice" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title">Notice</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-2">
+                    <img id="viewerImg" class="viewer-img" alt="Notice">
                 </div>
             </div>
         </div>
-
     </div>
+
+    {% if can_manage %}
+    <!-- UPLOAD MODAL -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadTitle">Upload Notice</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form method="POST" action="{{ url_for('upload_notice') }}" enctype="multipart/form-data"
+                          id="uploadForm">
+                        {% if current_user.role == "Admin" %}
+                        <div class="mb-3">
+                            <label class="form-label" for="uploadBranch">শাখা</label>
+                            <select id="uploadBranch" name="branch_name" class="form-select" required>
+                                {% for name in branches %}
+                                <option value="{{ name }}" {% if name == branch %}selected{% endif %}>{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% else %}
+                        <div class="mb-3">
+                            <label class="form-label">শাখা</label>
+                            <input type="text" class="form-control" value="{{ branch }}" disabled>
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label class="form-label" for="noticeFile">নোটিশের ছবি</label>
+                            <input type="file" id="noticeFile" name="img" class="form-control" required
+                                   accept=".png,.jpg,.jpeg,.gif,.webp,.bmp,image/*">
+                            <div class="form-text">PNG, JPG, GIF, WEBP বা BMP · সর্বোচ্চ {{ max_mb }} MB</div>
+                        </div>
+
+                        <img id="preview" class="viewer-img rounded border mb-3 d-none" alt="Preview">
+
+                        <button type="submit" id="uploadBtn" class="btn btn-success w-100">Upload</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    document.getElementById("searchBtn").addEventListener("click", async function () {
-        const className = document.getElementById("classSelect").value
+    // Tap a notice to see it full size
+    const viewer = document.getElementById("viewerModal")
+    document.querySelectorAll("[data-view]").forEach(img => img.addEventListener("click", () => {
+        document.getElementById("viewerImg").src = img.dataset.view
+        bootstrap.Modal.getOrCreateInstance(viewer).show()
+    }))
 
-        if (className === "Select Class") {
-            alert("Please select class!")
+    {% if can_manage %}
+    const MAX_BYTES = {{ max_mb }} * 1024 * 1024
+    const fileInput = document.getElementById("noticeFile")
+    const preview = document.getElementById("preview")
+
+    fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0]
+        preview.classList.add("d-none")
+        if (!file) return
+        if (!file.type.startsWith("image/")) {
+            alert("শুধু ছবি আপলোড করা যাবে।")
+            fileInput.value = ""
             return
         }
-
-        const response = await fetch("/api/search-video-links", {
-
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                class: className,
-            })
-        })
-
-        const result = await response.json()
-
-        const tbody = document.getElementById("tutorialBody")
-        const card = document.getElementById("tutorialCard")
-
-        tbody.innerHTML = ""
-
-        if (result.data.length === 0) {
-            tbody.innerHTML = `
-    <tr>
-        <td colspan="3" class="text-center text-muted">
-        No tutorial link found!
-        </td>
-    </tr>`
+        if (file.size > MAX_BYTES) {
+            alert("ছবিটি অনেক বড়। সর্বোচ্চ {{ max_mb }} MB।")
+            fileInput.value = ""
+            return
         }
-
-        if (result.data.length > 0) {
-            card.classList.remove("d-none")
-        } else {
-            card.classList.add("d-none")
-        }
-
-
-        result.data.forEach(row => {
-            tbody.innerHTML += `
-    <tr>
-        <td>${row.id}</td>
-        <td>${row.link}</td>
-    </tr>
-    `
-
-        })
-        attachEditEvents()
+        preview.src = URL.createObjectURL(file)
+        preview.classList.remove("d-none")
     })
 
+    document.getElementById("uploadForm").addEventListener("submit", () => {
+        const btn = document.getElementById("uploadBtn")
+        btn.disabled = true
+        btn.textContent = "Uploading..."
+    })
 
-    function attachEditEvents() {
-        document.querySelectorAll(".editBtn").forEach(btn => {
-            btn.addEventListener("click", function () {
-                document.getElementById("edit_id").value = this.dataset.id
-                document.getElementById("edit_topic").value = this.dataset.topic
+    document.querySelectorAll(".delete-btn").forEach(btn => btn.addEventListener("click", async () => {
+        if (!confirm("এই নোটিশটি মুছে ফেলবেন?")) return
+        btn.disabled = true
+        try {
+            const response = await fetch("{{ url_for('delete_notice') }}", {
+                method: "DELETE",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({notice_path: btn.dataset.src})
             })
-        })
-    }
-
-    async function deleteNotice(src) {
-
-        const response = await fetch("/api/delete_notice", {
-            method: "DELETE",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                notice_path: src
-            })
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-            location.reload();
-        } else {
-            alert(result.message || "Failed to delete.");
+            const result = await response.json().catch(() => ({}))
+            if (!response.ok || !result.success) throw new Error(result.error || "Failed to delete.")
+            btn.closest(".notice-card").remove()
+            if (!document.querySelector(".delete-btn")) location.reload()
+        } catch (error) {
+            alert(error.message)
+            btn.disabled = false
         }
-    }
-
-
+    }))
+    {% endif %}
 </script>
 </body>
 </html>

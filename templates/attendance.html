@@ -8,10 +8,10 @@
 
     <title>Attendance Management</title>
 
-    <link href="{{url_for('static', filename='/img/al-aqsa-icon.jpg')}}" rel="icon">
+    <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Baloo+Da+2:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         body {
@@ -63,6 +63,24 @@
             margin-bottom: 16px;
         }
 
+        .section-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eef0f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
         /* TABLE */
         .table-responsive {
             overflow-x: auto;
@@ -70,38 +88,64 @@
         }
 
         .attendance-table {
-            min-width: 700px; /* or more depending on columns */
+            margin-bottom: 0;
         }
 
-        .attendance-table th,
-        .attendance-table td {
-            word-wrap: break-word;
-            white-space: normal;
-        }
-
-        .attendance-table th {
-            font-size: 14px;
+        .attendance-table thead th {
+            background: #f8f9fc;
+            font-size: 13px;
             color: #666;
             font-weight: 600;
+            text-align: center;
+            white-space: nowrap;
         }
 
         .attendance-table td {
-            font-size: 11px;
             vertical-align: middle;
+            font-size: 13px;
         }
 
-        .edit-btn {
-            border-radius: 8px;
-        }
-
-        /* DROP AREA */
-        .drop-area {
-            border: 2px dashed #cbd5e1;
-            border-radius: 12px;
-            padding: 30px;
+        .attendance-table td.day {
             text-align: center;
-            cursor: pointer;
-            background: #f9fafc;
+            min-width: 28px;
+            padding: 4px 2px;
+        }
+
+        .attendance-table .col-name {
+            min-width: 180px;
+        }
+
+        .attendance-table .col-sum {
+            text-align: center;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .mark-present {
+            color: #059669;
+            font-weight: 700;
+        }
+
+        .mark-absent {
+            color: #dc2626;
+            font-weight: 700;
+        }
+
+        .mark-note {
+            color: #94a3b8;
+            cursor: help;
+        }
+
+        .legend {
+            font-size: 13px;
+            color: #555;
+            margin-top: 12px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 24px 0;
         }
 
         /* MOBILE IMPROVEMENTS */
@@ -113,48 +157,43 @@
             .title {
                 font-size: 16px;
             }
-
         }
 
+        /* WIDE SCREENS: table cards use the full screen width, so wide tables
+           (all months / all days / all subjects) are shown without side-scrolling */
+        @media (min-width: 1200px) {
+            .page {
+                max-width: none;
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+        }
+        /* Bootstrap's table cell colour would otherwise override the marks */
+        .attendance-table td.mark-present { color: #059669; }
+        .attendance-table td.mark-absent { color: #dc2626; }
+        .attendance-table td.mark-note { color: #94a3b8; }
     </style>
+    <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
 </head>
 
-<body>
+<body class="kids t-blue">
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;">
-
     {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-
     {% for category, message in messages %}
-
-    <div class="toast align-items-center text-bg-{{ category }} border-0 show mb-2"
-         role="alert">
-
+    <div class="toast align-items-center text-bg-{{ category }} border-0 show mb-2" role="alert">
         <div class="d-flex">
-
-            <div class="toast-body">
-                {{ message }}
-            </div>
-
-            <button type="button"
-                    class="btn-close btn-close-white me-2 m-auto"
-                    data-bs-dismiss="toast">
-            </button>
-
+            <div class="toast-body">{{ message }}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
         </div>
-
     </div>
-
     {% endfor %}
-
-    {% endif %}
     {% endwith %}
-
 </div>
-<div class="container p-0">
+
+<div class="container-fluid p-0">
     <!-- HEADER -->
     <div class="header">
-
         <div class="d-flex align-items-center gap-2">
 
             {% if current_user.role == "Admin" %}
@@ -174,315 +213,311 @@
                class="btn btn-light border rounded-3">
                 <i class="bi bi-house-door-fill"></i>
             </a>
-
-            {% elif current_user.role == "Student" %}
-            <a href="{{ url_for('student_dashboard') }}"
-               class="btn btn-light border rounded-3">
-                <i class="bi bi-house-door-fill"></i>
-            </a>
             {% endif %}
 
             <div class="title">
                 Attendance Management
             </div>
-
         </div>
 
-        {% if current_user.role not in ("Student", "Teacher") %}
-        <button class="btn btn-success add-btn"
-                data-bs-toggle="modal"
-                data-bs-target="#uploadModal">
-
-            <i class="bi bi-plus-lg"></i>
-
+        {% if current_user.role in ("Admin", "Service Admin") %}
+        <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#uploadModal"
+                aria-label="Upload attendance">
+            <i class="bi bi-upload"></i><span class="d-none d-sm-inline ms-1">Upload</span>
         </button>
         {% endif %}
-
     </div>
 
     <div class="page">
         <!-- FILTERS -->
         <div class="filter-card">
-            <div class="row g-2">
-                {% if current_user.role in ("Service Admin", "Teacher") %}
-                <input type="hidden" id="branchSelect" value="{{current_user.branch.name}}">
-                {% else %}
-                <div class="col-md">
-                    <select id="branchSelect" class="form-select" required>
-                        <option>Select Branch</option>
-                        {% for branch in get_branches():%}
-                        <option>{{ branch.name}}</option>
+            <div class="row g-2 align-items-end">
+                {% if current_user.role == "Admin" %}
+                <div class="col-12 col-md">
+                    <label class="form-label" for="branchSelect">ব্রাঞ্চ</label>
+                    <select id="branchSelect" class="form-select">
+                        <option value="">Select Branch</option>
+                        {% for branch in get_branches() %}
+                        <option value="{{ branch.name }}">{{ branch.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
+                {% else %}
+                <input type="hidden" id="branchSelect" value="{{ current_user.branch.name }}">
                 {% endif %}
 
-                <div class="col-md">
-                    <select id="classSelect" class="form-select" required>
-                        <option>Select Class</option>
-                        <option>Play</option>
-                        <option>Nursery</option>
-                        <option>One</option>
-                        <option>Two</option>
-                        <option>Three</option>
-                        <option>Four</option>
-                        <option>Five</option>
+                <div class="col-12 col-md">
+                    <label class="form-label" for="classSelect">শ্রেণী</label>
+                    <select id="classSelect" class="form-select">
+                        <option value="">Select Class</option>
+                        {% for class_name in classes %}
+                        <option value="{{ class_name }}">{{ class_name }}</option>
+                        {% endfor %}
                     </select>
                 </div>
 
-                <div class="col-md">
-                    <select id="monthSelect" class="form-select" required>
-                        <option>Select Month</option>
-                        <option>January {{ year }}</option>
-                        <option>February {{ year }}</option>
-                        <option>March {{ year }}</option>
-                        <option>April {{ year }}</option>
-                        <option>May {{ year }}</option>
-                        <option>June {{ year }}</option>
-                        <option>July {{ year }}</option>
-                        <option>August {{ year }}</option>
-                        <option>September {{ year }}</option>
-                        <option>October {{ year }}</option>
-                        <option>November {{ year }}</option>
-                        <option>December {{ year }}</option>
+                <div class="col-7 col-md">
+                    <label class="form-label" for="monthSelect">মাস</label>
+                    <select id="monthSelect" class="form-select">
+                        {% for month in months %}
+                        <option value="{{ month }}" {% if month == current_month %}selected{% endif %}>{{ month }}</option>
+                        {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <button id="searchBtn" class="btn btn-success w-100">
-                        Search
-                    </button>
+
+                <div class="col-5 col-md-2">
+                    <label class="form-label" for="yearSelect">বছর</label>
+                    <select id="yearSelect" class="form-select">
+                        {% for year in years %}
+                        <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-2">
+                    <button type="button" id="searchBtn" class="btn btn-success w-100">Search</button>
                 </div>
             </div>
         </div>
 
         <!-- ATTENDANCE TABLE -->
         <div id="attendanceCard" class="attendance-card d-none">
+            <div class="section-title">
+                <span id="sheetTitle"></span>
+                <span class="small fw-normal text-muted">
+                    <span class="mark-present">✔</span> উপস্থিত &nbsp;
+                    <span class="mark-absent">✗</span> অনুপস্থিত &nbsp;
+                    <span class="mark-note">•</span> ছুটি / অন্যান্য
+                </span>
+            </div>
+
             <div class="table-responsive">
-                <table class="table attendance-table align-middle">
+                <table class="table table-bordered table-hover attendance-table">
                     <thead>
                     <tr>
                         <th>ID</th>
-                        <th style="min-width:180px;">Student Name</th>
-                        {% for i in range(31) %}
-                        <th>{{ i+1 }}</th>
+                        <th class="col-name">Student Name</th>
+                        {% for i in range(1, 32) %}
+                        <th>{{ i }}</th>
                         {% endfor %}
-
+                        <th title="উপস্থিত">উপ.</th>
+                        <th title="অনুপস্থিত">অনু.</th>
+                        <th>%</th>
                     </tr>
                     </thead>
                     <tbody id="attendanceBody"></tbody>
                 </table>
             </div>
+
+            <ul id="dayNotes" class="legend list-unstyled mb-0"></ul>
+        </div>
+
+        <div id="emptyCard" class="attendance-card d-none">
+            <div class="empty-state" id="emptyText"></div>
         </div>
     </div>
 
+    {% if current_user.role in ("Admin", "Service Admin") %}
     <!-- UPLOAD MODAL -->
-    <div class="modal fade" id="uploadModal">
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">
-                        Upload Attendance Info
-                    </h5>
-                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="uploadTitle">Upload Attendance Info</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
                 <div class="modal-body">
-                    <form method="POST" action="{{ url_for('upload_attendance') }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ url_for('upload_attendance') }}" enctype="multipart/form-data"
+                          id="uploadForm">
 
-                        {% if current_user.role in ("Service Admin", "Teacher") %}
-                        <input type="hidden" name="branch_name" value="{{current_user.branch.name}}">
-                        {% else %}
+                        {% if current_user.role == "Admin" %}
                         <div class="mb-3">
-                            <label class="form-label">Branch</label>
-                            <select name="branch_name" class="form-select">
-                                {% for branch in get_branches():%}
-                                <option>{{ branch.name}}</option>
+                            <label class="form-label" for="uploadBranch">ব্রাঞ্চ</label>
+                            <select id="uploadBranch" name="branch_name" class="form-select" required>
+                                <option value="">Select Branch</option>
+                                {% for branch in get_branches() %}
+                                <option value="{{ branch.name }}">{{ branch.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         {% endif %}
 
                         <div class="mb-3">
-                            <label class="form-label">Class</label>
-                            <select name="class_name" class="form-select">
-                                <option>Play</option>
-                                <option>Nursery</option>
-                                <option>One</option>
-                                <option>Two</option>
-                                <option>Three</option>
-                                <option>Four</option>
-                                <option>Five</option>
+                            <label class="form-label" for="uploadClass">শ্রেণী</label>
+                            <select id="uploadClass" name="class_name" class="form-select" required>
+                                <option value="">Select Class</option>
+                                {% for class_name in classes %}
+                                <option value="{{ class_name }}">{{ class_name }}</option>
+                                {% endfor %}
                             </select>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Month</label>
-                            <select name="month_name" class="form-select">
-                                <option>January {{ year }}</option>
-                                <option>February {{ year }}</option>
-                                <option>March {{ year }}</option>
-                                <option>April {{ year }}</option>
-                                <option>May {{ year }}</option>
-                                <option>June {{ year }}</option>
-                                <option>July {{ year }}</option>
-                                <option>August {{ year }}</option>
-                                <option>September {{ year }}</option>
-                                <option>October {{ year }}</option>
-                                <option>November {{ year }}</option>
-                                <option>December {{ year }}</option>
-                            </select>
+                        <div class="row g-2 mb-3">
+                            <div class="col-7">
+                                <label class="form-label" for="uploadMonth">মাস</label>
+                                <select id="uploadMonth" class="form-select">
+                                    {% for month in months %}
+                                    <option value="{{ month }}" {% if month == current_month %}selected{% endif %}>{{ month }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-5">
+                                <label class="form-label" for="uploadYear">বছর</label>
+                                <select id="uploadYear" class="form-select">
+                                    {% for year in years %}
+                                    <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
                         </div>
+                        <input type="hidden" name="month_name" id="uploadMonthName">
 
                         <div class="mb-3">
-                            <label class="form-label">Upload Excel (Must contain 'ID', 'Student Name' & Dates
-                                Column)</label>
-                            <input type="file" name="excel_file" accept=".xlsx,.xls" class="form-control" required>
+                            <label class="form-label" for="excelFile">Excel ফাইল (.xlsx)</label>
+                            <input type="file" id="excelFile" name="excel_file" accept=".xlsx" class="form-control"
+                                   required>
+                            <div class="form-text">
+                                'ID' ও 'Student Name' কলাম এবং 1 থেকে 31 তারিখের কলাম থাকতে হবে।
+                                একই মাসের আগের আপলোড প্রতিস্থাপিত হবে।
+                            </div>
                         </div>
 
-                        <button class="btn btn-success w-100">
-                            Submit
-                        </button>
+                        <button type="submit" id="uploadBtn" class="btn btn-success w-100">Submit</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- EDIT MODAL -->
-    <div class="modal fade" id="editModal">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        Edit Lesson Schedule
-                    </h5>
-                    <button class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="updateForm">
-                        <input type="hidden" name="id" id="edit_id">
-                        <div class="mb-3">
-                            <label class="form-label">Topic</label>
-                            <input type="text" name="topic" id="edit_topic" class="form-control">
-                        </div>
-                        <button class="btn btn-success w-100">
-                            Update
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+    {% endif %}
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    document.getElementById("searchBtn").addEventListener("click", async function () {
-        const branchName = document.getElementById("branchSelect").value
-        const className = document.getElementById("classSelect").value
-        const monthName = document.getElementById("monthSelect").value
+    const searchBtn = document.getElementById("searchBtn")
+    const tbody = document.getElementById("attendanceBody")
+    const card = document.getElementById("attendanceCard")
+    const emptyCard = document.getElementById("emptyCard")
 
-        if (className === "Select Class" || branchName === "Select Branch" || monthName === "Select Month") {
-            alert("Please select branch, class and month")
+    function selectedMonth(monthId, yearId) {
+        return document.getElementById(monthId).value + " " + document.getElementById(yearId).value
+    }
+
+    function cell(text, className) {
+        const td = document.createElement("td")
+        td.textContent = text ?? ""
+        if (className) td.className = className
+        return td
+    }
+
+    function showEmpty(text) {
+        card.classList.add("d-none")
+        emptyCard.classList.remove("d-none")
+        document.getElementById("emptyText").textContent = text
+    }
+
+    // "1" = present, "0" = absent, any other text = holiday / exam note
+    function dayCell(value) {
+        const td = cell("", "day")
+        if (value === "1") {
+            td.textContent = "✔"
+            td.classList.add("mark-present")
+        } else if (value === "0") {
+            td.textContent = "✗"
+            td.classList.add("mark-absent")
+        } else if (value) {
+            td.textContent = "•"
+            td.classList.add("mark-note")
+            td.title = value
+        }
+        return td
+    }
+
+    function render(rows, month, className) {
+        if (rows.length === 0) {
+            showEmpty(`${className} শ্রেণীর ${month} মাসের উপস্থিতির তথ্য পাওয়া যায়নি !`)
             return
         }
 
-        const response = await fetch("/api/search-attendance", {
-
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                branch: branchName,
-                class: className,
-                month: monthName,
-            })
-        })
-
-        const result = await response.json()
-
-        const tbody = document.getElementById("attendanceBody")
-        const card = document.getElementById("attendanceCard")
+        emptyCard.classList.add("d-none")
+        card.classList.remove("d-none")
+        document.getElementById("sheetTitle").textContent = `${className} · ${month} · ${rows.length} জন`
 
         tbody.innerHTML = ""
+        const notes = {}  // day -> note (holidays are the same for the whole class)
 
-        if (result.data.length === 0) {
-            tbody.innerHTML = `
-    <tr>
-        <td colspan="3" class="text-center text-muted">
-        No attendance history  found!
-        </td>
-    </tr>`
-        }
+        rows.forEach(row => {
+            const tr = document.createElement("tr")
+            tr.appendChild(cell(row.ID, "text-nowrap"))
+            tr.appendChild(cell(row.student_name, "col-name"))
 
-        if (result.data.length > 0) {
-            card.classList.remove("d-none")
-        } else {
-            card.classList.add("d-none")
-        }
-
-
-        result.data.forEach(row => {
-
-            let attendanceColumns = ""
-
+            let present = 0, absent = 0
             for (let i = 1; i <= 31; i++) {
-
-                const day = `d${i}`
-
-                attendanceColumns += `
-        <td>${row[day] ?? ""}</td>
-        `
+                const value = row["d" + i]
+                if (value === "1") present++
+                else if (value === "0") absent++
+                else if (value && !notes[i]) notes[i] = value.trim()
+                tr.appendChild(dayCell(value))
             }
 
-            tbody.innerHTML += `
-    <tr>
-        <td>${row.ID}</td>
-        <td>${row.student_name}</td>
-
-        ${attendanceColumns}
-
-    </tr>
-    `
+            const total = present + absent
+            tr.appendChild(cell(present, "col-sum mark-present"))
+            tr.appendChild(cell(absent, "col-sum mark-absent"))
+            tr.appendChild(cell(total ? Math.round(present / total * 100) + "%" : "-", "col-sum"))
+            tbody.appendChild(tr)
         })
-        attachEditEvents()
-    })
 
-
-    function attachEditEvents() {
-        document.querySelectorAll(".editBtn").forEach(btn => {
-            btn.addEventListener("click", function () {
-                document.getElementById("edit_id").value = this.dataset.id
-                document.getElementById("edit_topic").value = this.dataset.topic
-            })
+        // Holiday / exam notes listed once under the table
+        const list = document.getElementById("dayNotes")
+        list.innerHTML = ""
+        Object.keys(notes).forEach(day => {
+            const li = document.createElement("li")
+            li.textContent = `${day} তারিখ: ${notes[day]}`
+            list.appendChild(li)
         })
     }
 
+    async function search() {
+        const branch = document.getElementById("branchSelect").value
+        const className = document.getElementById("classSelect").value
+        const month = selectedMonth("monthSelect", "yearSelect")
 
-    document.getElementById("uploadForm").addEventListener("submit", async function (e) {
-        e.preventDefault()
-
-        const data = {
-            branch: document.getElementById("edit_id").value,
-            class: document.getElementById("edit_topic").value,
-            month: document.getElementById("").value,
-            excel_file: document.getElementById(""),
-
+        if (!branch || !className) {
+            alert("Please select branch and class")
+            return
         }
 
-        await fetch("/api/upload-attendance", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(data)
+        searchBtn.disabled = true
+        searchBtn.textContent = "Searching..."
+        try {
+            const response = await fetch("/api/search-attendance", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({branch, class: className, month})
+            })
+            const result = await response.json().catch(() => ({}))
+            if (!response.ok || !result.success) throw new Error(result.error || "Request failed: " + response.status)
+            render(result.data, month, className)
+        } catch (error) {
+            console.error(error)
+            showEmpty("উপস্থিতির তথ্য লোড করা যায়নি: " + error.message)
+        } finally {
+            searchBtn.disabled = false
+            searchBtn.textContent = "Search"
+        }
+    }
+
+    searchBtn.addEventListener("click", search)
+
+    const uploadForm = document.getElementById("uploadForm")
+    if (uploadForm) {
+        uploadForm.addEventListener("submit", () => {
+            document.getElementById("uploadMonthName").value = selectedMonth("uploadMonth", "uploadYear")
+            const btn = document.getElementById("uploadBtn")
+            btn.disabled = true
+            btn.textContent = "Uploading..."
         })
-
-        bootstrap.Modal.getInstance(document.getElementById("editModal")).hide()
-        document.getElementById("searchBtn").click()
-    })
-
+    }
 </script>
 </body>
 </html>

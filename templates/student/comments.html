@@ -9,7 +9,7 @@
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Baloo+Da+2:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         body {
@@ -38,15 +38,11 @@
             font-size: 18px;
         }
 
-        .add-btn {
-            border-radius: 10px;
-        }
-
         /* PAGE */
         .page {
             margin-top: 70px;
             padding: 14px;
-            max-width: 1100px;
+            max-width: 800px;
             margin-left: auto;
             margin-right: auto;
         }
@@ -61,44 +57,62 @@
             margin-bottom: 16px;
         }
 
-        /* TABLE */
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        .comment-table {
-            width: 100%;
-            table-layout: fixed;
-        }
-
-        .comment-table th,
-        .comment-table td {
-            word-wrap: break-word;
-            white-space: normal;
-        }
-
-        .comment-table th {
-            font-size: 14px;
-            color: #666;
+        .section-title {
             font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eef0f5;
         }
 
-        .comment-table td {
-            vertical-align: middle;
-        }
-
-        .edit-btn {
-            border-radius: 8px;
-        }
-
-        /* DROP AREA */
-        .drop-area {
-            border: 2px dashed #cbd5e1;
+        /* COMMENT HISTORY */
+        .comment-item {
+            border: 1px solid #eef0f5;
             border-radius: 12px;
-            padding: 30px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .comment-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .comment-text,
+        .reply-text {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            font-size: 14px;
+        }
+
+        .reply-box {
+            background: #ecfdf5;
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .reply-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #059669;
+            margin-bottom: 2px;
+        }
+
+        .meta {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .no-reply {
+            font-size: 13px;
+            color: #b45309;
+            margin-top: 8px;
+        }
+
+        .empty-state {
             text-align: center;
-            cursor: pointer;
-            background: #f9fafc;
+            color: #888;
+            padding: 24px 0;
         }
 
         /* MOBILE IMPROVEMENTS */
@@ -112,47 +126,27 @@
             }
         }
     </style>
+    <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
 </head>
-<body>
+<body class="kids t-cyan">
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;">
-
     {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-
     {% for category, message in messages %}
-
-    <div class="toast align-items-center text-bg-{{ category }} border-0 show mb-2"
-         role="alert">
-
+    <div class="toast align-items-center text-bg-{{ category }} border-0 show mb-2" role="alert">
         <div class="d-flex">
-
-            <div class="toast-body">
-                {{ message }}
-            </div>
-
-            <button type="button"
-                    class="btn-close btn-close-white me-2 m-auto"
-                    data-bs-dismiss="toast">
-            </button>
-
+            <div class="toast-body">{{ message }}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
         </div>
-
     </div>
-
     {% endfor %}
-
-    {% endif %}
     {% endwith %}
-
 </div>
 
 <div class="container p-0">
     <!-- HEADER -->
     <div class="header">
-
         <div class="d-flex align-items-center gap-2">
-
-
             <a href="{{ url_for('student_dashboard') }}"
                class="btn btn-light border rounded-3">
                 <i class="bi bi-house-door-fill"></i>
@@ -161,57 +155,75 @@
             <div class="title">
                 Comment
             </div>
-
         </div>
     </div>
 
     <div class="page">
-        <!-- FILTERS -->
+        <!-- NEW COMMENT -->
         <div class="filter-card">
-            <div class="row g-2">
-                <form method="POST" action="{{url_for('upload_comment')}}" enctype="multipart/form-data">
-                    <div class="col-md-8">
-                        <textarea name="comment" style="width:100%;height:150px;" placeholder="আপনার মন্তব্য লিখুন..."
-                                  required></textarea>
-                    </div>
-                    <input type="hidden" name="username" value="{{current_user.username}}">
-                    <div class="col-md-4">
-                        <button type="submit" id="submitBtn" class="btn btn-success w-100">
-                            Submit
-                        </button>
-                    </div>
-                </form>
-            </div>
+            <div class="section-title">নতুন মন্তব্য</div>
+
+            <form method="POST" action="{{ url_for('upload_comment') }}" id="commentForm">
+                <label class="visually-hidden" for="commentInput">মন্তব্য</label>
+                <textarea id="commentInput" name="comment" rows="5" maxlength="{{ max_length }}"
+                          class="form-control" placeholder="আপনার মন্তব্য লিখুন..." required></textarea>
+
+                <div class="d-flex justify-content-end meta mt-1">
+                    <span id="charCount">0</span>/{{ max_length }}
+                </div>
+
+                <button type="submit" id="submitBtn" class="btn btn-success w-100 mt-2">Submit</button>
+            </form>
         </div>
 
-        <!-- COMMENT TABLE -->
-        <div id="commentCard" class="commentCard">
-            <div class="table-responsive">
-                <table class="table comment-table align-middle">
-                    <thead class="text-center">
-                    <tr>
-                        <th>পূর্ববর্তী মন্তব্য</th>
-                        <th>মন্তব্যের উত্তর</th>
-                    </tr>
-                    </thead>
-                    <tbody id="commentBody">
-                    {% for comment in comments[::-1] %}
-                    <tr>
-                        <td>{{ comment.comment }}</td>
-                        <td>{{ comment.reply.reply_txt }}</td>
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+        <!-- COMMENT HISTORY -->
+        <div class="commentCard">
+            <div class="section-title">
+                পূর্ববর্তী মন্তব্য <span class="badge text-bg-light border">{{ comments | length }}</span>
             </div>
+
+            {% for comment in comments %}
+            <div class="comment-item">
+                <div class="meta mb-1"><i class="bi bi-clock"></i> {{ format_time(comment.comment_time) }}</div>
+                <div class="comment-text">{{ comment.comment }}</div>
+
+                {% if comment.reply %}
+                <div class="reply-box">
+                    <div class="reply-label"><i class="bi bi-reply-fill"></i> উত্তর</div>
+                    <div class="reply-text">{{ comment.reply.reply_txt }}</div>
+                    <div class="meta mt-1">{{ format_time(comment.reply.reply_time) }}</div>
+                </div>
+                {% else %}
+                <div class="no-reply"><i class="bi bi-hourglass-split"></i> এখনো উত্তর দেওয়া হয়নি</div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="empty-state">আপনি এখনো কোন মন্তব্য করেননি</div>
+            {% endfor %}
         </div>
     </div>
-
-
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    const commentInput = document.getElementById("commentInput")
+    const charCount = document.getElementById("charCount")
 
+    commentInput.addEventListener("input", () => {
+        charCount.textContent = commentInput.value.length
+    })
+
+    // Block empty (spaces-only) comments and double submits
+    document.getElementById("commentForm").addEventListener("submit", event => {
+        if (!commentInput.value.trim()) {
+            event.preventDefault()
+            alert("অনুগ্রহ করে মন্তব্য লিখুন!")
+            return
+        }
+        const btn = document.getElementById("submitBtn")
+        btn.disabled = true
+        btn.textContent = "Submitting..."
+    })
 </script>
 </body>
 </html>

@@ -10,13 +10,21 @@
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Baloo+Da+2:wght@500;600;700;800&display=swap"
+          rel="stylesheet">
 
     <style>
         body {
-            background: #f4f6fb;
-            font-family: Inter, sans-serif;
+            background: #fff8ec;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(251, 191, 36, .18) 0 60px, transparent 61px),
+                radial-gradient(circle at 90% 35%, rgba(96, 165, 250, .16) 0 80px, transparent 81px),
+                radial-gradient(circle at 15% 75%, rgba(244, 114, 182, .14) 0 70px, transparent 71px),
+                radial-gradient(circle at 85% 90%, rgba(52, 211, 153, .16) 0 90px, transparent 91px);
+            background-attachment: fixed;
+            font-family: "Baloo Da 2", Inter, sans-serif;
             margin: 0;
+            color: #334155;
         }
 
         /* HEADER */
@@ -35,87 +43,245 @@
         }
 
         .title {
+            font-family: Inter, sans-serif;
             font-weight: 600;
             font-size: 18px;
-        }
-
-        .add-btn {
-            border-radius: 10px;
         }
 
         /* PAGE */
         .page {
             margin-top: 70px;
             padding: 14px;
-            max-width: 1100px;
+            max-width: 900px;
             margin-left: auto;
             margin-right: auto;
         }
 
-        /* CARD */
-        .filter-card,
-        .accounts-card {
-            background: white;
-            padding: 16px;
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, .05);
-            margin-bottom: 16px;
-        }
-
-        /* TABLE */
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        .accounts-table {
-            min-width: 300px; /* 🔥 force horizontal scroll */
-            table-layout: auto; /* allow natural width */
-        }
-
-        .accounts-table th,
-        .accounts-table td {
-            white-space: nowrap; /* 🔥 prevent wrapping */
-        }
-
-        .accounts-table th {
-            font-size: 14px;
-            color: #666;
-            font-weight: 600;
-        }
-
-        .accounts-table td {
-            vertical-align: middle;
-        }
-
-        .edit-btn {
-            border-radius: 8px;
-        }
-
-        /* DROP AREA */
-        .drop-area {
-            border: 2px dashed #cbd5e1;
-            border-radius: 12px;
-            padding: 30px;
+        /* HERO */
+        .hero {
+            position: relative;
+            overflow: hidden;
             text-align: center;
-            cursor: pointer;
-            background: #f9fafc;
+            color: white;
+            padding: 34px 18px 30px;
+            border-radius: 26px;
+            margin-bottom: 18px;
+            background: linear-gradient(135deg, #34d399 0%, #22d3ee 45%, #818cf8 100%);
+            box-shadow: 0 10px 25px rgba(34, 211, 238, .3);
+        }
+
+        .hero h3 {
+            font-weight: 800;
+            font-size: 30px;
+            margin-bottom: 4px;
+            text-shadow: 0 2px 0 rgba(0, 0, 0, .12);
+        }
+
+        .hero p {
+            font-size: 19px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .hero-badge {
+            width: 74px;
+            height: 74px;
+            margin: 0 auto 12px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: #10b981;
+            box-shadow: 0 6px 0 rgba(0, 0, 0, .1);
+            animation: bounce 2.4s ease-in-out infinite;
+        }
+
+        .deco {
+            position: absolute;
+            color: rgba(255, 255, 255, .55);
+            animation: twinkle 3s ease-in-out infinite;
+        }
+
+        .deco.d1 { top: 14px; left: 18px; font-size: 22px; }
+        .deco.d2 { top: 26px; right: 26px; font-size: 28px; animation-delay: .8s; }
+        .deco.d3 { bottom: 16px; left: 34px; font-size: 18px; animation-delay: 1.4s; }
+        .deco.d4 { bottom: 22px; right: 18px; font-size: 20px; animation-delay: 2s; }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: .35; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* FUN CARDS */
+        .fun-card {
+            --c1: #60a5fa;
+            --c2: #2563eb;
+            --soft: #eff6ff;
+            background: white;
+            border-radius: 22px;
+            padding: 18px;
+            margin-bottom: 16px;
+            border: 3px solid var(--soft);
+            border-top: 6px solid var(--c1);
+            box-shadow: 0 6px 0 var(--soft), 0 10px 20px rgba(0, 0, 0, .05);
+            text-align: justify;
+            font-size: 17px;
+            line-height: 1.7;
+        }
+
+        .fun-card h4,
+        .fun-card h5 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            color: var(--c2);
+            text-align: left;
+        }
+
+        .fun-card h4 { font-size: 22px; margin-bottom: 12px; }
+        .fun-card h5 { font-size: 19px; margin-bottom: 6px; }
+
+        .icon-bubble {
+            flex-shrink: 0;
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            background: linear-gradient(135deg, var(--c1), var(--c2));
+            transform: rotate(-6deg);
+        }
+
+        .fun-card h5 .icon-bubble {
+            width: 34px;
+            height: 34px;
+            border-radius: 11px;
+            font-size: 16px;
+        }
+
+        .fun-card ul {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+
+        .fun-card li {
+            position: relative;
+            padding-left: 28px;
+            margin-bottom: 6px;
+        }
+
+        .fun-card li::before {
+            content: "\F586"; /* bi-star-fill */
+            font-family: bootstrap-icons;
+            position: absolute;
+            left: 0;
+            top: 1px;
+            color: var(--c1);
+            font-size: 15px;
+        }
+
+        .fun-card strong { color: var(--c2); }
+
+        /* COLOR THEMES */
+        .t-green  { --c1: #34d399; --c2: #059669; --soft: #ecfdf5; }
+        .t-orange { --c1: #fb923c; --c2: #ea580c; --soft: #fff7ed; }
+        .t-pink   { --c1: #f472b6; --c2: #db2777; --soft: #fdf2f8; }
+        .t-purple { --c1: #a78bfa; --c2: #7c3aed; --soft: #f5f3ff; }
+        .t-blue   { --c1: #60a5fa; --c2: #2563eb; --soft: #eff6ff; }
+        .t-yellow { --c1: #fbbf24; --c2: #d97706; --soft: #fffbeb; }
+        .t-cyan   { --c1: #22d3ee; --c2: #0891b2; --soft: #ecfeff; }
+        .t-red    { --c1: #fb7185; --c2: #e11d48; --soft: #fff1f2; }
+
+        /* FOUNDER */
+        .founder-name {
+            display: inline-block;
+            background: var(--soft);
+            border: 2px dashed var(--c1);
+            border-radius: 14px;
+            padding: 4px 14px;
+            margin-bottom: 10px;
+        }
+
+        /* CURRICULUM GRID */
+        .curriculum-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 14px;
+        }
+
+        .curriculum-grid .fun-card {
+            margin-bottom: 0;
+            font-size: 16px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 24px;
+            color: #7c3aed;
+            margin: 26px 4px 14px;
+        }
+
+        /* CLOSING */
+        .closing {
+            text-align: center;
+            border-radius: 22px;
+            padding: 22px 18px;
+            margin-top: 18px;
+            color: white;
+            font-size: 17px;
+            line-height: 1.7;
+            background: linear-gradient(135deg, #f472b6, #fb923c, #fbbf24);
+            box-shadow: 0 10px 25px rgba(251, 146, 60, .3);
+        }
+
+        .closing strong { color: white; }
+
+        .closing .bye {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            background: white;
+            color: #ea580c;
+            font-weight: 800;
+            font-size: 20px;
+            padding: 6px 20px;
+            border-radius: 999px;
         }
 
         /* MOBILE IMPROVEMENTS */
         @media (max-width: 768px) {
-            .header {
-                padding: 12px;
-            }
+            .header { padding: 12px; }
+            .title { font-size: 16px; }
+            .hero h3 { font-size: 24px; }
+            .fun-card { font-size: 16px; }
+            .fun-card h4 { font-size: 20px; }
+            .section-title { font-size: 21px; }
+        }
 
-            .title {
-                font-size: 16px;
-            }
-
+        @media (prefers-reduced-motion: reduce) {
+            .hero-badge, .deco { animation: none; }
         }
     </style>
+    <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
 </head>
 
-<body>
+<body class="kids t-pink">
 <div class="container p-0">
     <!-- HEADER -->
     <div class="header">
@@ -153,167 +319,155 @@
     </div>
 
     <div class="page">
+        <main>
+            <!-- HERO -->
+            <header class="hero">
+                <i class="bi bi-star-fill deco d1"></i>
+                <i class="bi bi-moon-stars-fill deco d2"></i>
+                <i class="bi bi-stars deco d3"></i>
+                <i class="bi bi-star-fill deco d4"></i>
 
-        <input type="hidden" id="studentID" value="{{current_user.school_id}}">
-        <input type="hidden" id="branchSelect" class="form-select" value="{{current_user.branch.name}}" required>
-        <input type="hidden" id="classSelect" class="form-select" value="{{student_class}}" required>
+                <div class="hero-badge"><i class="bi bi-book-half"></i></div>
+                <h3>আল-আকসা ইসলামী একাডেমি</h3>
+                <p>“বিসমিল্লাহির রহমানির রাহীম”</p>
+            </header>
 
+            <!-- INTRO -->
+            <section class="fun-card t-green">
+                <h4><span class="icon-bubble"><i class="bi bi-house-heart-fill"></i></span>আমাদের পরিচিতি</h4>
+                <p class="mb-0">
+                    আলহামদুলিল্লাহ্, <strong>“আল-আকসা ইসলামী একাডেমি”</strong> ২০২৫ ইং সনে নেত্রকোণা সদর থানা, নেত্রকোণা পৌরসভাধীন আরামবাগ মোড়ে (হেলাল প্লাজা ২য় তলা) প্রতিষ্ঠিত হয়েছে।
+                </p>
+            </section>
 
-        <!-- ACCOUNTS TABLE -->
-        <div id="accountsCard" class="accounts-card" style="text-align:justify;">
-            <main>
-                <header class="text-center">
-                    <h3>আল-আকসা ইসলামী একাডেমি</h3>
-                    <p>“বিসমিল্লাহির রহমানির রাহীম”</p>
-                </header>
+            <!-- FOUNDER -->
+            <article class="fun-card t-orange">
+                <h4><span class="icon-bubble"><i class="bi bi-person-badge-fill"></i></span>প্রতিষ্ঠাতা</h4>
+                <p class="founder-name"><strong>মো: আতিকুর রহমান শরিফ</strong></p>
+                <ul>
+                    <li>ডিপ্লোমা ইন গ্লাস, ইনষ্টিটিউট অফ গ্লাস এন্ড সিরামিক্স, ঢাকা।</li>
+                    <li>বিএসসি ইন (ইইই), উত্তরা ইউনিভার্সিটি, ঢাকা।</li>
+                </ul>
+            </article>
 
-                <section>
-                    <h4>আমাদের পরিচিতি:-</h4>
+            <!-- PURPOSE -->
+            <section class="fun-card t-blue">
+                <h4><span class="icon-bubble"><i class="bi bi-lightbulb-fill"></i></span>উদ্দেশ্য</h4>
+                <p class="mb-0">
+                    বর্তমান যুগের প্রয়োজনের সাথে সামঞ্জস্য রেখে দ্বীনি ও জেনারেল শিক্ষার সমন্বয়ে সকল শিক্ষার্থীকে উভয় শিক্ষায় পারদর্শী করে গড়ে তোলা।
+                </p>
+            </section>
 
-                    <p>
-                      আলহামদুলিল্লাহ্, <strong>“আল-আকসা ইসলামী একাডেমি”</strong> ২০২৫ ইং সনে নেত্রকোণা সদর থানা, নেত্রকোণা পৌরসভাধীন আরামবাগ মোড়ে (হেলাল প্লাজা ২য় তলা) প্রতিষ্ঠিত হয়েছে।
-                    </p>
+            <!-- GOAL -->
+            <section class="fun-card t-pink">
+                <h4><span class="icon-bubble"><i class="bi bi-bullseye"></i></span>লক্ষ্য</h4>
+                <p class="mb-0">
+                    প্রতিটি মুসলিম শিশু-কিশোর যেন দ্বীনের ফরজ ইলম থেকে দূরে না থাকে। তাই
+                    তাদের পেছনে মেহনত করে এমনভাবে গড়ে তোলা যাতে রাষ্ট্রের প্রতিটি সেক্টরে,
+                    কর্মক্ষেত্রে আত্মনিয়োগ করার পাশাপাশি মসজিদ ও দ্বীনি প্রতিষ্ঠান পরিচালনার
+                    সক্ষমতা অর্জন করতে পারে। আমরা বিশ্বাস করি, আমাদের প্রতিটি শিক্ষার্থী
+                    সমাজ এবং রাষ্ট্রের পরিবর্তনে গুরুত্বপূর্ণ অবদান রাখবে, ইনশা-আল্লাহ্।
+                </p>
+            </section>
 
-                    <article>
-                        <h4>প্রতিষ্ঠাতা:-</h4>
+            <!-- CURRICULUM -->
+            <section>
+                <h4 class="section-title"><span class="icon-bubble t-purple"><i class="bi bi-palette-fill"></i></span>আমাদের কারিকুলাম</h4>
 
-                        <p><strong>মো: আতিকুর রহমান শরিফ</strong></p>
-
-                        <ul>
-                            <li>ডিপ্লোমা ইন গ্লাস, ইনষ্টিটিউট অফ গ্লাস এন্ড সিরামিক্স, ঢাকা।</li>
-                            <li>বিএসসি ইন (ইইই), উত্তরা ইউনিভার্সিটি, ঢাকা।</li>
-                        </ul>
-                    </article>
-                </section>
-
-                <section>
-                    <h4>উদ্দেশ্য:-</h4>
-
-                    <p>
-                       বর্তমান যুগের প্রয়োজনের সাথে সামনঞ্জস্য রেখে দ্বীনি ও জেনারেল শিক্ষার সমন্বয়ে সকল শিক্ষার্থীকে উভয় শিক্ষায় পারদর্শী করে গড়ে তোলা।
-                    </p>
-                </section>
-
-                <section>
-                    <h4>লক্ষ্য:-</h4>
-
-                    <p>
-                        প্রতিটি মুসলিম শিশু-কিশোর যেন দ্বীনের ফরজ ইলম থেকে দূরে না থাকে। তাই
-                        তাদের পেছনে মেহনত করে এমনভাবে গড়ে তোলা যাতে রাষ্ট্রের প্রতিটি সেক্টরে,
-                        কর্মক্ষেত্রে আত্মনিয়োগ করার পাশাপাশি মসজিদ ও দ্বীনি প্রতিষ্ঠান পরিচালনার
-                        সক্ষমতা অর্জন করতে পারে। আমরা বিশ্বাস করি, আমাদের প্রতিটি শিক্ষার্থী
-                        সমাজ এবং রাষ্ট্রের পরিবর্তনে গুরুত্বপূর্ণ অবদান রাখবে, ইনশা-আল্লাহ্।
-                    </p>
-                </section>
-
-                <section>
-                    <h4>আমাদের কারিকুলাম:-</h4>
-
-                    <article>
-                        <h5>বই-</h5>
-
+                <div class="curriculum-grid">
+                    <article class="fun-card t-yellow">
+                        <h5><span class="icon-bubble"><i class="bi bi-book-fill"></i></span>বই</h5>
                         <ul>
                             <li>
-                                আমাদের রয়েছে প্রি-প্রাইমারী পর্যন্ত আনন্দময়, সহজ ও ধাপে ধাপে সাজানো
+                                আমাদের রয়েছে প্রি-প্রাইমারী পর্যন্ত আনন্দময়, সহজ ও ধাপে ধাপে সাজানো
                                 একটি নিজস্ব ইউনিক পাঠ্যবই।
                             </li>
                             <li>
-                                পাঠ্যবইয়ের প্রতিটি পাঠে QR কোড সংযুক্ত রয়েছে। প্রতিষ্ঠানের নিজস্ব App
-                                দিয়ে স্ক্যান করে ভিডিও টিউটোরিয়াল দেখে পড়ার সুযোগ রয়েছে।
+                                পাঠ্যবইয়ের প্রতিটি পাঠে QR কোড সংযুক্ত রয়েছে। প্রতিষ্ঠানের নিজস্ব App
+                                দিয়ে স্ক্যান করে ভিডিও টিউটোরিয়াল দেখে পড়ার সুযোগ রয়েছে।
                             </li>
                         </ul>
                     </article>
 
-                    <article>
-                        <h5>পাঠ সিডিউল-</h5>
-
+                    <article class="fun-card t-cyan">
+                        <h5><span class="icon-bubble"><i class="bi bi-calendar-heart-fill"></i></span>পাঠ সিডিউল</h5>
                         <ul>
                             <li>
                                 আমাদের সিডিউলটি সারা বছরের পাঠকে ৩৬৫ দিনে তারিখ অনুসারে সুনির্দিষ্ট ও
-                                সুশৃঙ্খলভাবে সাজানো হয়েছে। ফলে প্রতিদিনের তারিখ অনুসারে ক্লাস, বাসার
-                                পড়া এবং লেখার কার্যক্রম অভিন্ন থাকে।
+                                সুশৃঙ্খলভাবে সাজানো হয়েছে। ফলে প্রতিদিনের তারিখ অনুসারে ক্লাস, বাসার
+                                পড়া এবং লেখার কার্যক্রম অভিন্ন থাকে।
                             </li>
                         </ul>
                     </article>
 
-                    <article>
-                        <h5>খাতা-</h5>
-
+                    <article class="fun-card t-red">
+                        <h5><span class="icon-bubble"><i class="bi bi-pencil-fill"></i></span>খাতা</h5>
                         <ul>
                             <li>
-                                প্রতিষ্ঠানের নিজস্ব খাতা রয়েছে, যেখানে প্রতিদিনের ক্লাসের পাঠের সাথে
-                                মিল রেখে সিডিউল অনুসারে হোমওয়ার্কের প্রতিটি পৃষ্ঠায় তারিখ উল্লেখ
-                                করা হয়েছে।
+                                প্রতিষ্ঠানের নিজস্ব খাতা রয়েছে, যেখানে প্রতিদিনের ক্লাসের পাঠের সাথে
+                                মিল রেখে সিডিউল অনুসারে হোমওয়ার্কের প্রতিটি পৃষ্ঠায় তারিখ উল্লেখ
+                                করা হয়েছে।
                             </li>
                             <li>
-                                হাতের লেখা সুন্দর করার জন্য প্রতিটি পৃষ্ঠায় রাইটিং স্ট্যান্ডার্ড ফন্ট
-                                ব্যবহার করা হয়েছে।
+                                হাতের লেখা সুন্দর করার জন্য প্রতিটি পৃষ্ঠায় রাইটিং স্ট্যান্ডার্ড ফন্ট
+                                ব্যবহার করা হয়েছে।
                             </li>
                         </ul>
                     </article>
 
-                    <article>
-                        <h5>সহজ পদ্ধতিতে কুরআন শিক্ষা-</h5>
-
+                    <article class="fun-card t-green">
+                        <h5><span class="icon-bubble"><i class="bi bi-moon-stars-fill"></i></span>সহজ পদ্ধতিতে কুরআন শিক্ষা</h5>
                         <ul>
                             <li>
-                                কুরআনুল কারীমের শিক্ষা সহজ ও নির্ভুল করার জন্য আমাদের রয়েছে QR কোড
-                                সম্বলিত নিজস্ব কায়দা।
+                                কুরআনুল কারীমের শিক্ষা সহজ ও নির্ভুল করার জন্য আমাদের রয়েছে QR কোড
+                                সম্বলিত নিজস্ব কায়দা।
                             </li>
                             <li>
-                                প্রতিষ্ঠানের নিজস্ব App দিয়ে QR কোড স্ক্যান করে ভিডিও টিউটোরিয়াল দেখে
-                                সহীহ উচ্চারণে কুরআন শেখার সুযোগ রয়েছে।
+                                প্রতিষ্ঠানের নিজস্ব App দিয়ে QR কোড স্ক্যান করে ভিডিও টিউটোরিয়াল দেখে
+                                সহীহ উচ্চারণে কুরআন শেখার সুযোগ রয়েছে।
                             </li>
                         </ul>
                     </article>
 
-                    <article>
-                        <h5>এ্যাপ (App)</h5>
-
+                    <article class="fun-card t-purple">
+                        <h5><span class="icon-bubble"><i class="bi bi-phone-fill"></i></span>এ্যাপ (App)</h5>
                         <ul>
                             <li>
-                                আল-আকসা ইসলামী একাডেমির নিজস্ব App রয়েছে। এর মাধ্যমে শিক্ষার্থীরা
+                                আল-আকসা ইসলামী একাডেমির নিজস্ব App রয়েছে। এর মাধ্যমে শিক্ষার্থীরা
                                 প্রতিদিনের পাঠ সিডিউল, উপস্থিতি, একাউন্টস, রেজাল্ট, নোটিশ এবং
                                 প্রতিষ্ঠানের সকল নির্দেশনা ইনবক্সে দেখতে পারে।
                             </li>
                             <li>
-                                App-এ নিজস্ব QR কোড স্ক্যানার রয়েছে, যার মাধ্যমে একাউন্টধারী
-                                শিক্ষার্থীরা নির্ধারিত শ্রেণির বইয়ের ভিডিও টিউটোরিয়াল দেখতে পারে।
+                                App-এ নিজস্ব QR কোড স্ক্যানার রয়েছে, যার মাধ্যমে একাউন্টধারী
+                                শিক্ষার্থীরা নির্ধারিত শ্রেণির বইয়ের ভিডিও টিউটোরিয়াল দেখতে পারে।
                             </li>
                         </ul>
                     </article>
 
-                    <article>
-                        <h5>বাস্তবমুখী শিক্ষা-</h5>
-
+                    <article class="fun-card t-orange">
+                        <h5><span class="icon-bubble"><i class="bi bi-puzzle-fill"></i></span>বাস্তবমুখী শিক্ষা</h5>
                         <ul>
                             <li>
-                                প্রতিটি শিক্ষার্থীর কারিকুলামের পাঠ বাস্তব জীবনে প্রয়োগের জন্য
-                                হাতে-কলমে শেখানোর চেষ্টা করা হয়।
+                                প্রতিটি শিক্ষার্থীর কারিকুলামের পাঠ বাস্তব জীবনে প্রয়োগের জন্য
+                                হাতে-কলমে শেখানোর চেষ্টা করা হয়।
                             </li>
                         </ul>
                     </article>
-                </section>
+                </div>
+            </section>
 
-                <section>
-                    <p>
-                        সম্মানিত পাঠক মহোদয়, <strong>“আল-আকসা ইসলামী একাডেমি”</strong>-এর জন্য
-                        আপনার কাছে আন্তরিকভাবে প্রতিষ্ঠানের সফলতার দোয়া কামনা করছি, যাতে করে
-                        এই প্রতিষ্ঠান মানুষ গড়ার এবং দীনি ইলমকে উন্নতির শিখরে নিয়ে যেতে পারে।
-                    </p>
-                </section>
-
-                <footer>
-                    <p class="text-center"><strong>আল্লাহ হাফেজ</strong></p>
-                </footer>
-            </main>
-        </div>
+            <!-- CLOSING -->
+            <footer class="closing">
+                <p class="mb-0">
+                    সম্মানিত পাঠক মহোদয়, <strong>“আল-আকসা ইসলামী একাডেমি”</strong>-এর জন্য
+                    আপনার কাছে আন্তরিকভাবে প্রতিষ্ঠানের সফলতার দোয়া কামনা করছি, যাতে করে
+                    এই প্রতিষ্ঠান মানুষ গড়ার এবং দীনি ইলমকে উন্নতির শিখরে নিয়ে যেতে পারে।
+                </p>
+                <div class="bye"><i class="bi bi-heart-fill"></i>আল্লাহ হাফেজ</div>
+            </footer>
+        </main>
     </div>
-
-
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-
-
 </body>
 </html>

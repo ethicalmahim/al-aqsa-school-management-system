@@ -9,7 +9,7 @@
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Baloo+Da+2:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         body{
@@ -111,10 +111,59 @@
         font-size:16px;
         }
         }
+
+        /* WIDE SCREENS: table cards use the full screen width, so wide tables
+           (all months / all days / all subjects) are shown without side-scrolling */
+        @media (min-width: 1200px) {
+            .page {
+                max-width: none;
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+        }
+        /* SHARED: labels, section titles, empty states */
+        .form-label {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eef0f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title .count {
+            font-size: 13px;
+            color: #888;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 24px 0;
+        }
+
+        .day-nav {
+            display: flex;
+            gap: 6px;
+        }
+
+        .day-nav .form-control {
+            min-width: 0;
+        }
     </style>
+    <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
 </head>
-<body>
-<div class="container p-0">
+<body class="kids t-pink">
+<div class="container-fluid p-0">
     <!-- HEADER -->
    <div class="header">
 
@@ -154,97 +203,111 @@
 </div>
 
     <div class="page">
-        <!-- FILTERS -->
+        <!-- DATE -->
         <div class="filter-card">
+            <label class="form-label" for="dateSelect">তারিখ</label>
             <div class="row g-2">
-                <div class="col-md-8">
-                    <input id="dateSelect" type="date" class="form-control" required>
+                <div class="col-12 col-md-8">
+                    <div class="day-nav">
+                        <button type="button" class="btn btn-light border" id="prevDay" aria-label="Previous day">
+                            <i class="bi bi-chevron-left"></i></button>
+                        <input id="dateSelect" type="date" class="form-control" value="{{ today }}">
+                        <button type="button" class="btn btn-light border" id="nextDay" aria-label="Next day">
+                            <i class="bi bi-chevron-right"></i></button>
+                    </div>
                 </div>
-
-                <div class="col-md-4">
-                    <button id="searchBtn" class="btn btn-success w-100">
-                        Search
-                    </button>
+                <div class="col-12 col-md-4">
+                    <input id="userFilter" type="search" class="form-control" placeholder="Username / শাখা খুঁজুন">
                 </div>
             </div>
         </div>
 
         <!-- LOG INFO TABLE -->
-        <div id="log-infoCard" class="log-info-card">
+        <div id="logCard" class="log-info-card">
+            <div class="section-title">
+                <span id="sheetTitle">Login History</span>
+                <span class="count" id="logCount"></span>
+            </div>
             <div class="table-responsive">
-                <table class="table log-info-table align-middle">
+                <table class="table table-bordered log-info-table align-middle mb-0">
                     <thead>
                     <tr>
+                        <th style="width:50px;">#</th>
                         <th>Username</th>
+                        <th>Role</th>
+                        <th>শাখা</th>
                         <th>Login Time</th>
                     </tr>
                     </thead>
-                    <tbody id="log-infoBody">
-                    {% for log_info in log_infos %}
-                        <tr><td>{{log_info.username}}</td><td>{{log_info.login_time.strftime("%d-%m-%Y %I:%M %p")}}</td></tr>
-                    {% endfor %}
-                    </tbody>
+                    <tbody id="logBody"></tbody>
                 </table>
             </div>
+            <div id="emptyState" class="empty-state d-none"></div>
         </div>
     </div>
-
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    document.getElementById("searchBtn").addEventListener("click", async function(){
-    const date = document.getElementById("dateSelect").value
+    const dateInput = document.getElementById("dateSelect")
+    const filterInput = document.getElementById("userFilter")
+    const tbody = document.getElementById("logBody")
+    const empty = document.getElementById("emptyState")
+    let logs = []
 
-    if(!date){
-    alert("Please select date")
-    return
-}
-
-    const response = await fetch("/api/search-log-info",{
-
-    method:"POST",
-    headers:{
-    "Content-Type":"application/json"
-    },
-
-    body:JSON.stringify({
-    date:date
-    })
-    })
-
-    const result = await response.json()
-
-    const tbody = document.getElementById("log-infoBody")
-    const card = document.getElementById("log-infoCard")
-    tbody.innerHTML = ""
-
-    if(result.data.length === 0){
-    tbody.innerHTML = `
-    <tr>
-        <td colspan="2" class="text-center text-muted">
-        No log in data found!
-        </td>
-    </tr>`
+    function shiftDay(days) {
+        const d = new Date((dateInput.value || {{ today | tojson }}) + "T00:00:00")
+        d.setDate(d.getDate() + days)
+        dateInput.value = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0")
+        search()
     }
 
-    if(result.data.length > 0){
-        card.classList.remove("d-none")
-    }else{
-        card.classList.add("d-none")
+    function render() {
+        const q = filterInput.value.trim().toLowerCase()
+        const rows = logs.filter(l => !q || l.username.toLowerCase().includes(q) || l.branch.toLowerCase().includes(q) || l.role.toLowerCase().includes(q))
+        tbody.innerHTML = ""
+        rows.forEach((log, i) => {
+            const tr = document.createElement("tr")
+            ;[i + 1, log.username, log.role, log.branch, log.login_time].forEach(value => {
+                const td = document.createElement("td")
+                td.textContent = value
+                tr.appendChild(td)
+            })
+            tbody.appendChild(tr)
+        })
+        document.getElementById("logCount").textContent = q ? `${rows.length} / ${logs.length} টি লগইন` : `${logs.length} টি লগইন`
+        empty.textContent = logs.length ? "কোন মিল পাওয়া যায়নি।" : "এই তারিখে কেউ লগইন করেনি।"
+        empty.classList.toggle("d-none", rows.length > 0)
     }
 
-    result.data.forEach(row=>{
-    tbody.innerHTML += `
-    <tr>
-        <td>${row.username}</td>
-        <td>${row.login_time}</td>
-    </tr>
-    `
+    async function search() {
+        if (!dateInput.value) return
+        document.getElementById("sheetTitle").textContent = "লোড হচ্ছে..."
+        try {
+            const response = await fetch("{{ url_for('search_login_info') }}", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({date: dateInput.value})
+            })
+            const result = await response.json().catch(() => ({}))
+            if (!response.ok || !result.success) throw new Error(result.error || "Request failed: " + response.status)
+            logs = result.data
+            const [y, m, d] = dateInput.value.split("-")
+            document.getElementById("sheetTitle").textContent = `Login History · ${d}-${m}-${y}`
+            render()
+        } catch (error) {
+            console.error(error)
+            logs = []
+            render()
+            empty.textContent = "লগ লোড করা যায়নি: " + error.message
+        }
+    }
 
-    })
-    })
-
-
+    document.getElementById("prevDay").addEventListener("click", () => shiftDay(-1))
+    document.getElementById("nextDay").addEventListener("click", () => shiftDay(1))
+    dateInput.addEventListener("change", search)
+    filterInput.addEventListener("input", render)
+    search()
 </script>
 </body>
 </html>

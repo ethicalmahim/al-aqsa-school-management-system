@@ -7,6 +7,9 @@ def roles_required(*roles):
     def wrapper(fn):
         @wraps(fn)
         def decorated(*args, **kwargs):
+            # Logged-out visitors have no role; refuse cleanly instead of crashing
+            if not current_user.is_authenticated:
+                abort(401)
             if current_user.role not in roles:
                 abort(403)
             return fn(*args, **kwargs)

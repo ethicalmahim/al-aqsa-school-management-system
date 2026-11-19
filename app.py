@@ -1,7 +1,10 @@
+import re
 import os
 from urllib.parse import unquote
 
-from flask import Flask, render_template, request, redirect, url_for, flash, abort, jsonify
+import click
+
+from flask import Flask, render_template, request, redirect, url_for, flash, abort, jsonify, send_from_directory
 from flask_login import UserMixin, LoginManager, login_user, logout_user, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import ForeignKey, Date, DateTime, func
@@ -9,6 +12,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from werkzeug.security import generate_password_hash, check_password_hash
 from decorators import roles_required
 from dotenv import load_dotenv
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 import pandas as pd
 from datetime import date, timedelta, datetime
 import helpers
@@ -36,9 +40,26 @@ class Base(DeclarativeBase):
     pass
 
 
+def env_flag(name, default=False):
+    value = os.getenv(name)
+    return default if value is None else value.strip().lower() in ("1", "true", "yes", "on")
+
+
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DB_URI")
+
+# Settings come from .env (see .env.example); every one has a safe fallback so the app starts anyway
+_secret_key = os.getenv("SECRET_KEY")
+if not _secret_key:
+    import secrets
+    _secret_key = secrets.token_hex(32)
+    print("WARNING: SECRET_KEY is not set in .env; using a temporary key, so logins reset on every restart.")
+app.config['SECRET_KEY'] = _secret_key
+# Relative sqlite paths such as sqlite:///school.db are created inside the instance/ folder
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DB_URI") or "sqlite:///school.db"
+
+# Folders that uploaded files are saved into
+NOTICES_DIR = os.path.join(app.root_path, "static", "img", "notices")
+SYLLABUS_DIR = os.path.join(app.root_path, "static", "img", "syllabus")
 
 db = SQLAlchemy(app, model_class=Base)
 login_manager = LoginManager(app)
@@ -250,33 +271,151 @@ class StudentRecord(db.Model):
     address: Mapped[str] = mapped_column()
     class_name: Mapped[str] = mapped_column()
     roll: Mapped[str] = mapped_column()
+    fixed_fee: Mapped[float] = mapped_column(nullable=True)  # ধার্যকৃত বেতন
+
+
+class DataSheet(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    date: Mapped[date] = mapped_column(Date)
+    monthly_fee: Mapped[float] = mapped_column()
+    exam_fee: Mapped[float] = mapped_column()
+    admission_fee: Mapped[float] = mapped_column()
+    book_fee: Mapped[float] = mapped_column()
+    copy_fee: Mapped[float] = mapped_column()
+    id_card_fee: Mapped[float] = mapped_column()
+    other_income: Mapped[float] = mapped_column()
+    total_income: Mapped[float] = mapped_column()
+    daily_expense: Mapped[float] = mapped_column()
+    all_rent_and_bills: Mapped[float] = mapped_column()
+    staff_salary: Mapped[float] = mapped_column()
+    other_expenses: Mapped[float] = mapped_column()
+    total_expense: Mapped[float] = mapped_column()
+
+
+class BalanceSheet(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    date: Mapped[date] = mapped_column(Date)
+    total_income: Mapped[float] = mapped_column()
+    total_expense: Mapped[float] = mapped_column()
+    deposit: Mapped[float] = mapped_column()
+    deposit_description: Mapped[str] = mapped_column()
+    withdraw: Mapped[float] = mapped_column()
+    withdraw_description: Mapped[str] = mapped_column()
+    balance: Mapped[float] = mapped_column()
 
 
 @app.template_global()
 def get_branches():
+    # Creation order, so the first branch always comes first in every dropdown
     return db.session.execute(
-        db.select(Branch)
+        db.select(Branch).order_by(Branch.id)
     ).scalars().all()
 
 
 # End of DB Models------------------------------------------------------------------------------------------------------
 
-with app.app_context():
-    db.create_all()
+def add_missing_columns():
+    """create_all() never alters existing tables, so add columns introduced after the table was created."""
+    new_columns = {
+        StudentRecord.__table__.name: {"fixed_fee": "FLOAT"},
+    }
+    inspector = db.inspect(db.engine)
+    with db.engine.begin() as connection:
+        for table, columns in new_columns.items():
+            existing = {column["name"] for column in inspector.get_columns(table)}
+            for column, column_type in columns.items():
+                if column not in existing:
+                    connection.execute(db.text(f"ALTER TABLE {table} ADD COLUMN {column} {column_type}"))
 
-    if not db.session.execute(db.select(User).where(User.username == 'al-aqsa-sharif')).scalar():
-        branch = Branch(code="NK", name="Netrakona", director="Md. Atikur Rahman Sharif", phone="01811114400")
+
+def seed_first_admin():
+    """On a brand-new database, create the first branch and Admin account from .env.
+
+    Runs only while there is no Admin user at all, so restarting the app (or changing .env later)
+    never creates duplicates or overwrites anything. More branches are added from Branch Management.
+    """
+    if db.session.execute(db.select(User.id).where(User.role == ADMIN_ROLE).limit(1)).first():
+        return
+
+    branch_name = os.getenv("INITIAL_BRANCH_NAME") or "Main Branch"
+    branch = db.session.execute(db.select(Branch).where(Branch.name == branch_name)).scalars().first()
+    if branch is None:
+        branch = Branch(
+            code=os.getenv("INITIAL_BRANCH_CODE") or "MB",
+            name=branch_name,
+            director=os.getenv("INITIAL_BRANCH_DIRECTOR") or "",
+            phone=os.getenv("INITIAL_BRANCH_PHONE") or "",
+        )
         db.session.add(branch)
-        branch_1 = Branch(code="PD", name="Purbadhala", director="Md. Atikur Rahman Sharif", phone="01811114400")
-        db.session.add(branch_1)
-        branch_2 = Branch(code="KK", name="Kalmakanda", director="Md. Atikur Rahman Sharif", phone="01811114400")
-        db.session.add(branch_2)
-        db.session.commit()
+        db.session.flush()
 
-        admin = User(username='al-aqsa-sharif', branch_id=branch.id, role=ADMIN_ROLE, school_id=101)
-        admin.set_password('admin')
-        db.session.add(admin)
-        db.session.commit()
+    username = os.getenv("ADMIN_USERNAME") or "admin"
+    password = os.getenv("ADMIN_PASSWORD")
+    if not password:
+        import secrets
+        password = secrets.token_urlsafe(9)
+        print(f"No ADMIN_PASSWORD in .env. Created admin '{username}' with password: {password}  "
+              f"(change it after logging in)")
+
+    try:
+        school_id = int(os.getenv("ADMIN_SCHOOL_ID") or 101)
+    except ValueError:
+        school_id = 101
+
+    admin = User(username=username, branch_id=branch.id, role=ADMIN_ROLE, school_id=school_id)
+    admin.set_password(password)
+    db.session.add(admin)
+    db.session.commit()
+
+
+def ensure_upload_folders():
+    """Upload routes save straight into these folders, so make sure they exist (e.g. after a fresh clone)."""
+    os.makedirs(SYLLABUS_DIR, exist_ok=True)
+    for (name,) in db.session.execute(db.select(Branch.name)).all():
+        os.makedirs(os.path.join(NOTICES_DIR, name), exist_ok=True)
+
+
+@app.cli.command("reset-admin-password")
+@click.option("--username", help="Admin to reset. Needed only when there is more than one Admin.")
+@click.option("--generate", is_flag=True, help="Create a random password and print it instead of asking.")
+def reset_admin_password(username, generate):
+    """Reset a forgotten Admin password. Run on the server:  flask --app app reset-admin-password"""
+    admins = db.session.execute(db.select(User).where(User.role == ADMIN_ROLE)).scalars().all()
+    names = ", ".join(a.username for a in admins) or "none"
+
+    if username:
+        admin = next((a for a in admins if a.username == username), None)
+        if admin is None:
+            raise click.ClickException(f"No Admin named '{username}'. Admins: {names}")
+    elif len(admins) == 1:
+        admin = admins[0]
+    else:
+        raise click.ClickException(f"Several Admins exist; choose one with --username. Admins: {names}")
+
+    if generate:
+        import secrets
+        password = secrets.token_urlsafe(9)
+    else:
+        password = click.prompt(f"New password for '{admin.username}'", hide_input=True,
+                                confirmation_prompt=True)
+        if len(password) < MIN_PASSWORD_LENGTH:
+            raise click.ClickException(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
+
+    admin.set_password(password)
+    admin.is_active = True  # make sure the account can log in again
+    db.session.commit()
+
+    click.echo(f"Password for Admin '{admin.username}' has been reset.")
+    if generate:
+        click.echo(f"New password: {password}  (change it after logging in)")
+
+
+with app.app_context():
+    os.makedirs(app.instance_path, exist_ok=True)  # default sqlite database lives here
+    db.create_all()
+    add_missing_columns()
+    seed_first_admin()
+    ensure_upload_folders()
 
 
 # Routes -------------------------------------------------------------------------------------------------------------
@@ -327,121 +466,274 @@ def teacher_dashboard():
 @login_required
 @roles_required(STUDENT_ROLE)
 def student_dashboard():
-    class_code = int(str(current_user.school_id)[0])
-    return render_template('student/student_dashboard.html', class_code=class_code)
+    # The class is the first digit of the school ID; Play-Three (1-5) use Lesson Schedule, Four/Five use Syllabus
+    first = str(current_user.school_id or "")[:1]
+    class_code = int(first) if first.isdigit() else 0
+    return render_template('student/student_dashboard.html', class_code=class_code,
+                           class_name=CLASS_MAP.get(class_code))
 
 
 # Options --------------------------------------------------------------------------------------------------------------
 @app.route("/lesson-schedule")
 @login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE, TEACHER_ROLE)
 def lesson_schedule():
-    return render_template("lesson_schedule.html")
+    return render_template("lesson_schedule.html", classes=CLASS_NAMES, subjects=SUBJECTS,
+                           today=today_in_dhaka().isoformat())
+
+
+def own_student_class():
+    """A student's class always comes from their own login, never from the URL."""
+    student_class = CLASS_MAP.get(int(str(current_user.school_id)[:1])) if str(current_user.school_id)[:1].isdigit() else None
+    if student_class is None:
+        abort(404)
+    return student_class
 
 
 @app.route("/student-lesson-schedule")
 @login_required
+@roles_required(STUDENT_ROLE)
 def student_lesson_schedule():
-    student_id = str(request.args.get("student_id"))
-    student_class = CLASS_MAP[int(student_id[:1])]
-    return render_template("student/lesson_schedule.html", student_class=student_class)
+    return render_template("student/lesson_schedule.html", student_class=own_student_class(),
+                           today=today_in_dhaka().isoformat())
 
 
 @app.route("/student-lesson-syllabus")
 @login_required
+@roles_required(STUDENT_ROLE)
 def student_lesson_syllabus():
-    student_id = str(request.args.get("student_id"))
-    student_class = CLASS_MAP[int(student_id[:1])]
-    return render_template("student/student_lesson_syllabus.html", student_class=student_class)
+    student_class = own_student_class()
+    return render_template("student/student_lesson_syllabus.html", student_class=student_class,
+                           pdf_url=url_for("syllabus_pdf", class_name=student_class)
+                           if student_class in SYLLABUS_CLASSES else None)
 
 
 @app.route("/lesson-syllabus")
 @login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE, TEACHER_ROLE)
 def lesson_syllabus():
-    return render_template("lesson_syllabus.html")
+    return render_template("lesson_syllabus.html", classes=SYLLABUS_CLASSES,
+                           uploaded=[c for c in SYLLABUS_CLASSES if os.path.isfile(syllabus_path(c))])
+
+
+SYLLABUS_CLASSES = ["Three", "Four", "Five"]  # classes that follow a PDF syllabus instead of a daily schedule
+SYLLABUS_MAX_BYTES = 25 * 1024 * 1024
+
+
+def syllabus_path(class_name):
+    return os.path.join(SYLLABUS_DIR, f"{class_name}.pdf")
+
+
+@app.route("/syllabus-pdf/<class_name>")
+@login_required
+def syllabus_pdf(class_name):
+    """The syllabus PDF, only for logged-in users; a student only gets their own class's."""
+    if class_name not in SYLLABUS_CLASSES:
+        abort(404)
+    if current_user.role == STUDENT_ROLE and class_from_school_id(current_user.school_id) != class_name:
+        abort(403)
+    if not os.path.isfile(syllabus_path(class_name)):
+        abort(404)
+    response = send_from_directory(SYLLABUS_DIR, f"{class_name}.pdf", mimetype="application/pdf", max_age=0)
+    response.headers["Cache-Control"] = "no-store, private"
+    return response
+
+
+MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July",
+               "August", "September", "October", "November", "December"]
+CLASS_NAMES = list(CLASS_MAP.values())
+
+
+def attendance_years():
+    """This year and the two before, so last year's records stay reachable in January."""
+    year = today_in_dhaka().year
+    return [year, year - 1, year - 2]
+
+
+def class_from_school_id(school_id):
+    """A student's class is the first digit of their ID (see CLASS_MAP); None if it doesn't fit."""
+    first = str(school_id or "")[:1]
+    return CLASS_MAP.get(int(first)) if first.isdigit() else None
+
+
+def can_open_attendance():
+    # Service Admins need the attendance option, as on their dashboard
+    return current_user.role != SERVICE_ADMIN_ROLE or current_user.has_attendance_option_access
 
 
 @app.route("/attendance")
 @login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE, TEACHER_ROLE)
 def attendance():
-    return render_template("attendance.html", year=datetime.now().strftime("%Y"))
+    if not can_open_attendance():
+        abort(403)
+    today = today_in_dhaka()
+    return render_template("attendance.html", months=MONTH_NAMES, years=attendance_years(),
+                           classes=CLASS_NAMES, current_month=MONTH_NAMES[today.month - 1],
+                           current_year=today.year)
 
 
 @app.route("/student-attendance")
 @login_required
+@roles_required(STUDENT_ROLE)
 def student_attendance():
-    student_id = str(request.args.get("student_id"))
-    student_class = CLASS_MAP[int(student_id[:1])]
-    return render_template("student/attendance.html", student_class=student_class, year=datetime.now().strftime("%Y"))
+    # Always the logged-in student; the ?student_id= in the link is ignored
+    student_class = class_from_school_id(current_user.school_id)
+    today = today_in_dhaka()
+    return render_template("student/attendance.html", student_class=student_class, months=MONTH_NAMES,
+                           years=attendance_years(), current_month=MONTH_NAMES[today.month - 1],
+                           current_year=today.year)
+
+
+ACCOUNT_MONTHS = ["january", "february", "march", "april", "may", "june", "july",
+                  "august", "september", "october", "november", "december"]
+
+
+def can_open_accounts():
+    # Service Admins need the accounts option, as on their dashboard
+    return current_user.role == ADMIN_ROLE or (
+            current_user.role == SERVICE_ADMIN_ROLE and current_user.has_accounts_option_access)
 
 
 @app.route("/accounts")
 @login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def accounts():
-    return render_template("accounts.html")
+    if not can_open_accounts():
+        abort(403)
+    return render_template("accounts.html", classes=CLASS_NAMES)
 
 
+# Internal accounts (school income/expense) are staff-only
 @app.route("/internal-accounts")
 @login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def internal_accounts():
     return render_template("internal_accounts.html")
 
+
 @app.route("/internal-accounts-income")
 @login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def internal_accounts_income():
     return render_template("income.html")
 
 
+@app.route("/internal-accounts-expense")
+@login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
+def internal_accounts_expense():
+    return render_template("expense.html")
+
+
+@app.route("/internal-accounts-datasheet")
+@login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
+def internal_accounts_datasheet():
+    return render_template("datasheet.html")
+
+
+@app.route("/internal-accounts-balance-sheet")
+@login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
+def internal_accounts_balance_sheet():
+    return render_template("balancesheet.html")
+
+
 @app.route("/student-accounts")
 @login_required
+@roles_required(STUDENT_ROLE)
 def student_accounts():
-    student_id = str(request.args.get("student_id"))
-    student_class = CLASS_MAP[int(student_id[:1])]
-    return render_template("student/student_accounts.html", student_class=student_class)
+    # Always the logged-in student; the ?student_id= in the link is ignored
+    return render_template("student/student_accounts.html",
+                           student_class=class_from_school_id(current_user.school_id))
+
+
+EXAM_TYPES = ["1st Semester Assessment", "2nd Semester Assessment", "Final Semester Assessment"]
+
+
+def can_open_results():
+    # Service Admins need the result option, as on their dashboard
+    return current_user.role != SERVICE_ADMIN_ROLE or current_user.has_results_option_access
+
+
+def staff_results_page():
+    if not can_open_results():
+        abort(403)
+
+
+def period_sort_key(period):
+    """'2nd Semester Assessment 2026' / 'August 2026' -> sortable (year, order)."""
+    parts = period.split()
+    year = int(parts[-1]) if parts and parts[-1].isdigit() else 0
+    name = " ".join(parts[:-1])
+    if name in MONTH_NAMES:
+        return year, MONTH_NAMES.index(name)
+    return year, EXAM_TYPES.index(name) if name in EXAM_TYPES else len(EXAM_TYPES)
+
+
+def student_periods(model, column):
+    """Exams / months that have results for the logged-in student's branch and class, newest first."""
+    values = db.session.execute(
+        db.select(column).distinct().where(
+            model.branch == current_user.branch.name,
+            model.class_name == class_from_school_id(current_user.school_id),
+        )
+    ).scalars().all()
+    return sorted(values, key=period_sort_key, reverse=True)
 
 
 @app.route("/result")
 @login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE, TEACHER_ROLE)
 def result():
+    staff_results_page()
     return render_template("result.html")
 
 
 @app.route("/student-result")
 @login_required
+@roles_required(STUDENT_ROLE)
 def student_result():
     return render_template("student/student_result.html")
 
 
 @app.route("/result/semester-assessment")
 @login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE, TEACHER_ROLE)
 def semester_assessment():
-    return render_template("semester_assessment.html", year=datetime.now().strftime("%Y"))
+    staff_results_page()
+    return render_template("semester_assessment.html", classes=CLASS_NAMES, exam_types=EXAM_TYPES,
+                           years=attendance_years(), current_year=today_in_dhaka().year)
 
 
 @app.route("/student-result/semester-assessment")
 @login_required
+@roles_required(STUDENT_ROLE)
 def student_semester_assessment():
-    student_class = CLASS_MAP[int(str(current_user.school_id)[:1])]
-    return render_template("student/semester_assessment.html", student_class=student_class,
-                           year=datetime.now().strftime("%Y"))
+    return render_template("student/semester_assessment.html",
+                           student_class=class_from_school_id(current_user.school_id),
+                           exams=student_periods(SemesterResultRecord, SemesterResultRecord.exam_name))
 
 
 @app.route("/result/class-assessment")
 @login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE, TEACHER_ROLE)
 def class_assessment():
-    return render_template("class_assessment.html", year=datetime.now().strftime("%Y"))
+    staff_results_page()
+    today = today_in_dhaka()
+    return render_template("class_assessment.html", classes=CLASS_NAMES, months=MONTH_NAMES,
+                           years=attendance_years(), current_month=MONTH_NAMES[today.month - 1],
+                           current_year=today.year)
 
 
 @app.route("/student-result/class-assessment")
 @login_required
+@roles_required(STUDENT_ROLE)
 def student_class_assessment():
-    student_class = CLASS_MAP[int(str(current_user.school_id)[:1])]
-    records = db.session.query(ClassTestResultRecord).all()
-    uploaded_months = []
-    for record in records:
-        if record.month not in uploaded_months:
-            uploaded_months.append(record.month)
-    return render_template("student/class_assessment.html", student_class=student_class,
-                           year=datetime.now().strftime("%Y"), months=uploaded_months)
+    return render_template("student/class_assessment.html",
+                           student_class=class_from_school_id(current_user.school_id),
+                           months=student_periods(ClassTestResultRecord, ClassTestResultRecord.month))
 
 
 @app.route("/qr-code-management")
@@ -461,7 +753,7 @@ def qr_scanner():
 @login_required
 @roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def tutorial_management():
-    return render_template("admin/tutorial_management.html")
+    return render_template("admin/tutorial_management.html", classes=CLASS_NAMES)
 
 
 @app.route("/admin-user-management")
@@ -492,41 +784,43 @@ def student_user_management():
     return render_template("admin/student_user_management.html")
 
 
+def can_open_notices():
+    # Service Admins need the Notice option, as on their dashboard
+    return current_user.role != SERVICE_ADMIN_ROLE or current_user.has_notice_access
+
+
 @app.route("/notice-board-management")
 @login_required
 def notice_board_management():
-    notice_folder = os.path.join(
-        app.static_folder,
-        "img",
-        "notices",
-        current_user.branch.name
-    )
+    if not can_open_notices():
+        abort(403)
 
-    image_extensions = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp")
+    branches = [b.name for b in get_branches()]
+    own_branch = current_user.branch.name if current_user.branch else None
+    if current_user.role == ADMIN_ROLE:
+        # Admins can look at any branch's notice board
+        requested = (request.args.get("branch") or "").strip()
+        branch = requested if requested in branches else (own_branch if own_branch in branches else
+                                                          (branches[0] if branches else None))
+    else:
+        branch = own_branch
 
-    images = []
-    files = sorted(
-        os.listdir(notice_folder),
-        key=lambda f: os.path.getmtime(os.path.join(notice_folder, f)),
-    )
-
-    for file in files:
-        if file.lower().endswith(image_extensions):
-            images.append(
-                url_for(
-                    "static",
-                    filename=f"img/notices/{current_user.branch.name}/{file}"
-                )
-            )
-
-    return render_template("notice_board_management.html", srcs=images[::-1])
+    return render_template("notice_board_management.html", notices=list_notices(branch),
+                           branch=branch, branches=branches,
+                           can_manage=current_user.role in (ADMIN_ROLE, SERVICE_ADMIN_ROLE),
+                           max_mb=NOTICE_MAX_BYTES // (1024 * 1024))
 
 
 @app.route("/branch-management")
 @login_required
 @roles_required(ADMIN_ROLE)
 def branch_management():
-    branches = db.session.execute(db.select(Branch)).scalars().all()
+    user_counts = dict(db.session.execute(
+        db.select(User.branch_id, func.count()).group_by(User.branch_id)).all())
+    student_counts = dict(db.session.execute(
+        db.select(StudentRecord.branch, func.count()).group_by(StudentRecord.branch)).all())
+    branches = [{"branch": b, "users": user_counts.get(b.id, 0), "students": student_counts.get(b.name, 0)}
+                for b in get_branches()]
     return render_template("admin/branch_management.html", branches=branches)
 
 
@@ -534,30 +828,124 @@ def branch_management():
 @login_required
 @roles_required(ADMIN_ROLE)
 def log_info():
-    log_infos = db.session.query(LogInfo).all()[::-1]
-    return render_template("admin/log_info.html", log_infos=log_infos)
+    # Logs are loaded per day by the page (there are thousands; loading them all made the page slow)
+    return render_template("admin/log_info.html", today=today_in_dhaka().isoformat())
+
+
+MAX_COMMENT_LENGTH = 1000
+
+
+def can_manage_comments():
+    """Admins always; Service Admins only when given the comment option."""
+    return current_user.role == ADMIN_ROLE or (
+            current_user.role == SERVICE_ADMIN_ROLE and current_user.has_comment_access)
+
+
+def managed_comments_query():
+    """Comments the current user may read and reply to: all for an Admin,
+    only comments from their own branch's users for a Service Admin."""
+    stmt = db.select(Comment)
+    if current_user.role != ADMIN_ROLE:
+        stmt = stmt.join(User, User.username == Comment.username).where(User.branch_id == current_user.branch_id)
+    return stmt
+
+
+def format_comment_time(value):
+    return value.strftime("%d-%m-%Y %I:%M %p") if value else ""
+
+
+def serialize_comment(comment):
+    return {
+        "id": comment.id,
+        "comment": comment.comment,
+        "username": comment.username,
+        # Unanswered comments have no reply row
+        "reply_txt": comment.reply.reply_txt if comment.reply else "",
+        "comment_time": format_comment_time(comment.comment_time),
+    }
 
 
 @app.route("/submitted-comments")
 @login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def submitted_comments():
-    comments = db.session.query(Comment).all()[::-1]
-
-    return render_template("admin/comments.html", comments=comments)
+    if not can_manage_comments():
+        abort(403)
+    comments = db.session.execute(
+        managed_comments_query().order_by(Comment.comment_time.desc())
+    ).scalars().all()
+    return render_template("admin/comments.html", comments=[serialize_comment(c) for c in comments])
 
 
 @app.route("/comment")
 @login_required
 def student_comment():
-    comments = db.session.query(Comment).filter_by(username=current_user.username).all()
-    return render_template("student/comments.html", comments=comments)
+    comments = db.session.execute(
+        db.select(Comment).where(Comment.username == current_user.username).order_by(Comment.comment_time.desc())
+    ).scalars().all()
+    return render_template("student/comments.html", comments=comments, format_time=format_comment_time,
+                           max_length=MAX_COMMENT_LENGTH)
+
+
+def normalize_phone(text):
+    """Keep digits (Bengali digits converted) and a leading +; drop spaces, dashes, etc."""
+    text = (text or "").strip().translate(str.maketrans("০১২৩৪৫৬৭৮৯", "0123456789"))
+    digits = "".join(ch for ch in text if ch.isdigit())
+    return ("+" + digits) if text.startswith("+") and digits else digits
+
+
+@app.template_filter("whatsapp_number")
+def whatsapp_number(phone):
+    """wa.me needs the full international number without '+': 017... -> 88017..."""
+    digits = "".join(ch for ch in (phone or "") if ch.isdigit())
+    return "88" + digits if digits.startswith("01") else digits
+
+
+def can_manage_phone_numbers():
+    return current_user.role in (ADMIN_ROLE, SERVICE_ADMIN_ROLE)
+
+
+def phone_branch_for_current_user(requested_branch):
+    """A Service Admin can only manage their own branch; an Admin any existing branch."""
+    if current_user.role == SERVICE_ADMIN_ROLE:
+        return current_user.branch.name
+    requested_branch = (requested_branch or "").strip()
+    exists = db.session.execute(db.select(Branch.id).where(Branch.name == requested_branch).limit(1)).first()
+    return requested_branch if exists else None
+
+
+def validate_phone_form():
+    """Returns (name, phone, error)."""
+    name = (request.form.get("name") or "").strip()
+    phone = normalize_phone(request.form.get("phone_number"))
+    if not name:
+        return name, phone, "অনুগ্রহ করে নাম লিখুন।"
+    if not 6 <= len(phone.lstrip("+")) <= 15:
+        return name, phone, "সঠিক ফোন নাম্বার লিখুন।"
+    return name, phone, None
 
 
 @app.route("/call-services")
 @login_required
 def call_services():
-    phone_numbers = db.session.query(PhoneNumber).filter_by(branch_name=current_user.branch.name).all()
-    return render_template("call_service.html", phone_numbers=phone_numbers)
+    # Branches in the order they were created (Branch.id), so the first branch comes first.
+    # Outer join: numbers whose branch no longer exists still show, at the end.
+    stmt = (
+        db.select(PhoneNumber)
+        .outerjoin(Branch, Branch.name == PhoneNumber.branch_name)
+        .order_by(Branch.id.is_(None), Branch.id, PhoneNumber.id)
+    )
+    # Admins see every branch; everyone else only their own
+    if current_user.role != ADMIN_ROLE:
+        stmt = stmt.where(PhoneNumber.branch_name == current_user.branch.name)
+    phone_numbers = db.session.execute(stmt).scalars().all()
+
+    grouped = {}
+    for phone_number in phone_numbers:
+        grouped.setdefault(phone_number.branch_name, []).append(phone_number)
+
+    return render_template("call_service.html", grouped=grouped, phone_count=len(phone_numbers),
+                           can_manage=can_manage_phone_numbers())
 
 
 @app.route("/student-registration")
@@ -574,64 +962,74 @@ def about():
 
 
 # APIs -----------------------------------------------------------------------------------------------------------------
+SUBJECTS = ["Arabic", "Quran", "Bengali", "Science", "English", "Math", "BGS", "Aqaid & Fiqh"]
+
+
+def schedule_date(value):
+    """An Excel date cell or a typed date (day first, as written in Bangladesh: 25/01/2026) -> date, else None."""
+    if value is None or (not isinstance(value, str) and pd.isna(value)):
+        return None
+    if isinstance(value, (datetime, pd.Timestamp)):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    text = str(value).strip().translate(str.maketrans("০১২৩৪৫৬৭৮৯", "0123456789"))
+    if not text:
+        return None
+    parsed = pd.to_datetime(text, errors="coerce", dayfirst=not text[:4].isdigit())
+    return None if pd.isna(parsed) else parsed.date()
+
+
 @app.route("/upload-curriculum", methods=["POST"])
 @login_required
 @roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def upload_curriculum():
     try:
-        class_name = request.form["class_name"].strip()
-        subject_name = request.form["subject_name"].strip()
-        file = request.files.get("excel_file")
+        class_name = (request.form.get("class_name") or "").strip()
+        subject_name = (request.form.get("subject_name") or "").strip()
+        if class_name not in CLASS_NAMES:
+            raise ValueError("অনুগ্রহ করে সঠিক শ্রেণী নির্বাচন করুন।")
+        if subject_name not in SUBJECTS:
+            raise ValueError("অনুগ্রহ করে সঠিক বিষয় নির্বাচন করুন।")
 
+        file = request.files.get("excel_file")
         if not file or file.filename == "":
             raise ValueError("No file uploaded")
-
-        if not file.filename.endswith((".xlsx", ".xls")):
-            raise ValueError("Invalid file type")
+        if not file.filename.lower().endswith(".xlsx"):
+            raise ValueError("Only .xlsx Excel files are supported. In Excel use Save As → .xlsx")
 
         df = pd.read_excel(file)
-
-        required_columns = {"Date", "Topic"}
-        if not required_columns.issubset(df.columns):
-            raise ValueError("Missing required columns")
+        headers = {str(c).strip().lower(): c for c in df.columns}
+        missing = [name for name in ("Date", "Topic") if name.lower() not in headers]
+        if missing:
+            raise ValueError(f"Excel file is missing column(s): {', '.join(missing)}")
 
         records = []
+        for excel_row, row in enumerate(df.to_dict("records"), start=2):
+            raw_date, topic = row[headers["date"]], row[headers["topic"]]
+            topic = "" if topic is None or (not isinstance(topic, str) and pd.isna(topic)) else str(topic).strip()
+            day = schedule_date(raw_date)
+            if not topic and day is None:
+                continue  # blank line
+            if day is None:
+                raise ValueError(f"Row {excel_row}: '{raw_date}' is not a valid date (use DD/MM/YYYY).")
+            if not topic:
+                continue  # a date with no lesson
+            records.append(Curriculum(class_name=class_name, subject_name=subject_name, date=day, topic=topic))
 
-        for _, row in df.iterrows():
-            topic = row["Topic"]
+        if not records:
+            raise ValueError("Excel file has no lesson rows.")
 
-            if pd.isna(topic):
-                continue
-
-            curriculum_date = pd.to_datetime(row["Date"], errors="coerce")
-            if pd.isna(curriculum_date):
-                continue
-
-            records.append(Curriculum(
-                class_name=class_name,
-                subject_name=subject_name,
-                date=curriculum_date,
-                topic=str(topic)
-            ))
-
-        # Delete only AFTER validation
-        db.session.query(Curriculum).filter_by(
-            class_name=class_name,
-            subject_name=subject_name
-        ).delete()
-
-        db.session.bulk_save_objects(records)
-
+        # Replace this class + subject only once the whole file is valid
+        db.session.query(Curriculum).filter_by(class_name=class_name, subject_name=subject_name).delete()
+        db.session.add_all(records)
         db.session.commit()
-
-        flash("Lesson schedule uploaded successfully.", "success")
-        return redirect(url_for("lesson_schedule"))
-
+        flash(f"Lesson schedule uploaded: {class_name} · {subject_name} ({len(records)} days).", "success")
     except Exception as e:
         db.session.rollback()
-
         flash(str(e), "danger")
-        return redirect(url_for("lesson_schedule"))
+
+    return redirect(url_for("lesson_schedule"))
 
 
 @app.route("/upload-syllabus", methods=["POST"])
@@ -639,49 +1037,55 @@ def upload_curriculum():
 @roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def upload_syllabus():
     try:
-        class_name = request.form["class_name"].strip()
-        file = request.files.get("pdf_file")
+        # The class becomes the file name, so it must be one of the known classes (no paths)
+        class_name = (request.form.get("class_name") or "").strip()
+        if class_name not in SYLLABUS_CLASSES:
+            raise ValueError("অনুগ্রহ করে সঠিক শ্রেণী নির্বাচন করুন।")
 
+        file = request.files.get("pdf_file")
         if not file or file.filename == "":
             raise ValueError("No file uploaded")
+        data = file.read(SYLLABUS_MAX_BYTES + 1)
+        if len(data) > SYLLABUS_MAX_BYTES:
+            raise ValueError(f"PDF is too large. Maximum size is {SYLLABUS_MAX_BYTES // (1024 * 1024)} MB.")
+        if not data.startswith(b"%PDF"):
+            raise ValueError("Only PDF files can be uploaded as a syllabus.")
 
-        file.save(f"static/img/syllabus/{class_name}.pdf")
-
-        flash("Lesson syllabus uploaded successfully.", "success")
-        return redirect(url_for("lesson_syllabus"))
-
+        os.makedirs(SYLLABUS_DIR, exist_ok=True)
+        temp_path = syllabus_path(class_name) + ".uploading"
+        with open(temp_path, "wb") as out:
+            out.write(data)
+        os.replace(temp_path, syllabus_path(class_name))  # the old PDF stays until the new one is fully saved
+        flash(f"Lesson syllabus uploaded for class {class_name}.", "success")
     except Exception as e:
-        db.session.rollback()
-
         flash(str(e), "danger")
-        return redirect(url_for("lesson_syllabus"))
+
+    return redirect(url_for("lesson_syllabus"))
 
 
 @app.route("/api/search-curriculum", methods=["POST"])
 @login_required
 def search_curriculum():
-    data = request.json
-    class_name = data["class"]
-    lesson_schedule_date = data["date"]
-    year, month, day = lesson_schedule_date.split("-")
-    date_obj = date(day=int(day), month=int(month), year=int(year))
+    data = request.get_json(silent=True) or {}
+    if current_user.role == STUDENT_ROLE:
+        class_name = class_from_school_id(current_user.school_id)  # students only see their own class
+    else:
+        class_name = (data.get("class") or "").strip()
+    if class_name not in CLASS_NAMES:
+        return jsonify({"success": False, "error": "Please select a valid class", "data": []}), 400
+    try:
+        day = date.fromisoformat(str(data.get("date") or ""))
+    except ValueError:
+        return jsonify({"success": False, "error": "Please select a valid date", "data": []}), 400
 
-    result = db.session.query(Curriculum).filter_by(class_name=class_name, date=date_obj)
+    rows = db.session.execute(
+        db.select(Curriculum).where(Curriculum.class_name == class_name, Curriculum.date == day)
+    ).scalars().all()
+    order = {name: i for i, name in enumerate(SUBJECTS)}
+    rows.sort(key=lambda r: (order.get(r.subject_name, len(order)), r.subject_name, r.id))
 
-    rows = result.all()
-
-    results = []
-
-    for r in rows:
-        results.append({
-            "id": r.id,
-            "class": r.class_name,
-            "subject": r.subject_name,
-            "date": r.date,
-            "topic": r.topic,
-        })
-
-    return {"data": results}
+    return jsonify({"success": True, "class": class_name, "date": day.strftime("%d-%m-%Y"),
+                    "data": [{"subject": r.subject_name, "topic": r.topic} for r in rows]})
 
 
 @app.route("/api/upload-videos", methods=["POST"])
@@ -689,60 +1093,83 @@ def search_curriculum():
 @roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def upload_videos():
     try:
-        class_name = request.form["class_name"]
-        file = request.files["excel_file"]
+        class_name = (request.form.get("class_name") or "").strip()
+        if class_name not in CLASS_NAMES:
+            raise ValueError("অনুগ্রহ করে সঠিক শ্রেণী নির্বাচন করুন।")
+        # A video ID starts with its class number (Play = 1 ... Five = 7); the QR on the book is that ID
+        class_digit = str(CLASS_NAMES.index(class_name) + 1)
 
+        file = request.files.get("excel_file")
         if not file or file.filename == "":
             raise ValueError("No file uploaded")
-
-        if not file.filename.endswith((".xlsx", ".xls")):
-            raise ValueError("Invalid file type")
+        if not file.filename.lower().endswith(".xlsx"):
+            raise ValueError("Only .xlsx Excel files are supported. In Excel use Save As → .xlsx")
 
         df = pd.read_excel(file)
+        headers = {str(c).strip().lower(): c for c in df.columns}
+        missing = [name for name in ("ID", "Link") if name.lower() not in headers]
+        if missing:
+            raise ValueError(f"Excel file is missing column(s): {', '.join(missing)}")
 
-        required_columns = {"ID", "Link"}
-        if not required_columns.issubset(df.columns):
-            raise ValueError("Missing required columns")
+        videos, seen = [], set()
+        for excel_row, row in enumerate(df.itertuples(index=False), start=2):
+            row = dict(zip(df.columns, row))
+            raw_id, raw_link = row[headers["id"]], row[headers["link"]]
+            if raw_id is None or pd.isna(raw_id):
+                continue  # blank line in the sheet
+            try:
+                video_id = int(float(raw_id))
+            except (TypeError, ValueError):
+                raise ValueError(f"Row {excel_row}: ID '{raw_id}' is not a number.")
+            if not str(video_id).startswith(class_digit):
+                raise ValueError(f"Row {excel_row}: ID {video_id} must start with {class_digit} for class {class_name}.")
+            if video_id in seen:
+                raise ValueError(f"Row {excel_row}: ID {video_id} appears more than once.")
+            seen.add(video_id)
 
-        db.session.query(Video).filter_by(
-            class_name=class_name,
-        ).delete()
+            link = helpers.youtube_embed_url(None if raw_link is None or pd.isna(raw_link) else raw_link)
+            if link is None:
+                raise ValueError(f"Row {excel_row}: '{raw_link}' is not a valid YouTube link.")
+            videos.append(Video(id=video_id, class_name=class_name, link=link))
 
-        for index, row in df.iterrows():
-            video_id = str(row["ID"])
-            video_link = helpers.youtube_embed_url(row["Link"])
-            video_obj = Video(id=video_id, class_name=class_name, link=video_link)
-            db.session.add(video_obj)
+        if not videos:
+            raise ValueError("Excel file has no video rows.")
 
+        # IDs are unique across all classes; refuse ones that belong to another class
+        taken = db.session.execute(
+            db.select(Video.id, Video.class_name).where(Video.id.in_(seen), Video.class_name != class_name)
+        ).all()
+        if taken:
+            raise ValueError("These IDs already belong to another class: " +
+                             ", ".join(f"{vid} ({cls})" for vid, cls in taken[:10]))
+
+        # Replace this class's links only once the whole file is valid
+        db.session.query(Video).filter_by(class_name=class_name).delete()
+        db.session.add_all(videos)
         db.session.commit()
-
-        flash("Video Links uploaded successfully", "success")
-        return redirect(url_for("tutorial_management"))
+        flash(f"Video Links uploaded successfully ({len(videos)} videos).", "success")
     except Exception as e:
-
         db.session.rollback()
         flash(str(e), "danger")
-        return redirect(url_for("tutorial_management"))
+
+    return redirect(url_for("tutorial_management"))
 
 
 @app.route("/api/search-video-links", methods=["POST"])
 @login_required
 @roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def search_video_links():
-    data = request.json
-    class_ = data["class"]
+    class_ = ((request.get_json(silent=True) or {}).get("class") or "").strip()
+    if class_ not in CLASS_NAMES:
+        return jsonify({"success": False, "error": "Please select a valid class", "data": []}), 400
 
-    videos = db.session.query(Video).filter_by(class_name=class_).all()
+    videos = db.session.execute(
+        db.select(Video).where(Video.class_name == class_).order_by(Video.id)
+    ).scalars().all()
 
-    results = []
-
-    for r in videos:
-        results.append({
-            "id": r.id,
-            "link": r.link,
-        })
-
-    return {"data": results}
+    return jsonify({"success": True, "data": [
+        {"id": v.id, "link": v.link, "url": url_for("show_video", video_id=v.id)} for v in videos
+    ]})
 
 
 @app.route("/api/add-user", methods=["POST"])
@@ -810,7 +1237,7 @@ def search_users():
         # find branch first
         branch_obj = db.session.execute(
             db.select(Branch).where(Branch.name == branch_name)
-        ).scalar_one_or_none()
+        ).scalars().first()
 
         # if branch not found, return empty result
         if branch_obj is None:
@@ -917,19 +1344,101 @@ def delete_user(id):
         return {"success": False, "error": str(e)}
 
 
+MIN_PASSWORD_LENGTH = 6
+
+
 @app.route('/api/change-password', methods=["PATCH"])
 @login_required
 @roles_required(ADMIN_ROLE)
 def change_password():
-    data = request.json
-    id = data["id"]
-    password = data["password"]
-    if current_user.role != ADMIN_ROLE:
-        abort(403)
-    user = db.session.get(User, id)
+    """Admin sets another user's password (user management pages)."""
+    data = request.get_json(silent=True) or {}
+    password = data.get("password") or ""
+    # Spaces don't count towards the length, so "      " can't become a password
+    if len(password.strip()) < MIN_PASSWORD_LENGTH:
+        return jsonify({"success": False,
+                        "error": f"Password must be at least {MIN_PASSWORD_LENGTH} characters"}), 400
+
+    try:
+        user_id = int(data.get("id"))
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "error": "User not found"}), 404
+
+    user = db.session.get(User, user_id)
+    if user is None:
+        return jsonify({"success": False, "error": "User not found"}), 404
+
     user.set_password(password)
     db.session.commit()
-    return {"success": True}
+    return jsonify({"success": True})
+
+
+@app.route('/change-password', methods=["GET", "POST"])
+@login_required
+def change_own_password():
+    """Any logged-in user changes their own password (needs the current one)."""
+    if request.method == "POST":
+        current_password = request.form.get("current_password") or ""
+        new_password = request.form.get("new_password") or ""
+        confirm_password = request.form.get("confirm_password") or ""
+
+        if not current_user.check_password(current_password):
+            flash("বর্তমান পাসওয়ার্ড সঠিক নয়।", "danger")
+        elif len(new_password.strip()) < MIN_PASSWORD_LENGTH:  # spaces don't count
+            flash(f"নতুন পাসওয়ার্ড কমপক্ষে {MIN_PASSWORD_LENGTH} অক্ষরের হতে হবে।", "danger")
+        elif new_password != confirm_password:
+            flash("নতুন পাসওয়ার্ড দুটি মিলছে না।", "danger")
+        elif new_password == current_password:
+            flash("নতুন পাসওয়ার্ড বর্তমান পাসওয়ার্ড থেকে আলাদা হতে হবে।", "danger")
+        else:
+            current_user.set_password(new_password)
+            db.session.commit()
+            flash("পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে।", "success")
+
+        return redirect(url_for("change_own_password"))
+
+    return render_template("change_password.html", min_length=MIN_PASSWORD_LENGTH)
+
+
+def attendance_branch_for_current_user(requested_branch):
+    """Admins may use any existing branch; everyone else only their own."""
+    if current_user.role != ADMIN_ROLE:
+        return current_user.branch.name
+    requested_branch = (requested_branch or "").strip()
+    exists = db.session.execute(db.select(Branch.id).where(Branch.name == requested_branch).limit(1)).first()
+    return requested_branch if exists else None
+
+
+def valid_attendance_month(month):
+    """'November 2026' style, as stored by uploads."""
+    parts = (month or "").split()
+    return len(parts) == 2 and parts[0] in MONTH_NAMES and parts[1].isdigit()
+
+
+def excel_day_columns(columns):
+    """Map day number (1-31) -> column label. Headers may be 1, "1", 1.0 or a date in that month."""
+    days = {}
+    for column in columns:
+        if isinstance(column, (datetime, date, pd.Timestamp)):
+            day = column.day
+        else:
+            try:
+                day = int(float(str(column).strip()))
+            except ValueError:
+                continue
+        if 1 <= day <= 31 and day not in days:
+            days[day] = column
+    return days
+
+
+def attendance_cell(value):
+    """Excel cell -> stored text: blanks become None and 1.0 becomes "1"."""
+    if value is None or pd.isna(value):
+        return None
+    if isinstance(value, float) and value.is_integer():
+        value = int(value)
+    text = str(value).strip()
+    return text or None
 
 
 @app.route('/upload-attendance', methods=['POST'])
@@ -937,43 +1446,67 @@ def change_password():
 @roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def upload_attendance():
     try:
-        branch = request.form["branch_name"].strip()
-        class_ = request.form["class_name"].strip()
-        month = request.form["month_name"].strip()
+        if not can_open_attendance():
+            abort(403)
+
+        branch = attendance_branch_for_current_user(request.form.get("branch_name"))
+        class_ = (request.form.get("class_name") or "").strip()
+        month = (request.form.get("month_name") or "").strip()
+
+        if branch is None:
+            raise ValueError("অনুগ্রহ করে সঠিক ব্রাঞ্চ নির্বাচন করুন।")
+        if class_ not in CLASS_NAMES:
+            raise ValueError("অনুগ্রহ করে সঠিক শ্রেণী নির্বাচন করুন।")
+        if not valid_attendance_month(month):
+            raise ValueError("অনুগ্রহ করে সঠিক মাস নির্বাচন করুন।")
 
         file = request.files.get('excel_file')
-
         if not file or file.filename == "":
             raise ValueError("No file uploaded")
-
-        if not file.filename.endswith((".xlsx", ".xls")):
-            raise ValueError("Invalid file type")
+        if not file.filename.lower().endswith(".xlsx"):
+            raise ValueError("Only .xlsx Excel files are supported. In Excel use Save As → .xlsx")
 
         df = pd.read_excel(file)
+        df.columns = [c.strip() if isinstance(c, str) else c for c in df.columns]
 
-        # Delete previous record before adding
-        db.session.query(AttendanceRecord).filter_by(
-            branch=branch,
-            class_name=class_,
-            month=month
-        ).delete()
+        missing = [c for c in ("ID", "Student Name") if c not in df.columns]
+        if missing:
+            raise ValueError(f"Excel file is missing column(s): {', '.join(missing)}")
 
-        for _, row in df.iterrows():
+        day_columns = excel_day_columns(df.columns)
+        if not day_columns:
+            raise ValueError("Excel file has no date columns (headers 1 to 31).")
+
+        records = []
+        for excel_row, row in enumerate(df.itertuples(index=False), start=2):
+            row = dict(zip(df.columns, row))
+            if row["ID"] is None or pd.isna(row["ID"]):
+                continue  # blank line in the sheet
+            try:
+                student_id = int(float(row["ID"]))
+            except (TypeError, ValueError):
+                raise ValueError(f"Row {excel_row}: ID '{row['ID']}' is not a number.")
+
             record = AttendanceRecord(
                 branch=branch,
                 class_name=class_,
                 month=month,
-                student_id=int(row["ID"]),
-                student_name=helpers.convert_bangla_text(str(row["Student Name"])),
-
+                student_id=student_id,
+                student_name=helpers.convert_bangla_text(attendance_cell(row["Student Name"]) or ""),
             )
-            for i in range(31):
-                record.__setattr__(f"d{i + 1}", row[i + 1])
+            for day in range(1, 32):
+                column = day_columns.get(day)
+                setattr(record, f"d{day}", attendance_cell(row[column]) if column is not None else None)
+            records.append(record)
 
-            db.session.add(record)
+        if not records:
+            raise ValueError("Excel file has no student rows.")
 
+        # Replace the previous upload for this branch/class/month in the same transaction
+        db.session.query(AttendanceRecord).filter_by(branch=branch, class_name=class_, month=month).delete()
+        db.session.add_all(records)
         db.session.commit()
-        flash("Attendance uploaded successfully.", "success")
+        flash(f"Attendance uploaded successfully ({len(records)} students).", "success")
 
     except Exception as e:
         db.session.rollback()
@@ -983,509 +1516,991 @@ def upload_attendance():
 
 
 @app.route("/api/search-attendance", methods=["POST"])
+@login_required
 def search_attendance():
-    data = request.json
+    data = request.get_json(silent=True) or {}
+    month = (data.get("month") or "").strip()
 
-    branch_name = data.get("branch")
-    class_name = data.get("class")
-    month = data.get("month")
-    student_id = data.get("student_id")
-
-    if student_id:
-        result = db.session.query(AttendanceRecord).filter_by(branch=branch_name, class_name=class_name, month=month,
-                                                              student_id=student_id)
+    if current_user.role == STUDENT_ROLE:
+        # Students only ever see their own record
+        branch_name = current_user.branch.name
+        class_name = class_from_school_id(current_user.school_id)
+        student_id = current_user.school_id
     else:
-        result = db.session.query(AttendanceRecord).filter_by(branch=branch_name, class_name=class_name, month=month)
+        if not can_open_attendance():
+            abort(403)
+        branch_name = attendance_branch_for_current_user(data.get("branch"))
+        class_name = (data.get("class") or "").strip()
+        student_id = data.get("student_id")
 
-    rows = result.all()
+    if branch_name is None or class_name not in CLASS_NAMES or not valid_attendance_month(month):
+        return jsonify({"success": False, "error": "Please select a valid branch, class and month", "data": []}), 400
+
+    stmt = db.select(AttendanceRecord).where(
+        AttendanceRecord.branch == branch_name,
+        AttendanceRecord.class_name == class_name,
+        AttendanceRecord.month == month,
+    )
+    if student_id:
+        try:
+            stmt = stmt.where(AttendanceRecord.student_id == int(student_id))
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "error": "Invalid ID", "data": []}), 400
+
+    rows = db.session.execute(stmt.order_by(AttendanceRecord.student_id)).scalars().all()
 
     results = []
-
     for r in rows:
-        record = {
-            "ID": r.student_id,
-            "student_name": r.student_name,
-        }
-        for i in range(31):
-            record[f"d{i + 1}"] = r.__getattribute__(f"d{i + 1}")
+        record = {"ID": r.student_id, "student_name": r.student_name}
+        for i in range(1, 32):
+            value = getattr(r, f"d{i}")
+            # Older uploads stored 1.0 / "nan"; show them as "1" / blank
+            if value in ("nan", "None"):
+                value = None
+            elif isinstance(value, str) and value.endswith(".0") and value[:-2].isdigit():
+                value = value[:-2]
+            record[f"d{i}"] = value
         results.append(record)
 
-    return {"data": results}
+    return jsonify({"success": True, "data": results})
+
+
+def account_amount(value):
+    """Excel cell -> stored amount: blanks become None, numbers (also Bengali digits) a float.
+    Any other text (e.g. a note) is kept as written."""
+    if value is None or pd.isna(value):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    text = str(value).strip().translate(str.maketrans("০১২৩৪৫৬৭৮৯", "0123456789")).replace(",", "")
+    if not text:
+        return None
+    try:
+        return float(text)
+    except ValueError:
+        return str(value).strip()
+
+
+def account_value_for_display(value):
+    """Numbers stay numbers (500.0 -> 500); text is converted from Bijoy to Unicode."""
+    if value is None:
+        return None
+    if isinstance(value, float):
+        return int(value) if value.is_integer() else value
+    if isinstance(value, int):
+        return value
+    return helpers.convert_bangla_text(value)
 
 
 @app.route('/upload-accounts', methods=['POST'])
+@login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def upload_accounts():
     try:
-        branch = request.form["branch_name"]
-        class_ = request.form["class_name"]
-        file = request.files['excel_file']
+        if not can_open_accounts():
+            abort(403)
 
+        branch = attendance_branch_for_current_user(request.form.get("branch_name"))
+        class_ = (request.form.get("class_name") or "").strip()
+
+        if branch is None:
+            raise ValueError("অনুগ্রহ করে সঠিক ব্রাঞ্চ নির্বাচন করুন।")
+        if class_ not in CLASS_NAMES:
+            raise ValueError("অনুগ্রহ করে সঠিক শ্রেণী নির্বাচন করুন।")
+
+        file = request.files.get('excel_file')
         if not file or file.filename == "":
             raise ValueError("No file uploaded")
-
-        if not file.filename.endswith((".xlsx", ".xls")):
-            raise ValueError("Invalid file type")
+        if not file.filename.lower().endswith(".xlsx"):
+            raise ValueError("Only .xlsx Excel files are supported. In Excel use Save As → .xlsx")
 
         df = pd.read_excel(file)
+        # Match headers case-insensitively: "January", "january ", "JANUARY" all work
+        columns = {str(c).strip().lower(): c for c in df.columns}
 
-        db.session.query(AccountsRecord).filter_by(
-            branch=branch,
-            class_name=class_,
-        ).delete()
+        missing = [name for name in ("ID", "Student Name") if name.lower() not in columns]
+        if missing:
+            raise ValueError(f"Excel file is missing column(s): {', '.join(missing)}")
+        if not any(month in columns for month in ACCOUNT_MONTHS + ["due"]):
+            raise ValueError("Excel file has no month columns (January to December) or Due column.")
 
-        for _, row in df.iterrows():
+        records = []
+        for excel_row, row in enumerate(df.itertuples(index=False), start=2):
+            row = dict(zip(df.columns, row))
+            raw_id = row[columns["id"]]
+            if raw_id is None or pd.isna(raw_id):
+                continue  # blank line in the sheet
+            try:
+                student_id = int(float(raw_id))
+            except (TypeError, ValueError):
+                raise ValueError(f"Row {excel_row}: ID '{raw_id}' is not a number.")
+
+            name = row[columns["student name"]]
             record = AccountsRecord(
                 branch=branch,
                 class_name=class_,
-                student_id=int(row["ID"]),
-                student_name=helpers.convert_bangla_text(str(row["Student Name"])),
-                january=row["January"],
-                february=row["February"],
-                march=row["March"],
-                april=row["April"],
-                may=row["May"],
-                june=row["June"],
-                july=row["July"],
-                august=row["August"],
-                september=row["September"],
-                october=row["October"],
-                november=row["November"],
-                december=row["December"],
-                due=row["Due"]
-
+                student_id=student_id,
+                student_name=helpers.convert_bangla_text("" if name is None or pd.isna(name) else str(name)),
             )
-            db.session.add(record)
+            for field in ACCOUNT_MONTHS + ["due"]:
+                setattr(record, field, account_amount(row[columns[field]]) if field in columns else None)
+            records.append(record)
+
+        if not records:
+            raise ValueError("Excel file has no student rows.")
+
+        # Replace this class's previous upload only once the new file has been read successfully
+        db.session.query(AccountsRecord).filter_by(branch=branch, class_name=class_).delete()
+        db.session.add_all(records)
         db.session.commit()
-        flash("Accounts uploaded successfully.", "success")
-        return redirect(url_for("accounts"))
+        flash(f"Accounts uploaded successfully ({len(records)} students).", "success")
     except Exception as e:
         db.session.rollback()
         flash(str(e), "danger")
-        return redirect(url_for("accounts"))
+
+    return redirect(url_for("accounts"))
 
 
 @app.route('/api/search-accounts', methods=['POST'])
+@login_required
 def search_accounts():
-    data = request.get_json()
+    """Used by the Accounts page, the student's salary card and the internal income page."""
+    data = request.get_json(silent=True) or {}
 
-    branch = data.get("branch")
-    class_ = data.get("class")
-    student_id = data.get("student_id")
+    if current_user.role == STUDENT_ROLE:
+        # Students only ever see their own record
+        branch = current_user.branch.name
+        class_ = class_from_school_id(current_user.school_id)
+        student_id = current_user.school_id
+    elif current_user.role in (ADMIN_ROLE, SERVICE_ADMIN_ROLE):
+        branch = attendance_branch_for_current_user(data.get("branch"))
+        class_ = (data.get("class") or "").strip()
+        student_id = data.get("student_id")
+    else:
+        abort(403)
 
-    query = db.session.query(AccountsRecord).filter_by(
-        branch=branch,
-        class_name=class_
-    )
+    if branch is None or class_ not in CLASS_NAMES:
+        return jsonify({"success": False, "error": "Please select a valid branch and class", "data": []}), 400
 
+    stmt = db.select(AccountsRecord).where(AccountsRecord.branch == branch, AccountsRecord.class_name == class_)
     if student_id:
-        query = query.filter_by(student_id=student_id)
+        try:
+            stmt = stmt.where(AccountsRecord.student_id == int(student_id))
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "error": "Invalid ID", "data": []}), 400
 
-    accounts_records = query.all()
+    records = db.session.execute(stmt.order_by(AccountsRecord.student_id)).scalars().all()
 
     results = []
+    for record in records:
+        row = {"ID": record.student_id, "student_name": record.student_name}
+        for field in ACCOUNT_MONTHS + ["due"]:
+            row[field] = account_value_for_display(getattr(record, field))
+        results.append(row)
 
-    for accounts_record in accounts_records:
-        results.append({
-            "ID": accounts_record.student_id,
-            "student_name": accounts_record.student_name,
-            "january": helpers.convert_bangla_text(accounts_record.january),
-            "february": helpers.convert_bangla_text(accounts_record.february),
-            "march": helpers.convert_bangla_text(accounts_record.march),
-            "april": helpers.convert_bangla_text(accounts_record.april),
-            "may": helpers.convert_bangla_text(accounts_record.may),
-            "june": helpers.convert_bangla_text(accounts_record.june),
-            "july": helpers.convert_bangla_text(accounts_record.july),
-            "august": helpers.convert_bangla_text(accounts_record.august),
-            "september": helpers.convert_bangla_text(accounts_record.september),
-            "october": helpers.convert_bangla_text(accounts_record.october),
-            "november": helpers.convert_bangla_text(accounts_record.november),
-            "december": helpers.convert_bangla_text(accounts_record.december),
-            "due": helpers.convert_bangla_text(accounts_record.due),
-        })
+    return jsonify({"success": True, "data": results})
 
-    return jsonify({
-        "success": True,
-        "data": results
-    })
+
+# Income columns of DataSheet, in the order they appear in the table
+INCOME_FIELDS = ["monthly_fee", "exam_fee", "admission_fee", "book_fee",
+                 "copy_fee", "id_card_fee", "other_income"]
+
+
+@app.route('/api/save-income', methods=['POST'])
+@login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
+def save_income():
+    data = request.get_json(silent=True) or {}
+
+    amounts = {}
+    for field in INCOME_FIELDS:
+        try:
+            amount = float(data.get(field) or 0)
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "error": f"Invalid amount for {field}"}), 400
+        if amount < 0:
+            return jsonify({"success": False, "error": f"{field} cannot be negative"}), 400
+        amounts[field] = amount
+
+    total_income = sum(amounts.values())
+    if total_income == 0:
+        return jsonify({"success": False, "error": "Nothing to save, all amounts are empty"}), 400
+
+    record = DataSheet(
+        date=datetime.now(ZoneInfo("Asia/Dhaka")).date(),
+        **amounts,
+        total_income=total_income,
+        # Expenses are recorded from the expense page; the columns are NOT NULL
+        daily_expense=0,
+        all_rent_and_bills=0,
+        staff_salary=0,
+        other_expenses=0,
+        total_expense=0,
+    )
+
+    db.session.add(record)
+    db.session.flush()
+    # Keep the balance sheet in step with the new income
+    refresh_balance_sheet(record.date)
+    db.session.commit()
+
+    return jsonify({"success": True, "id": record.id, "date": record.date.isoformat(),
+                    "total_income": total_income})
+
+
+def today_in_dhaka():
+    return datetime.now(ZoneInfo("Asia/Dhaka")).date()
+
+
+def refresh_balance_sheet(day):
+    """Make sure `day` has a BalanceSheet row, then recalculate it and every later row.
+
+    Each row's total_income / total_expense are the sums of that day's DataSheet rows, and
+    balance = previous day's balance + income - expense + deposit - withdraw.
+    Does not commit; the caller does.
+    """
+    row = db.session.execute(
+        db.select(BalanceSheet).where(BalanceSheet.date == day)
+    ).scalars().first()
+    if row is None:
+        db.session.add(BalanceSheet(date=day, total_income=0, total_expense=0, deposit=0,
+                                    deposit_description="", withdraw=0,
+                                    withdraw_description="", balance=0))
+        db.session.flush()
+
+    previous = db.session.execute(
+        db.select(BalanceSheet.balance)
+        .where(BalanceSheet.date < day)
+        .order_by(BalanceSheet.date.desc())
+        .limit(1)
+    ).scalar()
+    balance = previous or 0
+
+    daily_totals = dict(
+        (row_date, (income or 0, expense or 0))
+        for row_date, income, expense in db.session.execute(
+            db.select(DataSheet.date, func.sum(DataSheet.total_income), func.sum(DataSheet.total_expense))
+            .where(DataSheet.date >= day)
+            .group_by(DataSheet.date)
+        ).all()
+    )
+
+    later_rows = db.session.execute(
+        db.select(BalanceSheet).where(BalanceSheet.date >= day).order_by(BalanceSheet.date)
+    ).scalars().all()
+
+    for row in later_rows:
+        row.total_income, row.total_expense = daily_totals.get(row.date, (0, 0))
+        balance += row.total_income - row.total_expense + (row.deposit or 0) - (row.withdraw or 0)
+        row.balance = round(balance, 2)
+
+
+@app.route('/api/save-balance', methods=['POST'])
+@login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
+def save_balance():
+    data = request.get_json(silent=True) or {}
+
+    try:
+        day = date.fromisoformat(data.get("date")) if data.get("date") else today_in_dhaka()
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "error": "Invalid date"}), 400
+    if day > today_in_dhaka():
+        return jsonify({"success": False, "error": "Date cannot be in the future"}), 400
+
+    amounts = {}
+    for field in ("deposit", "withdraw"):
+        try:
+            amount = float(data.get(field) or 0)
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "error": f"Invalid amount for {field}"}), 400
+        if amount < 0:
+            return jsonify({"success": False, "error": f"{field} cannot be negative"}), 400
+        amounts[field] = amount
+
+    if amounts["deposit"] == 0 and amounts["withdraw"] == 0:
+        return jsonify({"success": False, "error": "Enter a deposit or a withdraw amount"}), 400
+
+    refresh_balance_sheet(day)  # creates the day's row if it is missing
+    row = db.session.execute(
+        db.select(BalanceSheet).where(BalanceSheet.date == day)
+    ).scalars().first()
+
+    # Several entries on the same day add up; their descriptions are kept side by side
+    for field in ("deposit", "withdraw"):
+        if amounts[field] == 0:
+            continue
+        setattr(row, field, (getattr(row, field) or 0) + amounts[field])
+        description = (data.get(f"{field}_description") or "").strip()
+        if description:
+            old = getattr(row, f"{field}_description") or ""
+            setattr(row, f"{field}_description", f"{old}; {description}" if old else description)
+
+    refresh_balance_sheet(day)  # recalculate with the new amounts
+    db.session.commit()
+
+    return jsonify({"success": True, "date": row.date.isoformat(), "balance": row.balance})
+
+
+@app.route('/api/search-balance-sheet', methods=['POST'])
+@login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
+def search_balance_sheet():
+    data = request.get_json(silent=True) or {}
+
+    try:
+        start = date.fromisoformat(data.get("from"))
+        end = date.fromisoformat(data.get("to"))
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "error": "Please choose a valid date range"}), 400
+
+    if start > end:
+        return jsonify({"success": False, "error": "From date must be before To date"}), 400
+
+    rows = db.session.execute(
+        db.select(BalanceSheet)
+        .where(BalanceSheet.date.between(start, end))
+        .order_by(BalanceSheet.date)
+    ).scalars().all()
+
+    opening = db.session.execute(
+        db.select(BalanceSheet.balance)
+        .where(BalanceSheet.date < start)
+        .order_by(BalanceSheet.date.desc())
+        .limit(1)
+    ).scalar()
+
+    results = [{
+        "date": row.date.isoformat(),
+        "total_income": row.total_income or 0,
+        "total_expense": row.total_expense or 0,
+        "deposit": row.deposit or 0,
+        "deposit_description": row.deposit_description or "",
+        "withdraw": row.withdraw or 0,
+        "withdraw_description": row.withdraw_description or "",
+        "balance": row.balance or 0,
+    } for row in rows]
+
+    return jsonify({"success": True, "opening_balance": opening or 0, "data": results})
+
+
+DATASHEET_FIELDS = INCOME_FIELDS + ["total_income", "daily_expense", "all_rent_and_bills",
+                                    "staff_salary", "other_expenses", "total_expense"]
+
+
+@app.route('/api/search-datasheet', methods=['POST'])
+@login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
+def search_datasheet():
+    data = request.get_json(silent=True) or {}
+
+    try:
+        start = date.fromisoformat(data.get("from"))
+        end = date.fromisoformat(data.get("to"))
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "error": "Please choose a valid date range"}), 400
+
+    if start > end:
+        return jsonify({"success": False, "error": "From date must be before To date"}), 400
+
+    records = db.session.execute(
+        db.select(DataSheet)
+        .where(DataSheet.date.between(start, end))
+        .order_by(DataSheet.date, DataSheet.id)
+    ).scalars().all()
+
+    results = [
+        {"id": record.id, "date": record.date.isoformat(),
+         **{field: getattr(record, field) or 0 for field in DATASHEET_FIELDS}}
+        for record in records
+    ]
+
+    return jsonify({"success": True, "data": results})
+
+
+# Result sheets: database field -> accepted Excel headers (matched ignoring case/spaces).
+# Missing subject columns are fine (lower classes have fewer subjects); they stay empty.
+SEMESTER_FIELDS = {
+    "merit": ["Merit"],
+    "arabic": ["Arabic"],
+    "quran": ["Quran"],
+    "bengali": ["Bengali"],
+    "english": ["English"],
+    "math": ["Math"],
+    "science": ["Science"],
+    "bgs": ["BGS"],
+    "aqaid_and_fiqh": ["Aqaid & Fiqh", "Aqaid and Fiqh"],
+    "class_test": ["Class Assessment", "Class Test"],
+    "presence": ["Attendance", "Presence"],
+    "total": ["Total"],
+    "letter_grade": ["Letter Grade", "Grade"],
+}
+CLASS_TEST_FIELDS = {
+    "arabic": ["Arabic"],
+    "quran": ["Quran"],
+    "bengali": ["Bengali"],
+    "english": ["English"],
+    "math": ["Math"],
+    "science": ["Science"],
+    "aqaid_and_fiqh": ["Aqaid & Fiqh", "Aqaid and Fiqh"],
+    "bgs": ["BGS"],
+    "total": ["Total"],
+}
+TEXT_RESULT_FIELDS = {"letter_grade"}
+INTEGER_RESULT_FIELDS = {"merit"}
+
+
+def valid_exam_name(exam):
+    """'1st Semester Assessment 2026' style."""
+    parts = (exam or "").rsplit(" ", 1)
+    return len(parts) == 2 and parts[0] in EXAM_TYPES and parts[1].isdigit()
+
+
+def result_cell(value, field, excel_row, header):
+    """Excel cell -> stored value. Blank/'-' -> None; marks may use Bengali digits."""
+    if value is None or (not isinstance(value, str) and pd.isna(value)):
+        return None
+    if field in TEXT_RESULT_FIELDS:
+        return str(value).strip() or None
+    text = str(value).strip().translate(str.maketrans("০১২৩৪৫৬৭৮৯", "0123456789"))
+    if text in ("", "-"):
+        return None
+    try:
+        number = float(text)
+    except ValueError:
+        raise ValueError(f"Row {excel_row}, column '{header}': '{value}' is not a number.")
+    return int(number) if field in INTEGER_RESULT_FIELDS else round(number, 2)
+
+
+def read_result_sheet(file, fields, model, fixed_values):
+    """Parse an uploaded result sheet into model rows (nothing is saved here)."""
+    if not file or file.filename == "":
+        raise ValueError("No file uploaded")
+    if not file.filename.lower().endswith(".xlsx"):
+        raise ValueError("Only .xlsx Excel files are supported. In Excel use Save As → .xlsx")
+
+    df = pd.read_excel(file)
+    headers = {" ".join(str(c).split()).lower(): c for c in df.columns}
+
+    missing = [name for name in ("ID", "Student Name", "Total") if name.lower() not in headers]
+    if missing:
+        raise ValueError(f"Excel file is missing column(s): {', '.join(missing)}")
+
+    field_columns = {}
+    for field, names in fields.items():
+        for name in names:
+            if name.lower() in headers:
+                field_columns[field] = headers[name.lower()]
+                break
+
+    records = []
+    for excel_row, row in enumerate(df.itertuples(index=False), start=2):
+        row = dict(zip(df.columns, row))
+        raw_id = row[headers["id"]]
+        if raw_id is None or pd.isna(raw_id):
+            continue  # blank line in the sheet
+        try:
+            student_id = int(float(raw_id))
+        except (TypeError, ValueError):
+            raise ValueError(f"Row {excel_row}: ID '{raw_id}' is not a number.")
+
+        name = row[headers["student name"]]
+        record = model(**fixed_values, student_id=student_id,
+                       student_name=helpers.convert_bangla_text("" if name is None or pd.isna(name) else str(name)))
+        for field, column in field_columns.items():
+            setattr(record, field, result_cell(row[column], field, excel_row, column))
+        records.append(record)
+
+    if not records:
+        raise ValueError("Excel file has no student rows.")
+    return records
+
+
+def result_upload_target(period_ok, period_error):
+    """Common checks for both result uploads. Returns (branch, class_name)."""
+    if not can_open_results():
+        abort(403)
+    branch = attendance_branch_for_current_user(request.form.get("branch_name"))
+    class_ = (request.form.get("class_name") or "").strip()
+    if branch is None:
+        raise ValueError("অনুগ্রহ করে সঠিক ব্রাঞ্চ নির্বাচন করুন।")
+    if class_ not in CLASS_NAMES:
+        raise ValueError("অনুগ্রহ করে সঠিক শ্রেণী নির্বাচন করুন।")
+    if not period_ok:
+        raise ValueError(period_error)
+    return branch, class_
+
+
+def result_search_target(data):
+    """Returns (branch, class_name, student_id) the current user may search."""
+    if current_user.role == STUDENT_ROLE:
+        # Students only ever see their own result
+        return current_user.branch.name, class_from_school_id(current_user.school_id), current_user.school_id
+    if not can_open_results():
+        abort(403)
+    return (attendance_branch_for_current_user(data.get("branch")),
+            (data.get("class") or "").strip(), data.get("student_id"))
+
+
+def result_value_for_display(value, field):
+    if isinstance(value, float) and value != value:  # NaN is not valid JSON
+        return None
+    if field in TEXT_RESULT_FIELDS:
+        # Letter grades are plain English ("A+"); the Bijoy converter would turn "A" into "অ"
+        return value
+    return account_value_for_display(value)
+
+
+def search_results(model, period_column, period, fields, order_by):
+    data = request.get_json(silent=True) or {}
+    branch, class_, student_id = result_search_target(data)
+
+    if branch is None or class_ not in CLASS_NAMES or not period:
+        return jsonify({"success": False, "error": "Please select a valid branch, class and exam/month",
+                        "data": []}), 400
+
+    stmt = db.select(model).where(model.branch == branch, model.class_name == class_, period_column == period)
+    if student_id:
+        try:
+            stmt = stmt.where(model.student_id == int(student_id))
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "error": "Invalid ID", "data": []}), 400
+
+    results = []
+    for record in db.session.execute(stmt.order_by(*order_by)).scalars().all():
+        row = {"ID": record.student_id, "student_name": record.student_name}
+        for field in fields:
+            row[field] = result_value_for_display(getattr(record, field), field)
+        results.append(row)
+
+    return jsonify({"success": True, "data": results})
 
 
 @app.route('/api/upload-semester-result', methods=['POST'])
+@login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def upload_semester_result():
     try:
-        file = request.files['excel_file']
-        branch = request.form["branch_name"]
-        class_ = request.form["class_name"]
-        exam = request.form["exam_name"]
+        exam = " ".join((request.form.get("exam_name") or "").split())
+        branch, class_ = result_upload_target(valid_exam_name(exam), "অনুগ্রহ করে সঠিক পরীক্ষা নির্বাচন করুন।")
+        records = read_result_sheet(request.files.get("excel_file"), SEMESTER_FIELDS, SemesterResultRecord,
+                                    {"branch": branch, "class_name": class_, "exam_name": exam})
 
-        if not file or file.filename == "":
-            raise ValueError("No file uploaded")
-
-        if not file.filename.endswith((".xlsx", ".xls")):
-            raise ValueError("Invalid file type")
-
-        df = pd.read_excel(file)
-
-        db.session.query(SemesterResultRecord).filter_by(
-            branch=branch,
-            class_name=class_,
-            exam_name=exam,
-        ).delete()
-
-        for _, row in df.iterrows():
-            if class_ in ("Play", "Nursery", "One", "Two"):
-                new_record = SemesterResultRecord(
-                    branch=branch,
-                    class_name=class_,
-                    exam_name=exam,
-                    student_id=int(row["ID"]),
-                    student_name=helpers.convert_bangla_text(str(row["Student Name"])),
-                    merit=int(row["Merit"]),
-                    arabic=round(float(row["Arabic"]), 2),
-                    quran=round(float(row["Quran"]), 2),
-                    bengali=round(float(row["Bengali"]), 2),
-                    english=round(float(row["English"]), 2),
-                    math=round(float(row["Math"]), 2),
-                    class_test=round(float(row["Class Assessment"]), 2),
-                    presence=round(float(row["Attendance"]), 2),
-                    total=round(float(row["Total"]), 2),
-                    letter_grade=str(row["Letter Grade"])
-                )
-            else:
-                new_record = SemesterResultRecord(
-                    branch=branch,
-                    class_name=class_,
-                    exam_name=exam,
-                    student_id=int(row["ID"]),
-                    student_name=helpers.convert_bangla_text(str(row["Student Name"])),
-                    merit=int(row["Merit"]),
-                    arabic=round(float(row["Arabic"]), 2),
-                    quran=round(float(row["Quran"]), 2),
-                    bengali=round(float(row["Bengali"]), 2),
-                    english=round(float(row["English"]), 2),
-                    math=round(float(row["Math"]), 2),
-                    science=round(float(row["Science"]), 2),
-                    bgs=round(float(row["BGS"]), 2),
-                    aqaid_and_fiqh=round(float(row["Aqaid & Fiqh"]), 2),
-                    class_test=round(float(row["Class Assessment"]), 2),
-                    presence=round(float(row["Attendance"]), 2),
-                    total=round(float(row["Total"]), 2),
-                    letter_grade=str(row["Letter Grade"])
-                )
-            db.session.add(new_record)
-
+        # Replace the previous upload only once the new file has been read successfully
+        db.session.query(SemesterResultRecord).filter_by(branch=branch, class_name=class_, exam_name=exam).delete()
+        db.session.add_all(records)
         db.session.commit()
-        flash("Semester Assessment Result uploaded successfully.", "success")
-        return redirect(url_for("semester_assessment"))
+        flash(f"Semester Assessment Result uploaded successfully ({len(records)} students).", "success")
     except Exception as e:
         db.session.rollback()
         flash(str(e), "danger")
-        return redirect(url_for("semester_assessment"))
+    return redirect(url_for("semester_assessment"))
 
 
 @app.route('/api/search-semester-result', methods=['POST'])
+@login_required
 def search_semester_result():
-    data = request.json
-    branch = data.get("branch")
-    class_ = data.get("class")
-    exam = data.get("exam")
-    student_id = data.get("student_id")
-
-    if student_id:
-        records = db.session.query(SemesterResultRecord).filter_by(branch=branch, class_name=class_,
-                                                                   exam_name=exam, student_id=student_id).all()
-    else:
-        records = db.session.query(SemesterResultRecord).filter_by(branch=branch, class_name=class_,
-                                                                   exam_name=exam).all()
-
-    results = []
-    for record in records:
-        new_record = {
-            "ID": record.student_id,
-            "student_name": record.student_name,
-            "merit": helpers.convert_bangla_text(record.merit),
-            "arabic": helpers.convert_bangla_text(record.arabic),
-            "quran": helpers.convert_bangla_text(record.quran),
-            "aqaid_and_fiqh": helpers.convert_bangla_text(record.aqaid_and_fiqh),
-            "bengali": helpers.convert_bangla_text(record.bengali),
-            "english": helpers.convert_bangla_text(record.english),
-            "math": helpers.convert_bangla_text(record.math),
-            "science": helpers.convert_bangla_text(record.science),
-            "bgs": helpers.convert_bangla_text(record.bgs),
-            "class_test": helpers.convert_bangla_text(record.class_test),
-            "presence": helpers.convert_bangla_text(record.presence),
-            "total": helpers.convert_bangla_text(record.total),
-            "letter_grade": record.letter_grade,
-        }
-        results.append(new_record)
-
-    return {"data": results}
+    exam = " ".join(((request.get_json(silent=True) or {}).get("exam") or "").split())
+    return search_results(SemesterResultRecord, SemesterResultRecord.exam_name,
+                          exam if valid_exam_name(exam) else None, SEMESTER_FIELDS,
+                          # Merit order first; students without a merit position go last
+                          [SemesterResultRecord.merit.is_(None), SemesterResultRecord.merit,
+                           SemesterResultRecord.student_id])
 
 
 @app.route('/api/upload-class-result', methods=['POST'])
+@login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def upload_class_result():
     try:
-        branch = request.form["branch_name"]
-        class_ = request.form["class_name"]
-        month = request.form["month_name"]
-        file = request.files['excel_file']
+        month = (request.form.get("month_name") or "").strip()
+        branch, class_ = result_upload_target(valid_attendance_month(month), "অনুগ্রহ করে সঠিক মাস নির্বাচন করুন।")
+        records = read_result_sheet(request.files.get("excel_file"), CLASS_TEST_FIELDS, ClassTestResultRecord,
+                                    {"branch": branch, "class_name": class_, "month": month})
 
-        if not file or file.filename == "":
-            raise ValueError("No file uploaded")
-
-        if not file.filename.endswith((".xlsx", ".xls")):
-            raise ValueError("Invalid file type")
-
-        df = pd.read_excel(file)
-
-        db.session.query(ClassTestResultRecord).filter_by(
-            branch=branch,
-            class_name=class_,
-            month=month,
-        ).delete()
-
-        for _, row in df.iterrows():
-            if class_ in ("Play", "Nursery", "One", "Two"):
-                new_record = ClassTestResultRecord(
-                    branch=branch,
-                    class_name=class_,
-                    month=month,
-                    student_id=int(row["ID"]),
-                    student_name=helpers.convert_bangla_text(str(row["Student Name"])),
-                    arabic=round(float(row["Arabic"]), 2),
-                    bengali=round(float(row["Bengali"]), 2),
-                    english=round(float(row["English"]), 2),
-                    math=round(float(row["Math"]), 2),
-                    total=round(float(row["Total"]), 2),
-                )
-            else:
-                new_record = ClassTestResultRecord(
-                    branch=branch,
-                    class_name=class_,
-                    month=month,
-                    student_id=int(row["ID"]),
-                    student_name=helpers.convert_bangla_text(str(row["Student Name"])),
-                    arabic=round(float(row["Arabic"]), 2),
-                    quran=round(float(row["Quran"]), 2),
-                    bengali=round(float(row["Bengali"]), 2),
-                    english=round(float(row["English"]), 2),
-                    math=round(float(row["Math"]), 2),
-                    science=round(float(row["Science"]), 2),
-                    aqaid_and_fiqh=round(float(row["Aqaid & Fiqh"]), 2),
-                    bgs=round(float(row["BGS"]), 2),
-                    total=round(float(row["Total"]), 2),
-                )
-
-            db.session.add(new_record)
-
+        db.session.query(ClassTestResultRecord).filter_by(branch=branch, class_name=class_, month=month).delete()
+        db.session.add_all(records)
         db.session.commit()
-
-        flash("Class Test Result uploaded successfully.", "success")
-        return redirect(url_for("class_assessment"))
+        flash(f"Class Test Result uploaded successfully ({len(records)} students).", "success")
     except Exception as e:
         db.session.rollback()
         flash(str(e), "danger")
-        return redirect(url_for("class_assessment"))
+    return redirect(url_for("class_assessment"))
 
 
 @app.route('/api/search-class-result', methods=['POST'])
+@login_required
 def search_class_result():
-    data = request.json
-    branch = data.get("branch")
-    class_ = data.get("class")
-    month = data.get("month")
-    student_id = data.get("student_id")
+    month = ((request.get_json(silent=True) or {}).get("month") or "").strip()
+    return search_results(ClassTestResultRecord, ClassTestResultRecord.month,
+                          month if valid_attendance_month(month) else None, CLASS_TEST_FIELDS,
+                          [ClassTestResultRecord.student_id])
 
-    if student_id:
-        records = db.session.query(ClassTestResultRecord).filter_by(branch=branch, class_name=class_, month=month,
-                                                                    student_id=student_id).all()
-    else:
-        records = db.session.query(ClassTestResultRecord).filter_by(branch=branch, class_name=class_, month=month).all()
 
-    results = []
-    for record in records:
-        new_record = {
-            "ID": record.student_id,
-            "student_name": record.student_name,
-            "arabic": helpers.convert_bangla_text(record.arabic),
-            "quran": helpers.convert_bangla_text(record.quran),
-            "aqaid_and_fiqh": helpers.convert_bangla_text(record.aqaid_and_fiqh),
-            "bengali": helpers.convert_bangla_text(record.bengali),
-            "english": helpers.convert_bangla_text(record.english),
-            "math": helpers.convert_bangla_text(record.math),
-            "science": helpers.convert_bangla_text(record.science),
-            "bgs": helpers.convert_bangla_text(record.bgs),
-            "total": helpers.convert_bangla_text(record.total),
-        }
-        results.append(new_record)
+NOTICE_IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp")
+NOTICE_MAX_BYTES = 10 * 1024 * 1024  # 10 MB
+NOTICE_NAME = re.compile(r"^(\d{2})-(\d{2})-(\d{4}) (\d{2})-(\d{2})-(\d{2})")
 
-    return {"data": results}
+
+def notice_image_type(head):
+    """The real image type from the file's first bytes (the file name can lie); None if not an image."""
+    if head.startswith(b"\x89PNG\r\n\x1a\n"):
+        return ".png"
+    if head.startswith(b"\xff\xd8\xff"):
+        return ".jpg"
+    if head[:6] in (b"GIF87a", b"GIF89a"):
+        return ".gif"
+    if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+        return ".webp"
+    if head[:2] == b"BM":
+        return ".bmp"
+    return None
+
+
+def list_notices(branch):
+    """A branch's notices, newest first, with the date they were posted."""
+    if not branch:
+        return []
+    folder = os.path.join(NOTICES_DIR, branch)
+    os.makedirs(folder, exist_ok=True)  # e.g. a branch that was just created
+    notices = []
+    for name in os.listdir(folder):
+        path = os.path.join(folder, name)
+        if not (os.path.isfile(path) and name.lower().endswith(NOTICE_IMAGE_EXTENSIONS)):
+            continue
+        match = NOTICE_NAME.match(name)
+        if match:
+            d, mo, y, h, mi, se = map(int, match.groups())
+            posted = datetime(y, mo, d, h, mi, se)
+        else:
+            posted = datetime.fromtimestamp(os.path.getmtime(path))
+        notices.append({"url": url_for("static", filename=f"img/notices/{branch}/{name}"),
+                        "posted": posted, "date": posted.strftime("%d-%m-%Y %I:%M %p")})
+    notices.sort(key=lambda n: n["posted"], reverse=True)
+    return notices
+
+
+def notice_branch_for_current_user(requested_branch):
+    """The branch a notice action may touch: a Service Admin only their own, an Admin any existing branch."""
+    if current_user.role == SERVICE_ADMIN_ROLE:
+        return current_user.branch.name
+    exists = db.session.execute(
+        db.select(Branch.id).where(Branch.name == (requested_branch or "").strip()).limit(1)
+    ).first()
+    return requested_branch.strip() if exists else None
 
 
 @app.route('/api/upload-notice', methods=['POST'])
+@login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def upload_notice():
+    if not can_open_notices():
+        abort(403)
+
+    branch = notice_branch_for_current_user(request.form.get("branch_name"))
     try:
-        img = request.files["img"]
-        branch = request.form["branch_name"]
-        img.save(
-            f"static/img/notices/{branch}/{datetime.now(ZoneInfo("Asia/Dhaka")).strftime("%d-%m-%Y %H-%M-%S")}.png")
-        flash("Notice uploaded successfully.", "success")
-        return redirect(url_for("notice_board_management"))
+        # Never trust the branch name as a folder path; it must be a real branch
+        if branch is None:
+            raise ValueError("Please select a valid branch.")
+
+        img = request.files.get("img")
+        if not img or not img.filename:
+            raise ValueError("Please choose a notice image.")
+
+        data = img.read(NOTICE_MAX_BYTES + 1)
+        if len(data) > NOTICE_MAX_BYTES:
+            raise ValueError(f"Image is too large. Maximum size is {NOTICE_MAX_BYTES // (1024 * 1024)} MB.")
+        extension = notice_image_type(data[:16])
+        if extension is None:
+            raise ValueError("Only image files (PNG, JPG, GIF, WEBP, BMP) can be uploaded as notices. "
+                             "For a PDF, take a screenshot or export it as an image.")
+
+        branch_folder = os.path.join(NOTICES_DIR, branch)
+        os.makedirs(branch_folder, exist_ok=True)
+        stamp = datetime.now(ZoneInfo("Asia/Dhaka")).strftime("%d-%m-%Y %H-%M-%S")
+        # Two uploads in the same second must not overwrite each other
+        name, n = f"{stamp}{extension}", 2
+        while os.path.exists(os.path.join(branch_folder, name)):
+            name, n = f"{stamp} ({n}){extension}", n + 1
+        with open(os.path.join(branch_folder, name), "wb") as out:
+            out.write(data)
+        flash(f"Notice uploaded to {branch}.", "success")
     except Exception as e:
-        db.session.rollback()
         flash(str(e), "danger")
-        return redirect(url_for("notice_board_management"))
+
+    if current_user.role == ADMIN_ROLE and branch:
+        return redirect(url_for("notice_board_management", branch=branch))
+    return redirect(url_for("notice_board_management"))
 
 
 @app.route("/api/search-log-info", methods=["POST"])
 @login_required
 @roles_required(ADMIN_ROLE)
 def search_login_info():
-    data = request.json
-    selected_date = data["date"]
+    try:
+        day = date.fromisoformat(str((request.get_json(silent=True) or {}).get("date") or ""))
+    except ValueError:
+        return jsonify({"success": False, "error": "Please select a valid date", "data": []}), 400
 
-    log_infos = db.session.query(LogInfo).filter(
-        func.date(LogInfo.login_time) == selected_date
-    ).order_by(LogInfo.login_time.desc()).all()
+    start = datetime.combine(day, datetime.min.time())
+    rows = db.session.execute(
+        db.select(LogInfo, User.role, Branch.name)
+        .outerjoin(User, User.username == LogInfo.username)
+        .outerjoin(Branch, Branch.id == User.branch_id)
+        .where(LogInfo.login_time >= start, LogInfo.login_time < start + timedelta(days=1))
+        .order_by(LogInfo.login_time.desc())
+    ).all()
 
-    results = []
-
-    for log in log_infos:
-        results.append({
-            "username": log.username,
-            "login_time": log.login_time.strftime("%d-%m-%Y %I:%M %p")
-        })
-
-    return jsonify({
-        "data": results
-    })
+    return jsonify({"success": True, "data": [{
+        "username": log.username,
+        "role": role or "—",          # "—" when the user has since been deleted
+        "branch": branch or "—",
+        "login_time": log.login_time.strftime("%I:%M %p"),
+    } for log, role, branch in rows]})
 
 
 @app.route("/api/search-comments", methods=["POST"])
 @login_required
-@roles_required(ADMIN_ROLE)
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def search_comments():
-    data = request.json
-    selected_date = data["date"]
+    if not can_manage_comments():
+        abort(403)
 
-    comments = db.session.query(Comment).filter(
-        func.date(Comment.comment_time) == selected_date
-    ).order_by(Comment.comment_time.desc()).all()
+    data = request.get_json(silent=True) or {}
+    stmt = managed_comments_query()
 
-    results = []
+    # No date = all comments
+    if data.get("date"):
+        try:
+            selected_date = date.fromisoformat(data["date"])
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "error": "Invalid date", "data": []}), 400
+        start = datetime.combine(selected_date, datetime.min.time())
+        stmt = stmt.where(Comment.comment_time >= start, Comment.comment_time < start + timedelta(days=1))
 
-    for comment in comments:
-        results.append({
-            "id": comment.id,
-            "comment": comment.comment,
-            "username": comment.username,
-            "reply_txt": comment.reply.reply_txt,
-            "comment_time": comment.comment_time.strftime("%d-%m-%Y %I: %M %p"),
+    comments = db.session.execute(stmt.order_by(Comment.comment_time.desc())).scalars().all()
 
-        })
-
-    return jsonify({
-        "data": results
-    })
+    return jsonify({"success": True, "data": [serialize_comment(c) for c in comments]})
 
 
 @app.route('/api/upload-phone-number', methods=['POST'])
+@login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def upload_phone_number():
-    try:
-        branch_name = request.form["branch_name"]
-        name = request.form["name"]
-        phone_number = request.form["phone_number"]
-        new_phone_number = PhoneNumber(branch_name=branch_name, name=name, phone_number=phone_number)
-        db.session.add(new_phone_number)
+    branch_name = phone_branch_for_current_user(request.form.get("branch_name"))
+    name, phone, error = validate_phone_form()
+
+    if branch_name is None:
+        flash("অনুগ্রহ করে সঠিক ব্রাঞ্চ নির্বাচন করুন।", "danger")
+    elif error:
+        flash(error, "danger")
+    else:
+        try:
+            db.session.add(PhoneNumber(branch_name=branch_name, name=name, phone_number=phone))
+            db.session.commit()
+            flash("ফোন নাম্বার যোগ করা হয়েছে।", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash(str(e), "danger")
+
+    return redirect(url_for("call_services"))
+
+
+def editable_phone_number(phone_id):
+    """The PhoneNumber row if the current user may change it, else None."""
+    phone_number = db.session.get(PhoneNumber, phone_id)
+    if phone_number is None:
+        return None
+    if current_user.role == SERVICE_ADMIN_ROLE and phone_number.branch_name != current_user.branch.name:
+        return None
+    return phone_number
+
+
+@app.route('/api/update-phone-number/<int:phone_id>', methods=['POST'])
+@login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
+def update_phone_number(phone_id):
+    phone_number = editable_phone_number(phone_id)
+    branch_name = phone_branch_for_current_user(request.form.get("branch_name"))
+    name, phone, error = validate_phone_form()
+
+    if phone_number is None:
+        flash("ফোন নাম্বারটি পাওয়া যায়নি।", "danger")
+    elif branch_name is None:
+        flash("অনুগ্রহ করে সঠিক ব্রাঞ্চ নির্বাচন করুন।", "danger")
+    elif error:
+        flash(error, "danger")
+    else:
+        phone_number.branch_name = branch_name
+        phone_number.name = name
+        phone_number.phone_number = phone
         db.session.commit()
-        flash("Phone number uploaded successfully.", "success")
-        return redirect(url_for("call_services"))
-    except Exception as e:
-        db.session.rollback()
-        flash(str(e), "danger")
-        return redirect(url_for("call_services"))
+        flash("ফোন নাম্বার আপডেট করা হয়েছে।", "success")
+
+    return redirect(url_for("call_services"))
+
+
+@app.route('/api/delete-phone-number/<int:phone_id>', methods=['DELETE'])
+@login_required
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
+def delete_phone_number(phone_id):
+    phone_number = editable_phone_number(phone_id)
+    if phone_number is None:
+        return jsonify({"success": False, "error": "Phone number not found"}), 404
+
+    db.session.delete(phone_number)
+    db.session.commit()
+    return jsonify({"success": True})
 
 
 @app.route('/api/upload-comment', methods=['POST'])
+@login_required
 def upload_comment():
-    try:
-        username = request.form["username"]
-        comment = request.form["comment"]
+    comment = (request.form.get("comment") or "").strip()
 
-        new_comment = Comment(username=username, comment=comment)
-        db.session.add(new_comment)
-        db.session.commit()
-        flash("Comment submitted successfully.", "success")
-        return redirect(url_for("student_comment"))
-    except Exception as e:
-        db.session.rollback()
-        flash(str(e), "danger")
-        return redirect(url_for("student_comment"))
+    if not comment:
+        flash("অনুগ্রহ করে মন্তব্য লিখুন।", "danger")
+    elif len(comment) > MAX_COMMENT_LENGTH:
+        flash(f"মন্তব্য সর্বোচ্চ {MAX_COMMENT_LENGTH} অক্ষরের হতে পারে।", "danger")
+    else:
+        try:
+            # Always the logged-in user; never trust a username sent by the form
+            db.session.add(Comment(username=current_user.username, comment=comment))
+            db.session.commit()
+            flash("মন্তব্য সফলভাবে জমা হয়েছে।", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash(str(e), "danger")
+
+    return redirect(url_for("student_comment"))
 
 
 @app.route("/api/reply-comment", methods=["POST"])
 @login_required
-@roles_required(ADMIN_ROLE)
+@roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def reply_comment():
-    try:
-        comment_id = int(request.form["comment_db_id"])
-        comment_reply = request.form["comment_reply"]
+    if not can_manage_comments():
+        abort(403)
 
-        comment_reply = CommentReply(replier=current_user.username, comment_id=comment_id, reply_txt=comment_reply)
-        db.session.add(comment_reply)
-        db.session.commit()
-        flash("Reply sent successfully.", "success")
-        return redirect(url_for("submitted_comments"))
-    except Exception as e:
-        db.session.rollback()
-        flash(str(e), "danger")
-        return redirect(url_for("submitted_comments"))
+    reply_txt = (request.form.get("comment_reply") or "").strip()
+    try:
+        comment_id = int(request.form.get("comment_db_id") or 0)
+    except ValueError:
+        comment_id = 0
+
+    # Must be a comment this user is allowed to see
+    comment = db.session.execute(
+        managed_comments_query().where(Comment.id == comment_id)
+    ).scalars().first()
+
+    if comment is None:
+        flash("মন্তব্যটি পাওয়া যায়নি।", "danger")
+    elif not reply_txt:
+        flash("অনুগ্রহ করে উত্তর লিখুন।", "danger")
+    elif len(reply_txt) > MAX_COMMENT_LENGTH:
+        flash(f"উত্তর সর্বোচ্চ {MAX_COMMENT_LENGTH} অক্ষরের হতে পারে।", "danger")
+    else:
+        try:
+            # One reply per comment: replying again edits the existing reply
+            if comment.reply:
+                comment.reply.reply_txt = reply_txt
+                comment.reply.replier = current_user.username
+                comment.reply.reply_time = datetime.now(ZoneInfo("Asia/Dhaka"))
+            else:
+                db.session.add(CommentReply(replier=current_user.username, comment_id=comment.id,
+                                            reply_txt=reply_txt))
+            db.session.commit()
+            flash("উত্তর পাঠানো হয়েছে।", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash(str(e), "danger")
+
+    return redirect(url_for("submitted_comments"))
 
 
 @app.route("/api/delete_notice", methods=["DELETE"])
+@login_required
 @roles_required(ADMIN_ROLE, SERVICE_ADMIN_ROLE)
 def delete_notice():
-    notice_url = request.json.get("notice_path")
-    # Remove the leading "/"
-    notice_url = notice_url.lstrip("/")
+    if not can_open_notices():
+        return jsonify({"success": False, "error": "You do not have access to notices."}), 403
+    notice_url = unquote((request.get_json(silent=True) or {}).get("notice_path") or "")
+    # "/static/img/notices/Branch%20Name/file.png" -> <NOTICES_DIR>/Branch Name/file.png
+    prefix = url_for("static", filename="img/notices/")
+    if not notice_url.startswith(prefix):
+        return jsonify({"success": False, "error": "Invalid notice"}), 400
+    notice_path = os.path.realpath(os.path.join(NOTICES_DIR, notice_url[len(prefix):]))
 
-    # Decode %20 -> space
-    notice_url = unquote(notice_url)
+    # Only files directly inside a branch's notices folder may be deleted
+    notices_root = os.path.realpath(NOTICES_DIR)
+    branch_folder = os.path.dirname(notice_path)
+    if os.path.dirname(branch_folder) != notices_root \
+            or not notice_path.lower().endswith(NOTICE_IMAGE_EXTENSIONS):
+        return jsonify({"success": False, "error": "Invalid notice"}), 400
 
-    notice_path = os.path.join(app.root_path, notice_url)
+    # A Service Admin may only delete their own branch's notices
+    if notice_branch_for_current_user(os.path.basename(branch_folder)) != os.path.basename(branch_folder):
+        return jsonify({"success": False, "error": "You cannot delete another branch's notice"}), 403
+
+    if not os.path.isfile(notice_path):
+        return jsonify({"success": False, "error": "Notice not found"}), 404
 
     os.remove(notice_path)
+    return jsonify({"success": True})
 
-    return {"success": True}
+
+BRANCH_NAME_TABLES = [  # tables that store the branch by name rather than by id
+    (AttendanceRecord, AttendanceRecord.branch),
+    (AccountsRecord, AccountsRecord.branch),
+    (SemesterResultRecord, SemesterResultRecord.branch),
+    (ClassTestResultRecord, ClassTestResultRecord.branch),
+    (Notice, Notice.branch),
+    (PhoneNumber, PhoneNumber.branch_name),
+    (StudentRecord, StudentRecord.branch),
+]
+
+
+def validate_branch_form(data, branch_id=None):
+    """Clean branch fields -> (fields, None) or (None, error). Names and codes must be unique."""
+    fields = {
+        "code": (data.get("code") or "").strip().upper(),
+        "name": " ".join((data.get("name") or "").split()),
+        "director": " ".join((data.get("director") or "").split()),
+        "phone": normalize_phone(data.get("phone")),
+    }
+    if not all(fields.values()):
+        return None, "অনুগ্রহ করে সকল তথ্য পূরণ করুন।"
+    # The name is also a folder name for the branch's notices
+    if any(ch in fields["name"] for ch in '/\\:*?"<>|') or fields["name"].strip(".") == "":
+        return None, "শাখার নামে / \\ : * ? \" < > | চিহ্ন ব্যবহার করা যাবে না।"
+    if len(fields["phone"].lstrip("+")) < 6:
+        return None, "সঠিক ফোন নম্বর দিন।"
+
+    for column, label in ((Branch.name, "নামে"), (Branch.code, "কোডে")):
+        value = fields["name"] if column is Branch.name else fields["code"]
+        clash = db.session.execute(
+            db.select(Branch.id).where(func.lower(column) == value.lower(), Branch.id != (branch_id or 0)).limit(1)
+        ).first()
+        if clash:
+            return None, f"এই {label} আরেকটি শাখা আছে: {value}"
+    return fields, None
 
 
 @app.route("/api/add-branch", methods=["POST"])
 @login_required
 @roles_required(ADMIN_ROLE)
 def add_branch():
-    data = request.json
+    data = request.get_json(silent=True) or {}
+    fields, error = validate_branch_form({"code": data.get("code"), "name": data.get("branch"),
+                                          "director": data.get("director"), "phone": data.get("phone")})
+    if error:
+        return jsonify({"success": False, "error": error}), 400
 
-    # Extract fields
-    code = data.get("code")
-    branch = data.get("branch")
-    director = data.get("director")
-    phone = data.get("phone")
-
-    # Simple validation
-    if not code or not branch or not director or not phone:
-        return jsonify({"success": False, "error": "Missing required fields"}), 400
-
-    # Add user
-    branch = Branch(
-        code=code,
-        name=branch,
-        director=director,
-        phone=phone,
-    )
-
+    branch = Branch(**fields)
     db.session.add(branch)
     db.session.commit()
-    os.mkdir(f"static/img/notices/{branch.name}")  # creates branch directory for notices
-
+    # Folder for the branch's notices; it may already exist if a branch with this name was deleted earlier
+    os.makedirs(os.path.join(NOTICES_DIR, branch.name), exist_ok=True)
     return jsonify({"success": True})
 
 
@@ -1493,57 +2508,119 @@ def add_branch():
 @login_required
 @roles_required(ADMIN_ROLE)
 def update_branch():
-    data = request.json
+    data = request.get_json(silent=True) or {}
+    try:
+        branch = db.session.get(Branch, int(data.get("branch_id")))
+    except (TypeError, ValueError):
+        branch = None
+    if branch is None:
+        return jsonify({"success": False, "error": "Branch not found"}), 404
 
-    # Extract fields
-    branch_id = data.get("branch_id")
-    branch_code = data.get("new_code")
-    branch_name = data.get("new_branch_name")
-    branch_director = data.get("new_director_name")
-    branch_phone = data.get("new_phone")
+    fields, error = validate_branch_form({"code": data.get("new_code"), "name": data.get("new_branch_name"),
+                                          "director": data.get("new_director_name"), "phone": data.get("new_phone")},
+                                         branch_id=branch.id)
+    if error:
+        return jsonify({"success": False, "error": error}), 400
 
-    branch_obj = db.session.get(Branch, branch_id)
+    old_name, new_name = branch.name, fields["name"]
+    try:
+        for key, value in fields.items():
+            setattr(branch, key, value)
+        if new_name != old_name:
+            # Records point to the branch by its name, so carry the new name everywhere
+            for model, column in BRANCH_NAME_TABLES:
+                db.session.execute(db.update(model).where(column == old_name).values({column.key: new_name}))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
 
-    branch_obj.code = branch_code
-    branch_obj.name = branch_name
-    branch_obj.director = branch_director
-    branch_obj.phone = branch_phone
-
-    db.session.commit()
+    if new_name != old_name:
+        move_notice_folder(old_name, new_name)
     return jsonify({"success": True})
 
 
-@app.route("/api/delete-branch/<id>", methods=["DELETE"])
+def move_notice_folder(old_name, new_name):
+    """Keep the branch's uploaded notices after a rename (merged if the new folder already exists)."""
+    old_folder, new_folder = os.path.join(NOTICES_DIR, old_name), os.path.join(NOTICES_DIR, new_name)
+    try:
+        if not os.path.isdir(old_folder):
+            os.makedirs(new_folder, exist_ok=True)
+        elif not os.path.exists(new_folder) or old_name.lower() == new_name.lower():
+            os.rename(old_folder, new_folder)  # also handles a change of letter case on Windows
+        else:
+            for name in os.listdir(old_folder):
+                target = os.path.join(new_folder, name)
+                if not os.path.exists(target):
+                    os.rename(os.path.join(old_folder, name), target)
+            if not os.listdir(old_folder):
+                os.rmdir(old_folder)
+    except OSError as e:
+        app.logger.warning("Could not move notices from %s to %s: %s", old_folder, new_folder, e)
+
+
+@app.route("/api/delete-branch/<int:id>", methods=["DELETE"])
 @login_required
 @roles_required(ADMIN_ROLE)
 def delete_branch(id):
+    branch = db.session.get(Branch, id)
+    if branch is None:
+        return jsonify({"success": False, "error": "Branch not found"}), 404
+
+    # Users must belong to a branch (users.branch_id is NOT NULL), and students are
+    # linked to the branch by name, so refuse instead of breaking or orphaning them.
+    user_count = db.session.execute(
+        db.select(func.count()).select_from(User).where(User.branch_id == branch.id)
+    ).scalar()
+    student_count = db.session.execute(
+        db.select(func.count()).select_from(StudentRecord).where(StudentRecord.branch == branch.name)
+    ).scalar()
+    if user_count or student_count:
+        return jsonify({
+            "success": False,
+            "error": f"এই ব্রাঞ্চে এখনও {user_count} জন ইউজার এবং {student_count} জন শিক্ষার্থী আছে। "
+                     f"মুছে ফেলার আগে তাদের অন্য ব্রাঞ্চে সরান বা মুছে ফেলুন।"
+        }), 409
+
     try:
-        branch = db.session.get(Branch, id)
         db.session.delete(branch)
         db.session.commit()
-        return {"success": True}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        db.session.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+    return jsonify({"success": True})
 
 
 @app.route("/api/add-student", methods=["POST"])
 @login_required
 @roles_required(SERVICE_ADMIN_ROLE)
 def add_student():
-    data = request.json
+    data = request.get_json(silent=True) or {}
+
+    # A service admin can only register students into their own branch
+    branch = current_user.branch.name
 
     # Extract fields
-    branch = data.get("branch")
-    student_name = data.get("student_name")
-    fathers_name = data.get("fathers_name")
-    guardian_phone = data.get("guardian_phone")
-    address = data.get("address")
-    class_name = data.get("class_name")
-    roll = data.get("roll")
+    student_name = (data.get("student_name") or "").strip()
+    fathers_name = (data.get("fathers_name") or "").strip()
+    guardian_phone = (data.get("guardian_phone") or "").strip()
+    address = (data.get("address") or "").strip()
+    class_name = (data.get("class_name") or "").strip()
+    roll = str(data.get("roll") or "").strip()
+    fixed_fee = data.get("fixed_fee")
 
     # Simple validation
-    if not student_name or not fathers_name or not guardian_phone or not address or not class_name or not roll:
+    if not student_name or not fathers_name or not guardian_phone or not address or not class_name or not roll \
+            or fixed_fee in (None, ""):
         return jsonify({"success": False, "error": "Missing required fields"}), 400
+
+    try:
+        fixed_fee = float(fixed_fee)
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "error": "Fixed fee must be a number"}), 400
+    if fixed_fee < 0:
+        return jsonify({"success": False, "error": "Fixed fee cannot be negative"}), 400
 
     # Add user
     student = StudentRecord(
@@ -1554,6 +2631,7 @@ def add_student():
         address=address,
         class_name=class_name,
         roll=roll,
+        fixed_fee=fixed_fee,
     )
 
     db.session.add(student)
@@ -1577,7 +2655,7 @@ def search_students():
         # find branch first
         branch_obj = db.session.execute(
             db.select(Branch).where(Branch.name == branch_name)
-        ).scalar_one_or_none()
+        ).scalars().first()
 
         # if branch not found, return empty result
         if branch_obj is None:
@@ -1611,6 +2689,7 @@ def search_students():
             "guardian_phone": student.guardian_phone,
             "address": student.address,
             "class_name": student.class_name,
+            "fixed_fee": student.fixed_fee,
         }
 
     users_serialized = [serialize_user(student) for student in students]
@@ -1619,19 +2698,68 @@ def search_students():
 
 
 # Others ---------------------------------------------------------------------------------------------------------------
+# Private video playback ------------------------------------------------------------------------------------------------
+# The YouTube ID is never written into the page. The page gets a short-lived token bound to the
+# logged-in user and the video, and swaps it for the ID only when the player starts.
+VIDEO_TOKEN_MAX_AGE = 120  # seconds
+video_token_signer = URLSafeTimedSerializer(app.config["SECRET_KEY"], salt="private-video-source")
+
+
+def can_watch_video(video_id):
+    # Students may only watch their own class's videos (both IDs start with the class number)
+    return current_user.role != STUDENT_ROLE or str(current_user.school_id)[:1] == str(video_id)[:1]
+
+
+def private_page_headers(response):
+    """No caching, no embedding in other sites, no picture-in-picture, no referrer leaks."""
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "picture-in-picture=(), display-capture=()"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
 @app.route("/video/<int:video_id>")
 @login_required
 def show_video(video_id):
-    if current_user.role == STUDENT_ROLE:
-        if str(current_user.school_id)[:1] != str(video_id)[:1]:
-            abort(403)
+    if not can_watch_video(video_id):
+        page = render_template("video.html", error="এই ভিডিওটি আপনার শ্রেণীর জন্য নয়।", video_id=video_id)
+        return private_page_headers(app.make_response((page, 403)))
 
-    video = db.get_or_404(Video, video_id)
+    video = db.session.get(Video, video_id)
+    if video is None:
+        page = render_template("video.html", error="এই QR কোডের কোন ভিডিও পাওয়া যায়নি।", video_id=video_id)
+        return private_page_headers(app.make_response((page, 404)))
 
-    return render_template(
-        "video.html",
-        video_link=video.link
-    )
+    token = video_token_signer.dumps({"u": current_user.id, "v": video_id})
+    page = render_template("video.html", video_id=video_id, class_name=video.class_name, token=token,
+                           watermark=f"{current_user.username} · {current_user.school_id}")
+    return private_page_headers(app.make_response(page))
+
+
+@app.route("/api/video-source", methods=["POST"])
+@login_required
+def video_source():
+    """Swap a fresh page token for the YouTube ID. Only works for the same logged-in user, for 2 minutes."""
+    token = (request.get_json(silent=True) or {}).get("token") or ""
+    try:
+        data = video_token_signer.loads(token, max_age=VIDEO_TOKEN_MAX_AGE)
+    except SignatureExpired:
+        return private_page_headers(jsonify({"success": False, "error": "expired"})), 403
+    except BadSignature:
+        return private_page_headers(jsonify({"success": False, "error": "invalid"})), 403
+
+    if data.get("u") != current_user.id or not can_watch_video(data.get("v")):
+        return private_page_headers(jsonify({"success": False, "error": "forbidden"})), 403
+
+    video = db.session.get(Video, data.get("v"))
+    youtube_id = video.link.rstrip("/").rsplit("/", 1)[-1] if video and video.link else None
+    if not youtube_id or not helpers.YOUTUBE_ID.match(youtube_id):
+        return private_page_headers(jsonify({"success": False, "error": "not found"})), 404
+
+    return private_page_headers(jsonify({"success": True, "id": youtube_id}))
 
 
 @app.route('/logout')
@@ -1642,4 +2770,5 @@ def logout():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0")
+    app.run(debug=env_flag("FLASK_DEBUG", True), host=os.getenv("HOST", "0.0.0.0"),
+            port=int(os.getenv("PORT") or 5000))

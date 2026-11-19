@@ -1,0 +1,528 @@
+/*
+ * Kid-friendly theme shared by every logged-in page (student, teacher, service admin, admin).
+ * Usage: load after the page's own <style> and put  class="kids t-<colour>"  on <body>.
+ * Everything is scoped to body.kids so it wins over the page styles without !important.
+ */
+
+/* COLOUR THEMES (c1 = light, c2 = dark, soft = tint) */
+.t-green  { --c1: #34d399; --c2: #059669; --soft: #ecfdf5; }
+.t-blue   { --c1: #60a5fa; --c2: #2563eb; --soft: #eff6ff; }
+.t-yellow { --c1: #fbbf24; --c2: #d97706; --soft: #fffbeb; }
+.t-purple { --c1: #c084fc; --c2: #9333ea; --soft: #faf5ff; }
+.t-red    { --c1: #fb7185; --c2: #e11d48; --soft: #fff1f2; }
+.t-orange { --c1: #fb923c; --c2: #ea580c; --soft: #fff7ed; }
+.t-cyan   { --c1: #22d3ee; --c2: #0891b2; --soft: #ecfeff; }
+.t-indigo { --c1: #818cf8; --c2: #4338ca; --soft: #eef2ff; }
+.t-pink   { --c1: #f472b6; --c2: #db2777; --soft: #fdf2f8; }
+
+/* PAGE BACKGROUND */
+body.kids {
+    font-family: "Baloo Da 2", Inter, sans-serif;
+    color: #334155;
+    background: #fff8ec;
+    background-image:
+        radial-gradient(circle at 8% 25%, rgba(251, 191, 36, .18) 0 60px, transparent 61px),
+        radial-gradient(circle at 92% 40%, rgba(96, 165, 250, .16) 0 80px, transparent 81px),
+        radial-gradient(circle at 12% 80%, rgba(244, 114, 182, .14) 0 70px, transparent 71px),
+        radial-gradient(circle at 88% 92%, rgba(52, 211, 153, .16) 0 90px, transparent 91px);
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+/* HEADER */
+body.kids .header::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #34d399, #22d3ee, #818cf8, #f472b6, #fb923c, #fbbf24);
+}
+
+body.kids .header .title {
+    font-weight: 800;
+    font-size: 20px;
+    color: var(--c2);
+}
+
+body.kids .header .btn-light {
+    border: none !important;
+    color: white;
+    border-radius: 13px !important;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    box-shadow: 0 4px 0 rgba(0, 0, 0, .12);
+    transform: rotate(-6deg);
+    transition: transform .2s ease;
+}
+
+body.kids .header .btn-light:hover { transform: rotate(6deg) scale(1.05); }
+body.kids .header .btn-light:active { transform: translateY(2px) scale(.95); box-shadow: none; }
+
+/* CARDS */
+body.kids .filter-card,
+body.kids .attendance-card,
+body.kids .report-card,
+body.kids .accounts-card,
+body.kids .curriculum-card,
+body.kids .commentCard,
+body.kids .scanner-card,
+body.kids .notice-card,
+body.kids .contact-card,
+body.kids .table-card,
+body.kids .sheet-card,
+body.kids .result-card,
+body.kids .log-info-card,
+body.kids .tutorial-card,
+body.kids .video-card {
+    background: white;
+    border: 3px solid var(--soft);
+    border-top: 6px solid var(--c1);
+    border-radius: 22px;
+    box-shadow: 0 6px 0 var(--soft), 0 10px 20px rgba(0, 0, 0, .05);
+    margin-bottom: 18px;
+}
+
+/* FORMS */
+body.kids .form-label {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--c2);
+}
+
+body.kids .form-select,
+body.kids .form-control {
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+body.kids .form-select:focus,
+body.kids .form-control:focus {
+    border-color: var(--c1);
+    box-shadow: 0 0 0 .25rem var(--soft);
+}
+
+body.kids .btn {
+    font-family: inherit;
+    font-weight: 700;
+}
+
+body.kids .btn-success:not(.action-btn) {
+    border: none;
+    border-radius: 14px;
+    font-size: 17px;
+    color: white;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    box-shadow: 0 5px 0 rgba(0, 0, 0, .15);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+body.kids .btn-success:not(.action-btn):hover { transform: translateY(-2px); }
+body.kids .btn-success:not(.action-btn):active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0, 0, 0, .15); }
+
+body.kids .page .btn-light {
+    background: var(--soft);
+    color: var(--c2);
+    border: 2px solid var(--soft) !important;
+    border-radius: 12px;
+}
+
+body.kids .page .btn-light:hover {
+    border-color: var(--c1) !important;
+}
+
+/* REPORT HEADINGS */
+body.kids .report-head h4 {
+    font-weight: 800;
+    font-size: 21px;
+    color: var(--c2);
+}
+
+body.kids .report-head h5 {
+    display: inline-block;
+    font-weight: 700;
+    font-size: 16px;
+    color: white;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    padding: 2px 14px;
+    border-radius: 999px;
+    margin: 4px 0 6px;
+}
+
+body.kids .report-head .meta,
+body.kids .meta {
+    font-size: 14px;
+    color: #64748b;
+}
+
+body.kids .section-title {
+    font-weight: 800;
+    font-size: 19px;
+    color: var(--c2);
+}
+
+/* SUMMARY TILES — each one its own colour */
+body.kids .summary {
+    gap: 10px;
+}
+
+body.kids .summary-tile {
+    --tile: #60a5fa;
+    --tile-soft: #eff6ff;
+    border: 3px solid var(--tile-soft);
+    border-bottom: 5px solid var(--tile);
+    background: var(--tile-soft);
+    border-radius: 18px;
+    padding: 10px 6px;
+}
+
+body.kids .summary-tile:nth-child(4n+1) { --tile: #34d399; --tile-soft: #ecfdf5; }
+body.kids .summary-tile:nth-child(4n+2) { --tile: #fb7185; --tile-soft: #fff1f2; }
+body.kids .summary-tile:nth-child(4n+3) { --tile: #818cf8; --tile-soft: #eef2ff; }
+body.kids .summary-tile:nth-child(4n+4) { --tile: #fbbf24; --tile-soft: #fffbeb; }
+
+body.kids .summary-tile .value {
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+body.kids .summary-tile .label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #475569;
+}
+
+/* TABLES */
+body.kids .table-responsive {
+    border-radius: 16px;
+    border: 2px solid var(--soft);
+}
+
+body.kids .table {
+    margin-bottom: 0;
+    font-size: 16px;
+    --bs-border-color: #eef2f7;
+}
+
+body.kids .table-bordered {
+    border-style: hidden; /* outer edge comes from the rounded wrapper */
+}
+
+body.kids .table thead th {
+    --bs-table-bg: var(--soft);
+    color: var(--c2);
+    font-weight: 800;
+}
+
+body.kids .table tbody tr:nth-child(even) > * {
+    --bs-table-bg: #fcfcfe;
+}
+
+body.kids .table td.mark-present,
+body.kids .table td.text-paid { color: #059669; font-weight: 700; }
+
+body.kids .table td.mark-absent,
+body.kids .table td.text-due,
+body.kids .text-fail { color: #e11d48; font-weight: 700; }
+
+/* EMPTY STATE */
+body.kids .empty-state {
+    margin: 6px 0;
+    padding: 22px 12px;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--c2);
+    background: var(--soft);
+    border: 2px dashed var(--c1);
+    border-radius: 18px;
+}
+
+body.kids .empty-state::before {
+    content: "\F586"; /* bi-star-fill */
+    font-family: bootstrap-icons;
+    display: block;
+    font-size: 28px;
+    color: var(--c1);
+    margin-bottom: 4px;
+}
+
+body.kids .empty-state:empty { display: none; }
+
+/* pages that already show their own icon don't need the star */
+body.kids .empty-state:has(> i)::before { display: none; }
+
+body.kids .empty-state > i { color: var(--c1); }
+
+/* COMMENTS */
+body.kids .comment-item {
+    background: var(--soft);
+    border: none;
+    border-left: 5px solid var(--c1);
+    border-radius: 16px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+}
+
+body.kids .reply-box {
+    background: white;
+    border: 2px dashed #a7f3d0;
+    border-radius: 14px;
+}
+
+body.kids .reply-label {
+    color: #059669;
+    font-weight: 700;
+}
+
+/* PDF VIEWER */
+body.kids .pdf-page-wrap {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 3px solid var(--soft);
+}
+
+body.kids .pdf-page-badge {
+    background: var(--c2);
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 12px;
+}
+
+/* QR SCANNER */
+body.kids .scanner-title {
+    font-weight: 800;
+    font-size: 21px;
+    color: var(--c2);
+}
+
+body.kids .scanner-subtitle {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+body.kids .camera-wrapper {
+    border: 4px solid var(--c1);
+    border-radius: 22px;
+}
+
+body.kids .icon-btn {
+    border-radius: 50%;
+}
+
+/* NOTICE BOARD */
+body.kids .notice-badge {
+    background: linear-gradient(135deg, #f472b6, #db2777);
+    color: white;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+body.kids .notice-meta {
+    font-weight: 600;
+    color: var(--c2);
+}
+
+body.kids .notice-img {
+    border-radius: 16px;
+}
+
+/* CALL SERVICE */
+body.kids .contact-row {
+    background: var(--soft);
+    border: none;
+    border-radius: 16px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+}
+
+body.kids .contact-avatar {
+    color: white;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    transform: rotate(-6deg);
+}
+
+body.kids .contact-name {
+    font-weight: 700;
+    font-size: 17px;
+}
+
+body.kids .contact-phone {
+    font-weight: 600;
+    color: var(--c2);
+}
+
+body.kids .action-btn {
+    border-radius: 12px;
+}
+
+/* CHANGE PASSWORD */
+body.kids .account-name {
+    background: var(--soft);
+    border: 2px dashed var(--c1);
+    border-radius: 14px;
+    color: var(--c2);
+    font-weight: 700;
+}
+
+/* SUB HEADINGS */
+body.kids .sub-title {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--c2);
+}
+
+/* CHECKBOXES / RADIOS */
+body.kids .form-check-input {
+    border: 2px solid #cbd5e1;
+}
+
+body.kids .form-check-input:checked {
+    background-color: var(--c2);
+    border-color: var(--c2);
+}
+
+body.kids .form-check-input:focus {
+    border-color: var(--c1);
+    box-shadow: 0 0 0 .25rem var(--soft);
+}
+
+body.kids .form-check-label {
+    font-weight: 600;
+}
+
+/* SMALL / OUTLINE BUTTONS */
+body.kids .btn-sm {
+    border-radius: 10px;
+}
+
+body.kids .btn-outline-success,
+body.kids .btn-outline-danger,
+body.kids .btn-primary,
+body.kids .btn-dark {
+    border-radius: 12px;
+}
+
+body.kids .action-icon {
+    color: var(--c2);
+    transition: transform .15s ease;
+}
+
+body.kids .action-icon:hover { transform: scale(1.2) rotate(-6deg); }
+
+/* TABLES WITHOUT .table (sheets, item lists) */
+body.kids thead th {
+    color: var(--c2);
+}
+
+/* FILE DROP ZONES */
+body.kids .drop-area {
+    border: 2px dashed var(--c1);
+    border-radius: 18px;
+    background: var(--soft);
+    color: var(--c2);
+    font-weight: 600;
+}
+
+/* BADGES */
+body.kids .badge {
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+body.kids .count-badge,
+body.kids .branch-badge {
+    color: white;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+/* MODALS */
+body.kids .modal-content {
+    border: none;
+    border-top: 6px solid var(--c1);
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .15);
+}
+
+body.kids .modal-header {
+    background: var(--soft);
+    border-bottom: 2px dashed var(--c1);
+}
+
+body.kids .modal-title {
+    font-weight: 800;
+    color: var(--c2);
+}
+
+body.kids .modal-footer {
+    border-top: 2px dashed var(--soft);
+}
+
+/* TOASTS */
+body.kids .toast {
+    border-radius: 16px;
+    font-weight: 600;
+}
+
+/* MENU TILES (same look as the student dashboard) */
+body.kids .card-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+body.kids .card-btn {
+    background: white;
+    border: 3px solid var(--soft);
+    border-radius: 22px;
+    box-shadow: 0 6px 0 var(--soft), 0 10px 18px rgba(0, 0, 0, .05);
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+
+body.kids .card-btn:hover {
+    transform: translateY(-4px);
+    background: var(--soft);
+    box-shadow: 0 10px 0 var(--c1), 0 14px 22px rgba(0, 0, 0, .06);
+}
+
+body.kids .card-btn:hover .icon-circle { animation: kids-wiggle .6s ease-in-out; }
+
+body.kids .card-btn:active {
+    transform: translateY(3px) scale(.96);
+    box-shadow: 0 2px 0 var(--c1);
+}
+
+body.kids .icon-circle {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    font-size: 26px;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    box-shadow: 0 4px 0 rgba(0, 0, 0, .1);
+    transform: rotate(-6deg);
+}
+
+body.kids .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--c2);
+}
+
+@keyframes kids-wiggle {
+    0%, 100% { transform: rotate(-6deg) scale(1.08); }
+    50% { transform: rotate(6deg) scale(1.08); }
+}
+
+@media (max-width: 768px) {
+    body.kids .header .title { font-size: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.kids .card-btn:hover .icon-circle { animation: none; }
+}

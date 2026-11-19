@@ -10,7 +10,7 @@
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Baloo+Da+2:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         body {
@@ -90,9 +90,10 @@
 
         }
     </style>
+    <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
 </head>
 
-<body>
+<body class="kids t-green">
 <div class="container p-0">
     <!-- HEADER -->
     <div class="header">
@@ -348,6 +349,9 @@
     const MONTHS = ["january", "february", "march", "april", "may", "june",
         "july", "august", "september", "october", "november", "december"]
 
+    // Pre-select the current month (option values are 1-12)
+    document.getElementById("monthSelect").value = String(new Date().getMonth() + 1)
+
     const searchBtn = document.getElementById("searchBtn")
 
     // The API sends amounts as text like "500.0"; show them as "500"
@@ -527,6 +531,71 @@
     document.getElementById("salaryPreviousDue").addEventListener("input", updateSalaryTotal)
 
     searchBtn.addEventListener("click", getStudent)
+
+    // SAVE: map the form onto the DataSheet income columns. The server adds
+    // today's date and calculates total_income.
+    const saveBtn = document.getElementById("saveBtn")
+
+    function amountOf(id) {
+        return parseAmount(document.getElementById(id).value)
+    }
+
+    async function saveIncome() {
+        const payload = {
+            monthly_fee: document.getElementById("feeMonthly").checked ? MONTHLY_FEE : 0,
+            exam_fee: document.getElementById("feeExam").checked ? EXAM_FEE : 0,
+            admission_fee: amountOf("miscAdmission"),
+            book_fee: amountOf("miscBook"),
+            copy_fee: amountOf("miscNotebook"),
+            id_card_fee: amountOf("miscIdCard"),
+            other_income: amountOf("feeOther") + amountOf("miscOtherAmount"),
+        }
+
+        const total = Object.values(payload).reduce((sum, value) => sum + value, 0)
+        if (total === 0) {
+            alert("Please enter at least one income amount!")
+            return
+        }
+
+        saveBtn.disabled = true
+        saveBtn.textContent = "Saving..."
+
+        try {
+            const response = await fetch("/api/save-income", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(payload)
+            })
+            const result = await response.json().catch(() => ({}))
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || "Request failed: " + response.status)
+            }
+
+            alert("Saved! Total income: " + result.total_income)
+            clearIncomeForm()
+        } catch (error) {
+            console.error(error)
+            alert("Could not save: " + error.message)
+        } finally {
+            saveBtn.disabled = false
+            saveBtn.textContent = "Save"
+        }
+    }
+
+    // Empty the income inputs after a save so the same entry is not saved twice
+    function clearIncomeForm() {
+        document.getElementById("feeMonthly").checked = false
+        document.getElementById("feeExam").checked = false
+        ;["feeOther", "salaryPaid", "miscAdmission", "miscBook", "miscNotebook",
+            "miscIdCard", "miscOtherName", "miscOtherAmount", "miscPaid"].forEach(id => {
+            document.getElementById(id).value = ""
+        })
+        updateSalaryTotal()
+        updateMiscSubtotal()
+    }
+
+    saveBtn.addEventListener("click", saveIncome)
 
     // Pressing Enter in the roll box searches too
     document.getElementById("roll").addEventListener("keydown", event => {

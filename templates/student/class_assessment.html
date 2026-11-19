@@ -10,7 +10,7 @@
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Baloo+Da+2:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         body{
@@ -111,154 +111,257 @@
         }
         }
 
+        /* REPORT */
+        .page {
+            max-width: 700px;
+        }
+
+        .report-card {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, .05);
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .report-head {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .report-head h4 {
+            font-size: 18px;
+            margin-bottom: 2px;
+        }
+
+        .report-head h5 {
+            font-size: 15px;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .report-head .meta,
+        .period-name {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .period-name {
+            text-align: center;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 10px;
+        }
+
+        .summary {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .summary-tile {
+            border: 1px solid #eef0f5;
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .summary-tile .value {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .summary-tile .label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .text-fail {
+            color: #dc2626;
+        }
+
+        .report-table {
+            margin-bottom: 0;
+            font-size: 14px;
+        }
+
+        .report-table th {
+            background: #f8f9fc;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .report-table .col-mark {
+            text-align: right;
+            width: 140px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 24px 0;
+        }
     </style>
+    <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
 </head>
 
-<body>
+<body class="kids t-indigo">
 <div class="container p-0">
     <!-- HEADER -->
     <div class="header">
         <div class="d-flex align-items-center gap-2">
-
             <a href="{{ url_for('student_dashboard') }}"
                class="btn btn-light border rounded-3">
                 <i class="bi bi-house-door-fill"></i>
             </a>
 
             <div class="title">
-                শ্রেণী মূল্যায়ন
+                Class Assessment
             </div>
         </div>
     </div>
 
     <div class="page">
+        {% set periods = months %}
+        {% if periods %}
         <!-- FILTERS -->
         <div class="filter-card">
-            <div class="row g-2">
-                <input type="hidden" id="studentID" value="{{ current_user.school_id }}" required>
-                <input type="hidden" id="branchSelect" value="{{ current_user.branch.name}}" required>
-                <input type="hidden" id="classSelect" value="{{ student_class }}" required>
-
-                <div class="col-md-8">
-                    <select id="monthSelect" class="form-select" required>
-                        <option>Select Month</option>
-                        {% for month in months %}
-                        <option>{{month}}</option>
-                        {%endfor%}
+            <div class="row g-2 align-items-end">
+                <div class="col-12 col-md-8">
+                    <label class="form-label" for="periodSelect">মাস</label>
+                    <select id="periodSelect" class="form-select">
+                        {% for period in periods %}
+                        <option value="{{ period }}">{{ period }}</option>
+                        {% endfor %}
                     </select>
                 </div>
-
-                <div class="col-md-4">
-                    <button id="searchBtn" class="btn btn-success w-100">
-                        Search
-                    </button>
+                <div class="col-12 col-md-4">
+                    <button type="button" id="searchBtn" class="btn btn-success w-100">Search</button>
                 </div>
             </div>
         </div>
+        {% endif %}
 
-        <!-- CLASS ASSESSMENT TABLE -->
-        <div id="class-resultCard" class="class-result-card d-none">
-            <div class="table-responsive">
-                <div id="student-info" style="text-align:center"></div>
-                <table class="table class-result-table align-middle">
-                    <thead id="class-resultHead">
-                    </thead>
-                    <tbody id="class-resultBody"></tbody>
-                </table>
+        <div class="report-card">
+            <div class="report-head">
+                <h4>আল-আকসা ইসলামী একাডেমী</h4>
+                <h5>প্রোগ্রেস রিপোর্ট</h5>
+                <div class="meta" id="reportMeta">
+                    রোলঃ {{ current_user.school_id }}{% if student_class %} · {{ student_class }}{% endif %}
+                </div>
+            </div>
+            <div id="reportBody">
+                {% if not student_class %}
+                <div class="empty-state">আপনার শ্রেণী নির্ধারণ করা যায়নি। অনুগ্রহ করে অফিসে যোগাযোগ করুন।</div>
+                {% elif not periods %}
+                <div class="empty-state">এখনো কোন শ্রেণি মূল্যায়নের ফলাফল প্রকাশিত হয়নি।</div>
+                {% else %}
+                <div class="empty-state">Loading...</div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    document.getElementById("searchBtn").addEventListener("click", async function(){
-    const branchName = document.getElementById("branchSelect").value
-    const className = document.getElementById("classSelect").value
-    const monthName = document.getElementById("monthSelect").value
-    const studentID = document.getElementById("studentID").value
+    const STUDENT_CLASS = {{ student_class | tojson }}
+    const LOWER_CLASSES = ["Play", "Nursery", "One", "Two"]
+    // Subjects in report order; lower and upper classes use different subject names
+    const SUBJECTS = LOWER_CLASSES.includes(STUDENT_CLASS) ? [["arabic", "আরবী"], ["quran", "কুরআন ও হাদি:, মাসা:"], ["bengali", "বাংলা"], ["english", "ইংরেজী"], ["math", "গণিত"]] : [["quran", "কুরআন ও তাজভিদ"], ["aqaid_and_fiqh", "আকাইদ ও ফিকহ"], ["arabic", "আরবী ১ম, ২য়"], ["bengali", "বাংলা ১ম, ২য়"], ["english", "ইংরেজী ১ম, ২য়"], ["bgs", "বা ও বি"], ["science", "বিজ্ঞান"], ["math", "গণিত"]]
+    const SUMMARY = [["total", "মোট নাম্বার"]]
+    const SEARCH_URL = "/api/search-class-result"
+    const PERIOD_KEY = "month"
 
-    if(monthName === "Select Month" ){
-    alert("অনুগ্রহ করে মাসের নাম নির্বাচন করুন !")
-    return
+    const reportBody = document.getElementById("reportBody")
+    const searchBtn = document.getElementById("searchBtn")
+
+    function element(tag, text, className) {
+        const el = document.createElement(tag)
+        if (text !== undefined) el.textContent = text
+        if (className) el.className = className
+        return el
     }
 
-    searchBtn.disabled = true;
-    searchBtn.innerHTML = "Loading...";
-
-    const response = await fetch("/api/search-class-result",{
-
-    method:"POST",
-    headers:{
-    "Content-Type":"application/json"
-    },
-
-    body:JSON.stringify({
-    branch:branchName,
-    class:className,
-    month:monthName,
-    student_id: studentID,
-    })
-    })
-    searchBtn.disabled = false;
-    searchBtn.innerHTML = "Search";
-
-
-    const result = await response.json()
-
-    const studentInfo = document.getElementById("student-info")
-    const thead = document.getElementById("class-resultHead")
-    const tbody = document.getElementById("class-resultBody")
-    const card = document.getElementById("class-resultCard")
-
-    studentInfo.innerHTML = ""
-    thead.innerHTML = ""
-    tbody.innerHTML = ""
-
-    card.classList.remove("d-none");
-
-    const row = result.data[0];
-
-    studentInfo.innerHTML = `
-    <h4>আল-আকসা ইসলামী একাডেমী</h4>
-    <h5>প্রোগ্রেস রিপোর্ট</h5>
-<!--    <h6>নামঃ ${row.student_name}</h6>-->
-    <h6>রোলঃ ${row.ID}</h6>
-    `
-
-    thead.innerHTML = `
-                    <tr>
-                        <th><b>বিষয়ের নাম</b></th>
-                        <th><b>প্রাপ্ত নাম্বার</b></th>
-                    </tr>`
-
-
-    const firstChar = Number(row.ID.toString()[0]);
-    if(firstChar >= 1 && firstChar <= 4){
-        tbody.innerHTML += `
-        <tr><td>আরবী:</td><td>${row.arabic}</td></tr>
-        <tr><td>বাংলা:</td><td>${row.bengali}</td></tr>
-        <tr><td>ইংরেজী:</td><td>${row.english}</td></tr>
-        <tr><td>গণিত:</td><td>${row.math}</td></tr>
-        <tr><td>মোট নাম্বার:</td><td>${row.total}</td></tr>
-        `
-    }else{
-
-        tbody.innerHTML += `
-        <tr><td>কুরআন ও তাজভিদ:</td><td>${row.quran}</td></tr>
-        <tr><td>আকাইদ ও ফিকহ:</td><td>${row.aqaid_and_fiqh}</td></tr>
-        <tr><td>আরবী ১ম, ২য়:</td><td>${row.arabic}</td></tr>
-        <tr><td>বাংলা ১ম, ২য়:</td><td>${row.bengali}</td></tr>
-        <tr><td>ইংরেজী ১ম, ২য়:</td><td>${row.english}</td></tr>
-        <tr><td>বা ও বি:</td><td>${row.bgs}</td></tr>
-        <tr><td>বিজ্ঞান:</td><td>${row.science}</td></tr>
-        <tr><td>গণিত:</td><td>${row.math}</td></tr>
-        <tr><td>মোট নাম্বার:</td><td>${row.total}</td></tr>
-        `
+    function showMessage(text) {
+        reportBody.innerHTML = ""
+        reportBody.appendChild(element("div", text, "empty-state"))
     }
 
-})
+    function hasValue(value) {
+        return value !== null && value !== undefined && value !== ""
+    }
 
+    function render(row, period) {
+        reportBody.innerHTML = ""
+        reportBody.appendChild(element("div", period, "period-name"))
 
+        // Summary tiles (total, grade, merit) for the values that exist
+        const summary = element("div", undefined, "summary")
+        SUMMARY.filter(([key]) => hasValue(row[key])).forEach(([key, label]) => {
+            const tile = element("div", undefined, "summary-tile")
+            const value = element("div", row[key], "value")
+            if (key === "letter_grade" && row[key] === "F") value.classList.add("text-fail")
+            tile.appendChild(value)
+            tile.appendChild(element("div", label, "label"))
+            summary.appendChild(tile)
+        })
+        summary.style.gridTemplateColumns = `repeat(${summary.children.length || 1}, 1fr)`
+        reportBody.appendChild(summary)
+
+        const table = element("table", undefined, "table table-bordered report-table")
+        table.innerHTML = '<thead><tr><th>বিষয়ের নাম</th><th class="col-mark">প্রাপ্ত নাম্বার</th></tr></thead>'
+        const tbody = element("tbody")
+        SUBJECTS.filter(([key]) => hasValue(row[key])).forEach(([key, label]) => {
+            const tr = element("tr")
+            tr.appendChild(element("td", label))
+            tr.appendChild(element("td", row[key], "col-mark"))
+            tbody.appendChild(tr)
+        })
+        table.appendChild(tbody)
+
+        const wrap = element("div", undefined, "table-responsive")
+        wrap.appendChild(table)
+        reportBody.appendChild(wrap)
+    }
+
+    async function search() {
+        const period = document.getElementById("periodSelect").value
+        searchBtn.disabled = true
+        searchBtn.textContent = "Loading..."
+        try {
+            // The server uses the logged-in student's own branch, class and ID
+            const response = await fetch(SEARCH_URL, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({[PERIOD_KEY]: period})
+            })
+            const result = await response.json().catch(() => ({}))
+            if (!response.ok || !result.success) throw new Error(result.error || "Request failed: " + response.status)
+
+            if (result.data.length === 0) {
+                showMessage("উক্ত মাসে আপনার ফলাফল পাওয়া যায়নি!")
+            } else {
+                render(result.data[0], period)
+            }
+        } catch (error) {
+            console.error(error)
+            showMessage("ফলাফল লোড করা যায়নি: " + error.message)
+        } finally {
+            searchBtn.disabled = false
+            searchBtn.textContent = "Search"
+        }
+    }
+
+    if (searchBtn && STUDENT_CLASS) {
+        searchBtn.addEventListener("click", search)
+        search()  // newest result straight away
+    }
 </script>
 </body>
 </html>

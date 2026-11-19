@@ -8,11 +8,11 @@
           content="width=device-width, initial-scale=1, viewport-fit=cover">
 
     <title>User Management</title>
-    <link href="{{url_for('static', filename='/img/al-aqsa-icon.jpg')}}" rel="icon">
+    <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Baloo+Da+2:wght@500;600;700;800&display=swap" rel="stylesheet">
     <style>
 
         body{
@@ -205,9 +205,10 @@
         }
     </style>
 
+    <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
 </head>
 
-<body>
+<body class="kids t-indigo">
 <div class="container p-0">
      <!-- HEADER -->
     <div class="header">
@@ -251,21 +252,21 @@
     <div class="dashboard">
 
         <a href="{{ url_for('service_admin_user_management') }}" class="card-link">
-            <div class="card-btn">
+            <div class="card-btn t-purple">
                 <div class="icon-circle users"><i class="bi bi-people"></i></div>
                 <div class="card-title">Service Admin</div>
             </div>
         </a>
 
         <a href="{{ url_for('teacher_user_management') }}" class="card-link">
-            <div class="card-btn">
+            <div class="card-btn t-blue">
                 <div class="icon-circle users"><i class="bi bi-people"></i></div>
                 <div class="card-title">Teacher</div>
             </div>
         </a>
 
          <a href="{{ url_for('student_user_management') }}" class="card-link">
-            <div class="card-btn">
+            <div class="card-btn t-green">
                 <div class="icon-circle users"><i class="bi bi-people"></i></div>
                 <div class="card-title">Student</div>
             </div>

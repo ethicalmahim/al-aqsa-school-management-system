@@ -9,7 +9,7 @@
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Baloo+Da+2:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         body {
@@ -38,10 +38,6 @@
             font-size: 18px;
         }
 
-        .add-btn {
-            border-radius: 10px;
-        }
-
         /* PAGE */
         .page {
             margin-top: 70px;
@@ -61,50 +57,55 @@
             margin-bottom: 16px;
         }
 
+        .section-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eef0f5;
+        }
+
+        .form-label {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
         /* TABLE */
-        .table-responsive {
-            overflow-x: auto;
-        }
-
         .comment-table {
-            min-width: 900px; /* or 1000px */
-            table-layout: auto;
-        }
-
-        .comment-table th,
-        .comment-table td {
-            white-space: nowrap;
+            font-size: 14px;
+            margin-bottom: 0;
         }
 
         .comment-table th {
-            font-size: 14px;
+            background: #f8f9fc;
             color: #666;
             font-weight: 600;
+            white-space: nowrap;
         }
 
         .comment-table td {
             vertical-align: middle;
         }
 
-        .edit-btn {
-            border-radius: 8px;
-        }
-
-        /* DROP AREA */
-        .drop-area {
-            border: 2px dashed #cbd5e1;
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            cursor: pointer;
-            background: #f9fafc;
-        }
-
-        .comment-col {
-            white-space: normal !important;
-            word-break: break-word;
+        .comment-table .comment-col {
+            min-width: 220px;
+            white-space: pre-wrap;
             overflow-wrap: anywhere;
-            max-width: 100px;
+        }
+
+        .comment-table .col-nowrap {
+            white-space: nowrap;
+        }
+
+        .no-reply {
+            color: #b45309;
+            font-size: 13px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 24px 0;
         }
 
         /* MOBILE IMPROVEMENTS */
@@ -117,193 +118,247 @@
                 font-size: 16px;
             }
         }
+
+        /* WIDE SCREENS: table cards use the full screen width, so wide tables
+           (all months / all days / all subjects) are shown without side-scrolling */
+        @media (min-width: 1200px) {
+            .page {
+                max-width: none;
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+        }
     </style>
+    <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
 </head>
-<body>
+<body class="kids t-cyan">
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;">
-
     {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-
     {% for category, message in messages %}
-
-    <div class="toast align-items-center text-bg-{{ category }} border-0 show mb-2"
-         role="alert">
-
+    <div class="toast align-items-center text-bg-{{ category }} border-0 show mb-2" role="alert">
         <div class="d-flex">
-
-            <div class="toast-body">
-                {{ message }}
-            </div>
-
-            <button type="button"
-                    class="btn-close btn-close-white me-2 m-auto"
-                    data-bs-dismiss="toast">
-            </button>
-
+            <div class="toast-body">{{ message }}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
         </div>
-
     </div>
-
     {% endfor %}
-
-    {% endif %}
     {% endwith %}
-
 </div>
-<div class="container p-0">
+
+<div class="container-fluid p-0">
     <!-- HEADER -->
     <div class="header">
-
         <div class="d-flex align-items-center gap-2">
 
+            {% if current_user.role == "Admin" %}
             <a href="{{ url_for('admin_dashboard') }}"
                class="btn btn-light border rounded-3">
                 <i class="bi bi-house-door-fill"></i>
             </a>
 
+            {% elif current_user.role == "Service Admin" %}
+            <a href="{{ url_for('service_admin_dashboard') }}"
+               class="btn btn-light border rounded-3">
+                <i class="bi bi-house-door-fill"></i>
+            </a>
+            {% endif %}
+
             <div class="title">
                 Comments
             </div>
-
         </div>
     </div>
 
     <div class="page">
         <!-- FILTERS -->
         <div class="filter-card">
-            <div class="row g-2">
-                <div class="col-md-8">
-                    <input id="dateSelect" type="date" class="form-control" required>
+            <div class="row g-2 align-items-end">
+                <div class="col-12 col-md">
+                    <label class="form-label" for="dateSelect">তারিখ</label>
+                    <input id="dateSelect" type="date" class="form-control">
                 </div>
 
-                <div class="col-md-4">
-                    <button id="searchBtn" class="btn btn-success w-100">
-                        Search
-                    </button>
+                <div class="col-6 col-md-3">
+                    <button type="button" id="searchBtn" class="btn btn-success w-100">Search</button>
                 </div>
-            </div>
-        </div>
 
-        <!--        Reply Modal-->
-        <div class="modal fade" id="replyModal">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Reply Comment</h5>
-                        <button class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
+                <div class="col-6 col-md-3">
+                    <button type="button" id="showAllBtn" class="btn btn-light border w-100">সকল মন্তব্য</button>
+                </div>
 
-                    <div class="modal-body">
-                        <form id="replyForm" method="POST" action="{{ url_for('reply_comment') }}"
-                              enctype="multipart/form-data">
-                            <input type="hidden" name="comment_db_id" id="comment_id">
-                            <div class="mb-3">
-                                <input id="comment_reply" name="comment_reply" placeholder="Reply"
-                                       class="form-control" required>
-                            </div>
-                            <button type="submit" class="btn btn-success w-100">Send</button>
-                        </form>
+                <div class="col-12">
+                    <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" id="unansweredOnly">
+                        <label class="form-check-label" for="unansweredOnly">শুধু উত্তরবিহীন মন্তব্য</label>
                     </div>
                 </div>
             </div>
         </div>
+
         <!-- COMMENT TABLE -->
-        <div id="commentCard" class="commentCard">
+        <div class="commentCard">
+            <div class="section-title">
+                মন্তব্য তালিকা <span id="commentCount" class="badge text-bg-light border"></span>
+            </div>
             <div class="table-responsive">
-                <table class="table comment-table align-middle">
+                <table class="table table-bordered table-hover comment-table">
                     <thead>
                     <tr>
-                        <th><b>মন্তব্য</b></th>
-                        <th><b>মন্তব্যের উত্তর</b></th>
-                        <th><b>মন্তব্যকারী</b></th>
-                        <th><b>সময়</b></th>
-                        <th><b>অ্যাকশান</b></th>
+                        <th>মন্তব্য</th>
+                        <th>মন্তব্যের উত্তর</th>
+                        <th>মন্তব্যকারী</th>
+                        <th>সময়</th>
+                        <th>অ্যাকশান</th>
                     </tr>
                     </thead>
-                    <tbody id="commentBody">
-                    {% for comment in comments %}
-                    <tr>
-                        <td class="comment-col">{{ comment.comment }}</td>
-                        <td class="comment-col">{{ comment.reply.reply_txt }}</td>
-                        <td>{{ comment.username}}</td>
-                        <td>{{ comment.comment_time.strftime("%d-%m-%Y %I: %M %p") }}</td>
-                        <td>
-                            <button class="btn btn-light btn-sm me-1" onclick="openReplyModal('{{comment.id}}')">
-                                <i class="bi bi-reply-fill"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                    </tbody>
+                    <tbody id="commentBody"></tbody>
                 </table>
             </div>
         </div>
     </div>
-
-
 </div>
+
+<!-- REPLY MODAL -->
+<div class="modal fade" id="replyModal" tabindex="-1" aria-labelledby="replyTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="replyTitle">মন্তব্যের উত্তর</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-3 p-2 rounded bg-light small" id="replyOriginal" style="white-space:pre-wrap;"></div>
+
+                <form id="replyForm" method="POST" action="{{ url_for('reply_comment') }}">
+                    <input type="hidden" name="comment_db_id" id="comment_id">
+                    <div class="mb-3">
+                        <label class="form-label" for="comment_reply">উত্তর</label>
+                        <textarea id="comment_reply" name="comment_reply" rows="4" maxlength="1000"
+                                  class="form-control" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Send</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    document.getElementById("searchBtn").addEventListener("click", async function () {
-        const date = document.getElementById("dateSelect").value
+    // Initial list from the server; text is inserted with textContent, never as HTML
+    let comments = {{ comments | tojson }}
 
+    const tbody = document.getElementById("commentBody")
+    const countBadge = document.getElementById("commentCount")
+    const unansweredOnly = document.getElementById("unansweredOnly")
+    const searchBtn = document.getElementById("searchBtn")
+
+    function cell(text, className) {
+        const td = document.createElement("td")
+        td.textContent = text ?? ""
+        if (className) td.className = className
+        return td
+    }
+
+    function showMessage(text) {
+        tbody.innerHTML = ""
+        countBadge.textContent = ""
+        const tr = document.createElement("tr")
+        const td = cell(text, "empty-state")
+        td.colSpan = 5
+        tr.appendChild(td)
+        tbody.appendChild(tr)
+    }
+
+    function render() {
+        const rows = unansweredOnly.checked ? comments.filter(c => !c.reply_txt) : comments
+        if (rows.length === 0) {
+            showMessage("কোন মন্তব্য পাওয়া যায়নি !")
+            return
+        }
+
+        tbody.innerHTML = ""
+        countBadge.textContent = rows.length
+
+        rows.forEach(c => {
+            const tr = document.createElement("tr")
+            tr.appendChild(cell(c.comment, "comment-col"))
+
+            const replyTd = cell(c.reply_txt, "comment-col")
+            if (!c.reply_txt) {
+                replyTd.innerHTML = '<span class="no-reply"><i class="bi bi-hourglass-split"></i> উত্তর দেওয়া হয়নি</span>'
+            }
+            tr.appendChild(replyTd)
+
+            tr.appendChild(cell(c.username, "col-nowrap"))
+            tr.appendChild(cell(c.comment_time, "col-nowrap"))
+
+            const actionTd = document.createElement("td")
+            const btn = document.createElement("button")
+            btn.type = "button"
+            btn.className = "btn btn-light btn-sm border"
+            btn.title = c.reply_txt ? "উত্তর সম্পাদনা" : "উত্তর দিন"
+            btn.innerHTML = c.reply_txt ? '<i class="bi bi-pencil-square"></i>' : '<i class="bi bi-reply-fill"></i>'
+            btn.addEventListener("click", () => openReplyModal(c))
+            actionTd.appendChild(btn)
+            tr.appendChild(actionTd)
+
+            tbody.appendChild(tr)
+        })
+    }
+
+    async function loadComments(date) {
+        searchBtn.disabled = true
+        try {
+            const response = await fetch("/api/search-comments", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({date})
+            })
+            const result = await response.json().catch(() => ({}))
+            if (!response.ok || !result.success) throw new Error(result.error || "Request failed: " + response.status)
+
+            comments = result.data
+            render()
+        } catch (error) {
+            console.error(error)
+            showMessage("মন্তব্য লোড করা যায়নি: " + error.message)
+        } finally {
+            searchBtn.disabled = false
+        }
+    }
+
+    searchBtn.addEventListener("click", () => {
+        const date = document.getElementById("dateSelect").value
         if (!date) {
             alert("অনুগ্রহ করে তারিখ নির্বাচন করুন !")
             return
         }
-
-        const response = await fetch("/api/search-comments", {
-
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                date: date
-            })
-        })
-
-        const result = await response.json()
-
-        const tbody = document.getElementById("commentBody")
-        const card = document.getElementById("commentCard")
-        tbody.innerHTML = ""
-
-        if (result.data.length === 0) {
-            tbody.innerHTML = `
-    <tr>
-        <td colspan="5" class="text-center text-muted">
-        উক্ত তারিখের কোন মন্তব্য পাওয়া যায়নি !
-        </td>
-    </tr>`
-        } else {
-
-            result.data.forEach(row => {
-                tbody.innerHTML += `
-    <tr>
-        <td class="comment-col">${row.comment}</td>
-        <td class="comment-col">${row.reply_txt}</td>
-        <td>${row.username}</td>
-        <td>${row.comment_time}</td>
-        <td> <button class="btn btn-light btn-sm me-1" onclick="openReplyModal('${row.id}')">
-            <i class="bi bi-reply-fill"></i>
-            </button></td>
-    </tr>
-    `
-
-            })
-        }
+        loadComments(date)
     })
 
-    function openReplyModal(id) {
+    document.getElementById("showAllBtn").addEventListener("click", () => {
+        document.getElementById("dateSelect").value = ""
+        loadComments("")
+    })
 
-        document.getElementById("comment_id").value = id
+    unansweredOnly.addEventListener("change", render)
 
-        new bootstrap.Modal(document.getElementById("replyModal")).show()
+    // REPLY: opening an answered comment pre-fills its reply so it can be edited
+    const replyModalEl = document.getElementById("replyModal")
 
+    function openReplyModal(c) {
+        document.getElementById("comment_id").value = c.id
+        document.getElementById("replyOriginal").textContent = c.username + ": " + c.comment
+        document.getElementById("comment_reply").value = c.reply_txt || ""
+        bootstrap.Modal.getOrCreateInstance(replyModalEl).show()
     }
+
+    replyModalEl.addEventListener("shown.bs.modal", () => document.getElementById("comment_reply").focus())
+
+    render()
 </script>
 </body>
 </html>

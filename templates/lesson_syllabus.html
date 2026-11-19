@@ -9,7 +9,7 @@
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Baloo+Da+2:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         body {
@@ -135,10 +135,49 @@
             padding: 2px 7px;
             border-radius: 4px;
         }
+        /* SHARED: labels, section titles, empty states */
+        .form-label {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eef0f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title .count {
+            font-size: 13px;
+            color: #888;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 24px 0;
+        }
+
+        .day-nav {
+            display: flex;
+            gap: 6px;
+        }
+
+        .day-nav .form-control {
+            min-width: 0;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
 </head>
-<body>
+<body class="kids t-cyan">
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;">
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -209,12 +248,9 @@
         </div>
 
         {% if current_user.role not in ("Student", "Teacher") %}
-        <button class="btn btn-success add-btn"
-                data-bs-toggle="modal"
-                data-bs-target="#uploadModal">
-
-            <i class="bi bi-plus-lg"></i>
-
+        <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#uploadModal"
+                aria-label="Upload lesson syllabus">
+            <i class="bi bi-upload"></i><span class="d-none d-sm-inline ms-1">Upload</span>
         </button>
         {% endif %}
 
@@ -223,110 +259,92 @@
     <div class="page">
         <!-- FILTERS -->
         <div class="filter-card">
-            <div class="row g-2">
-                <div class="col-md-8">
-                    <select id="classSelect" class="form-select" required>
-                        <option>Select Class</option>
-                        <option>Three</option>
-                        <option>Four</option>
-                        <option>Five</option>
-                    </select>
-                </div>
-
-                <div class="col-md-4">
-                    <button id="searchBtn" class="btn btn-success w-100">
-                        Search
-                    </button>
-                </div>
-            </div>
+            <label class="form-label" for="classSelect">শ্রেণী</label>
+            <select id="classSelect" class="form-select">
+                <option value="">Select Class</option>
+                {% for class_name in classes %}
+                <option value="{{ class_name }}" data-url="{{ url_for('syllabus_pdf', class_name=class_name) }}">
+                    {{ class_name }}{% if class_name not in uploaded %} (আপলোড করা হয়নি){% endif %}
+                </option>
+                {% endfor %}
+            </select>
         </div>
+
         <!-- CURRICULUM PDF VIEWER -->
         <div id="curriculumCard" class="curriculum-card d-none">
             <div class="d-flex align-items-center justify-content-between mb-2">
                 <span id="pdfPageInfo" class="text-muted small"></span>
                 <div class="d-flex align-items-center gap-2">
-                    <button id="zoomOut" class="btn btn-sm btn-light border">−</button>
+                    <button type="button" id="zoomOut" class="btn btn-sm btn-light border" aria-label="Zoom out">−</button>
                     <span id="zoomLabel" class="small text-muted">100%</span>
-                    <button id="zoomIn" class="btn btn-sm btn-light border">+</button>
+                    <button type="button" id="zoomIn" class="btn btn-sm btn-light border" aria-label="Zoom in">+</button>
                 </div>
             </div>
-
             <div id="pdfPages" class="d-flex flex-column align-items-center gap-3"></div>
-
-            <div id="noPdfMsg" class="text-center text-muted d-none py-4">
-                No syllabus PDF found for this class
-            </div>
+            <div id="noPdfMsg" class="empty-state d-none">এই শ্রেণীর কোন সিলেবাস PDF পাওয়া যায়নি।</div>
         </div>
     </div>
 
+    {% if current_user.role in ("Admin", "Service Admin") %}
     <!-- UPLOAD MODAL -->
-    <div class="modal fade" id="uploadModal">
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">
-                        Upload Lesson Syllabus
-                    </h5>
-                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="uploadTitle">Upload Lesson Syllabus</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-
                 <div class="modal-body">
-                    <form method="POST" action="{{ url_for('upload_syllabus') }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ url_for('upload_syllabus') }}" enctype="multipart/form-data"
+                          id="uploadForm">
                         <div class="mb-3">
-                            <label for="class_select" class="form-label">Class</label>
-                            <select id="class_select" name="class_name" class="form-select">
-                                <option>Three</option>
-                                <option>Four</option>
-                                <option>Five</option>
+                            <label for="class_select" class="form-label">শ্রেণী</label>
+                            <select id="class_select" name="class_name" class="form-select" required>
+                                <option value="">Select Class</option>
+                                {% for class_name in classes %}
+                                <option value="{{ class_name }}">{{ class_name }}</option>
+                                {% endfor %}
                             </select>
                         </div>
-
                         <div class="mb-3">
-                            <label for="file_select" class="form-label">Upload PDF</label>
-                            <input id="file_select" type="file" accept=".pdf" name="pdf_file"
+                            <label for="file_select" class="form-label">সিলেবাস PDF</label>
+                            <input id="file_select" type="file" accept=".pdf,application/pdf" name="pdf_file"
                                    class="form-control" required>
+                            <div class="form-text">শুধু PDF · সর্বোচ্চ 25 MB · এই শ্রেণীর আগের সিলেবাস প্রতিস্থাপিত হবে।</div>
                         </div>
-
-                        <button class="btn btn-success w-100">Submit</button>
+                        <button type="submit" id="uploadBtn" class="btn btn-success w-100">Submit</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-
+    {% endif %}
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-
     let currentPdf = null;
     let scale = 1.5; // base render scale
-
     const card = document.getElementById("curriculumCard");
     const pagesEl = document.getElementById("pdfPages");
     const pageInfo = document.getElementById("pdfPageInfo");
     const noPdfMsg = document.getElementById("noPdfMsg");
     const zoomLabel = document.getElementById("zoomLabel");
+    const classSelect = document.getElementById("classSelect");
 
-    document.getElementById("searchBtn").addEventListener("click", async function () {
-        const className = document.getElementById("classSelect").value;
-
-        if (className === "Select Class") {
-            alert("Please select class");
+    async function loadSyllabus() {
+        const option = classSelect.selectedOptions[0];
+        if (!classSelect.value) {
+            card.classList.add("d-none");
             return;
         }
-
-        const pdfUrl = `/static/img/syllabus/${className}.pdf`;
-
         card.classList.remove("d-none");
         pagesEl.innerHTML = "";
         pageInfo.textContent = "Loading...";
         noPdfMsg.classList.add("d-none");
-
         try {
-            const loadingTask = pdfjsLib.getDocument(pdfUrl);
-            currentPdf = await loadingTask.promise;
-
+            currentPdf = await pdfjsLib.getDocument(option.dataset.url).promise;
             pageInfo.textContent = currentPdf.numPages + " page" + (currentPdf.numPages > 1 ? "s" : "");
             await renderAllPages();
         } catch (err) {
@@ -335,7 +353,9 @@
             pageInfo.textContent = "";
             noPdfMsg.classList.remove("d-none");
         }
-    });
+    }
+
+    classSelect.addEventListener("change", loadSyllabus);
 
     async function renderAllPages(){
         pagesEl.innerHTML = "";
@@ -375,6 +395,15 @@
         scale = Math.min(4, Math.max(0.4, scale + delta));
         zoomLabel.textContent = Math.round((scale/1.5)*100) + "%";
         await renderAllPages();
+    }
+
+    const uploadForm = document.getElementById("uploadForm");
+    if (uploadForm) {
+        uploadForm.addEventListener("submit", () => {
+            const btn = document.getElementById("uploadBtn");
+            btn.disabled = true;
+            btn.textContent = "Uploading...";
+        });
     }
 </script>
 </body>
