@@ -1,6 +1,5 @@
 <div align="center">
 
-
 # 🏫 Al-Aqsa School Management System
 
 **A complete, multi-branch school management platform built with Flask: attendance, results, accounts, lessons, videos and notices, with a separate portal for each role.**
