@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>Login | Al-Aqsa Islami Academy</title>
+    <title>{{ t("Login | Al-Aqsa Islami Academy", "লগইন | আল-আকসা ইসলামী একাডেমি") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
 
@@ -166,9 +166,26 @@
         }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
+    <style>
+        /* Language switch in the top corner, above the decorations */
+        .login-lang {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 1000;
+        }
+
+        .login-lang .lang-switch {
+            background: rgba(255, 255, 255, .9);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .08);
+        }
+    </style>
 </head>
 
 <body class="kids t-green">
+
+<div class="login-lang">{% include "_lang_switch.html" %}</div>
 
 <div class="app-container">
 
@@ -182,20 +199,20 @@
             <img src="{{url_for('static', filename='img/al-aqsa-logo.png')}}" alt="Al-Aqsa Logo" class="logo">
         </div>
 
-        <h3 class="school-name">Al-Aqsa Islami Academy</h3>
-        <span class="salam">আসসালামু আলাইকুম</span>
+        <h3 class="school-name">{{ t("Al-Aqsa Islami Academy", "আল-আকসা ইসলামী একাডেমি") }}</h3>
+        <span class="salam">{{ t("Assalamu Alaikum", "আসসালামু আলাইকুম") }}</span>
     </div>
 
     <!-- Login Card -->
     <div class="login-card">
-        <div class="login-title"><i class="bi bi-door-open-fill"></i>Login</div>
+        <div class="login-title"><i class="bi bi-door-open-fill"></i>{{ t("Login", "লগইন") }}</div>
 
         <form method="POST" action="{{ url_for('login') }}">
 
             <div class="form-floating mb-3">
-                <input type="text" id="username" name="username" class="form-control" placeholder="Username"
+                <input type="text" id="username" name="username" class="form-control" placeholder="{{ t('Username', 'ইউজারনেম') }}"
                        required>
-                <label for="username">Username</label>
+                <label for="username">{{ t("Username", "ইউজারনেম") }}</label>
             </div>
 
             <div class="position-relative mb-3">
@@ -204,9 +221,9 @@
                            id="password"
                            name="password"
                            class="form-control pe-5"
-                           placeholder="Password"
+                           placeholder="{{ t('Password', 'পাসওয়ার্ড') }}"
                            required>
-                    <label for="password">Password</label>
+                    <label for="password">{{ t("Password", "পাসওয়ার্ড") }}</label>
                 </div>
 
                 <button type="button"
@@ -225,7 +242,7 @@
             {% endfor %}
             {% endwith %}
 
-            <button class="btn btn-success w-100 login-btn">Login</button>
+            <button class="btn btn-success w-100 login-btn">{{ t("Login", "লগইন") }}</button>
 
         </form>
     </div>

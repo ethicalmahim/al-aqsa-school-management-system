@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>Student Registration</title>
+    <title>{{ t("Student Registration", "শিক্ষার্থী নিবন্ধন") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -106,6 +106,35 @@
             white-space: nowrap;
         }
 
+        .student-table .col-action {
+            white-space: nowrap;
+            text-align: center;
+            width: 1%;
+        }
+
+        .student-table .col-action .btn + .btn {
+            margin-left: 4px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-pending {
+            background: #fff4d6;
+            color: #8a5a00;
+        }
+
+        .status-approved {
+            background: #dcf5e4;
+            color: #17713a;
+        }
+
         .empty-state {
             text-align: center;
             color: #888;
@@ -134,6 +163,7 @@
         }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-green">
@@ -168,27 +198,44 @@
             {% endif %}
 
             <div class="title">
-                Student Registration
+                {{ t("Student Registration", "শিক্ষার্থী নিবন্ধন") }}
             </div>
         </div>
 
-        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addStudentModal"
-                aria-label="নতুন শিক্ষার্থী">
-            <i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline ms-1">নতুন শিক্ষার্থী</span>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
+
+            <button type="button" id="openAddBtn" class="btn btn-success"
+                aria-label="{{ t("New Student", "নতুন শিক্ষার্থী") }}">
+            <i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline ms-1">{{ t("New Student", "নতুন শিক্ষার্থী") }}</span>
         </button>
+        </div>
     </div>
 
     <div class="page">
 
         <!-- FILTERS -->
         <div class="filter-card">
+            {% if current_user.role != "Admin" %}
             <input type="hidden" id="branchFilter" value="{{ current_user.branch.name }}">
+            {% endif %}
 
             <div class="row g-2 align-items-end">
+                {% if current_user.role == "Admin" %}
+                <div class="col-12 col-md">
+                    <label class="form-label" for="branchFilter">{{ t("Branch", "ব্রাঞ্চ") }}</label>
+                    <select id="branchFilter" class="form-select">
+                        <option value="">{{ t("All Branches", "সকল ব্রাঞ্চ") }}</option>
+                        {% for branch in get_branches() %}
+                        <option value="{{ branch.name }}">{{ branch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
                 <div class="col-6 col-md">
-                    <label class="form-label" for="classFilter">শ্রেণী</label>
+                    <label class="form-label" for="classFilter">{{ t("Class", "শ্রেণী") }}</label>
                     <select id="classFilter" class="form-select">
-                        <option value="">সকল শ্রেণী</option>
+                        <option value="">{{ t("All Classes", "সকল শ্রেণী") }}</option>
                         <option value="1">Play</option>
                         <option value="2">Nursery</option>
                         <option value="3">One</option>
@@ -200,12 +247,21 @@
                 </div>
 
                 <div class="col-6 col-md">
-                    <label class="form-label" for="rollFilter">রোল</label>
-                    <input id="rollFilter" type="text" inputmode="numeric" placeholder="Roll" class="form-control">
+                    <label class="form-label" for="rollFilter">{{ t("Roll", "রোল") }}</label>
+                    <input id="rollFilter" type="text" inputmode="numeric" placeholder="{{ t("Roll", "রোল") }}" class="form-control">
+                </div>
+
+                <div class="col-12 col-md">
+                    <label class="form-label" for="statusFilter">{{ t("Status", "অবস্থা") }}</label>
+                    <select id="statusFilter" class="form-select">
+                        <option value="">{{ t("All", "সকল") }}</option>
+                        <option value="Pending">{{ t("Pending", "অপেক্ষমাণ") }}</option>
+                        <option value="Approved">{{ t("Approved", "অনুমোদিত") }}</option>
+                    </select>
                 </div>
 
                 <div class="col-12 col-md-3">
-                    <button type="button" id="searchBtn" class="btn btn-success w-100">Search</button>
+                    <button type="button" id="searchBtn" class="btn btn-success w-100">{{ t("Search", "খুঁজুন") }}</button>
                 </div>
             </div>
         </div>
@@ -213,27 +269,33 @@
         <!-- TABLE -->
         <div class="table-card">
             <div class="section-title">
-                <span>শিক্ষার্থী তালিকা <span id="studentCount" class="badge text-bg-light border"></span></span>
-                <span class="branch-badge"><i class="bi bi-geo-alt"></i> {{ current_user.branch.name }}</span>
+                <span>{{ t("Student List", "শিক্ষার্থী তালিকা") }} <span id="studentCount" class="badge text-bg-light border"></span></span>
+                <span class="branch-badge"><i class="bi bi-geo-alt"></i> <span id="branchBadge">{{ current_user.branch.name if current_user.role != "Admin" else t("All Branches", "সকল ব্রাঞ্চ") }}</span></span>
             </div>
 
             <div class="table-responsive">
                 <table class="table table-bordered table-hover student-table">
                     <thead>
                     <tr>
-                        <th class="col-serial">ক্রমিক</th>
-                        <th>শিক্ষার্থীর নাম</th>
-                        <th>পিতার নাম</th>
-                        <th>অভিভাবকের নাম্বার</th>
-                        <th>ঠিকানা</th>
-                        <th>শ্রেণী</th>
-                        <th>রোল</th>
-                        <th class="text-end">ধার্যকৃত বেতন</th>
+                        <th class="col-serial">{{ t("Serial", "ক্রমিক") }}</th>
+                        <th>{{ t("Branch", "ব্রাঞ্চ") }}</th>
+                        <th>{{ t("Student Name", "শিক্ষার্থীর নাম") }}</th>
+                        <th>{{ t("Father's Name", "পিতার নাম") }}</th>
+                        <th>{{ t("Guardian's Number", "অভিভাবকের নাম্বার") }}</th>
+                        <th>{{ t("Address", "ঠিকানা") }}</th>
+                        <th>{{ t("Class", "শ্রেণী") }}</th>
+                        <th>{{ t("Roll", "রোল") }}</th>
+                        <th class="text-end">{{ t("Fixed Fee", "ধার্যকৃত বেতন") }}</th>
+                        <th class="text-end">{{ t("Fixed Exam Fee", "ধার্যকৃত পরীক্ষার ফি") }}</th>
+                        <th>{{ t("Status", "অবস্থা") }}</th>
+                        {% if current_user.role == "Admin" %}
+                        <th class="col-action">{{ t("Actions", "অ্যাকশন") }}</th>
+                        {% endif %}
                     </tr>
                     </thead>
                     <tbody id="studentTable">
                     <tr>
-                        <td colspan="8" class="empty-state">Loading...</td>
+                        <td colspan="{{ 12 if current_user.role == 'Admin' else 11 }}" class="empty-state">{{ t("Loading...", "লোড হচ্ছে...") }}</td>
                     </tr>
                     </tbody>
                 </table>
@@ -248,33 +310,45 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addStudentTitle">শিক্ষার্থী নিবন্ধন</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="addStudentTitle">{{ t("Student Registration", "শিক্ষার্থী নিবন্ধন") }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t("Close", "বন্ধ করুন") }}"></button>
             </div>
 
             <div class="modal-body">
                 <form id="addStudentForm" novalidate>
                     <div class="row g-2">
+                        {% if current_user.role == "Admin" %}
+                        <div class="col-12">
+                            <label class="form-label" for="branch">{{ t("Branch", "ব্রাঞ্চ") }}</label>
+                            <select id="branch" name="branch" class="form-select" required>
+                                <option value="">{{ t("Select", "নির্বাচন") }}</option>
+                                {% for branch in get_branches() %}
+                                <option value="{{ branch.name }}">{{ branch.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+
                         <div class="col-12 col-md-6">
-                            <label class="form-label" for="studentName">শিক্ষার্থীর নাম</label>
+                            <label class="form-label" for="studentName">{{ t("Student Name", "শিক্ষার্থীর নাম") }}</label>
                             <input id="studentName" name="student_name" class="form-control" required>
                         </div>
 
                         <div class="col-12 col-md-6">
-                            <label class="form-label" for="fathersName">পিতার নাম</label>
+                            <label class="form-label" for="fathersName">{{ t("Father's Name", "পিতার নাম") }}</label>
                             <input id="fathersName" name="fathers_name" class="form-control" required>
                         </div>
 
                         <div class="col-12 col-md-6">
-                            <label class="form-label" for="guardianPhone">অভিভাবকের নাম্বার</label>
+                            <label class="form-label" for="guardianPhone">{{ t("Guardian's Number", "অভিভাবকের নাম্বার") }}</label>
                             <input id="guardianPhone" name="guardian_phone" type="tel" inputmode="tel"
-                                   placeholder="01XXXXXXXXX" class="form-control" required>
+                                   placeholder="{{ t("01XXXXXXXXX", "01XXXXXXXXX") }}" class="form-control" required>
                         </div>
 
                         <div class="col-6 col-md-3">
-                            <label class="form-label" for="className">শ্রেণী</label>
+                            <label class="form-label" for="className">{{ t("Class", "শ্রেণী") }}</label>
                             <select id="className" name="class_name" class="form-select" required>
-                                <option value="">নির্বাচন</option>
+                                <option value="">{{ t("Select", "নির্বাচন") }}</option>
                                 <option>Play</option>
                                 <option>Nursery</option>
                                 <option>One</option>
@@ -286,23 +360,29 @@
                         </div>
 
                         <div class="col-6 col-md-3">
-                            <label class="form-label" for="roll">রোল</label>
+                            <label class="form-label" for="roll">{{ t("Roll", "রোল") }}</label>
                             <input id="roll" name="roll" inputmode="numeric" class="form-control" required>
                         </div>
 
-                        <div class="col-12 col-md-6">
-                            <label class="form-label" for="fixedFee">ধার্যকৃত বেতন</label>
-                            <input id="fixedFee" name="fixed_fee" inputmode="decimal" placeholder="টাকা"
+                        <div class="col-6 col-md-3">
+                            <label class="form-label" for="fixedFee">{{ t("Fixed Fee", "ধার্যকৃত বেতন") }}</label>
+                            <input id="fixedFee" name="fixed_fee" inputmode="decimal" placeholder="{{ t(" Taka", " টাকা") }}"
+                                   class="form-control" required>
+                        </div>
+
+                        <div class="col-6 col-md-3">
+                            <label class="form-label" for="fixedExamFee">{{ t("Fixed Exam Fee", "ধার্যকৃত পরীক্ষার ফি") }}</label>
+                            <input id="fixedExamFee" name="fixed_exam_fee" inputmode="decimal" placeholder="{{ t(" Taka", " টাকা") }}"
                                    class="form-control" required>
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label" for="address">ঠিকানা</label>
+                            <label class="form-label" for="address">{{ t("Address", "ঠিকানা") }}</label>
                             <textarea id="address" name="address" rows="2" class="form-control" required></textarea>
                         </div>
                     </div>
 
-                    <button type="submit" id="addStudentBtn" class="btn btn-success w-100 mt-3">Add Student</button>
+                    <button type="submit" id="addStudentBtn" class="btn btn-success w-100 mt-3">{{ t("Add Student", "শিক্ষার্থী যোগ করুন") }}</button>
                 </form>
             </div>
         </div>
@@ -312,12 +392,13 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const COLUMN_COUNT = 8
+    const IS_ADMIN = {{ (current_user.role == "Admin")|tojson }}
+    const COLUMN_COUNT = IS_ADMIN ? 12 : 11
     const searchBtn = document.getElementById("searchBtn")
     const studentTable = document.getElementById("studentTable")
     const studentCount = document.getElementById("studentCount")
 
-    // Bengali digits -> English digits, so "০১৭..." and "017..." are the same
+    // Bengali digits -> English digits, so {{ t("017...", "০১৭...")|tojson }} and "017..." are the same
     function toEnglishDigits(text) {
         return text.trim().replace(/[০-৯]/g, digit => "০১২৩৪৫৬৭৮৯".indexOf(digit))
     }
@@ -339,9 +420,45 @@
         studentTable.appendChild(tr)
     }
 
+    const STATUS_LABELS = {
+        Pending: {{ t("Pending", "অপেক্ষমাণ")|tojson }},
+        Approved: {{ t("Approved", "অনুমোদিত")|tojson }},
+    }
+
+    function statusCell(status) {
+        const td = cell("")
+        const badge = document.createElement("span")
+        badge.className = "status-badge " + (status === "Pending" ? "status-pending" : "status-approved")
+        badge.textContent = STATUS_LABELS[status] || status
+        td.appendChild(badge)
+        return td
+    }
+
+    // Approve (only while pending), edit and delete buttons for the admin
+    function actionCell(s) {
+        const td = cell("", "col-action")
+        if (s.status === "Pending") {
+            td.appendChild(actionButton("btn-success", "bi-check-lg", {{ t("Approve", "অনুমোদন")|tojson }}, () => approveStudent(s)))
+        }
+        td.appendChild(actionButton("btn-outline-primary", "bi-pencil-fill", {{ t("Edit", "সম্পাদনা")|tojson }}, () => openEdit(s)))
+        td.appendChild(actionButton("btn-outline-danger", "bi-trash-fill", {{ t("Delete", "মুছুন")|tojson }}, () => deleteStudent(s)))
+        return td
+    }
+
+    function actionButton(style, icon, label, onClick) {
+        const btn = document.createElement("button")
+        btn.type = "button"
+        btn.className = "btn btn-sm " + style
+        btn.title = label
+        btn.setAttribute("aria-label", label)
+        btn.innerHTML = `<i class="bi ${icon}"></i>`
+        btn.addEventListener("click", onClick)
+        return btn
+    }
+
     function renderStudents(students) {
         if (students.length === 0) {
-            showMessage("কোনো শিক্ষার্থী পাওয়া যায়নি")
+            showMessage({{ t("No students found", "কোনো শিক্ষার্থী পাওয়া যায়নি")|tojson }})
             return
         }
 
@@ -351,6 +468,7 @@
         students.forEach((s, index) => {
             const tr = document.createElement("tr")
             tr.appendChild(cell(index + 1, "col-serial"))
+            tr.appendChild(cell(s.branch, "col-nowrap"))
             tr.appendChild(cell(s.student_name))
             tr.appendChild(cell(s.fathers_name))
             tr.appendChild(cell(s.guardian_phone, "col-nowrap"))
@@ -359,6 +477,9 @@
             tr.appendChild(cell(s.roll, "col-nowrap"))
             // Older students registered before this field existed have no fee
             tr.appendChild(cell(s.fixed_fee == null ? "-" : String(Number(s.fixed_fee)), "col-nowrap text-end"))
+            tr.appendChild(cell(s.fixed_exam_fee == null ? "-" : String(Number(s.fixed_exam_fee)), "col-nowrap text-end"))
+            tr.appendChild(statusCell(s.status))
+            if (IS_ADMIN) tr.appendChild(actionCell(s))
             studentTable.appendChild(tr)
         })
     }
@@ -367,9 +488,10 @@
         const branch = document.getElementById("branchFilter").value
         const studentClass = document.getElementById("classFilter").value
         const id = toEnglishDigits(document.getElementById("rollFilter").value)
+        const status = document.getElementById("statusFilter").value
 
         if (id && !/^\d+$/.test(id)) {
-            alert("Roll must be a number!")
+            alert({{ t("Roll must be a number!", "রোল অবশ্যই সংখ্যা হতে হবে!")|tojson }})
             return
         }
 
@@ -380,7 +502,7 @@
             const res = await fetch("/api/search-students", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({branch, studentClass, id})
+                body: JSON.stringify({branch, studentClass, id, status})
             })
             if (!res.ok) throw new Error("Request failed: " + res.status)
 
@@ -388,15 +510,23 @@
             renderStudents(data.users || [])
         } catch (err) {
             console.error(err)
-            showMessage("Could not load students. Please try again.")
+            showMessage({{ t("Could not load students. Please try again.", "শিক্ষার্থীদের তথ্য লোড করা যায়নি। আবার চেষ্টা করুন।")|tojson }})
         } finally {
             searchBtn.disabled = false
-            searchBtn.textContent = "Search"
+            searchBtn.textContent = {{ t("Search", "খুঁজুন")|tojson }}
         }
     }
 
     searchBtn.addEventListener("click", searchStudents)
+    {% if current_user.role == "Admin" %}
+    document.getElementById("branchFilter").addEventListener("change", event => {
+        document.getElementById("branchBadge").textContent =
+            event.target.value || {{ t("All Branches", "সকল ব্রাঞ্চ")|tojson }}
+        searchStudents()
+    })
+    {% endif %}
     document.getElementById("classFilter").addEventListener("change", searchStudents)
+    document.getElementById("statusFilter").addEventListener("change", searchStudents)
     document.getElementById("rollFilter").addEventListener("keydown", event => {
         if (event.key === "Enter") {
             event.preventDefault()
@@ -408,6 +538,74 @@
     const addForm = document.getElementById("addStudentForm")
     const addBtn = document.getElementById("addStudentBtn")
     const addModalEl = document.getElementById("addStudentModal")
+
+    const addModal = bootstrap.Modal.getOrCreateInstance(addModalEl)
+    const modalTitle = document.getElementById("addStudentTitle")
+    let editingId = null  // null = registering a new student
+
+    function clearErrors() {
+        addForm.querySelectorAll(".is-invalid").forEach(el => el.classList.remove("is-invalid"))
+    }
+
+    function setSaveLabel() {
+        addBtn.textContent = editingId === null
+            ? {{ t("Add Student", "শিক্ষার্থী যোগ করুন")|tojson }}
+            : {{ t("Save", "সংরক্ষণ")|tojson }}
+    }
+
+    document.getElementById("openAddBtn").addEventListener("click", () => {
+        editingId = null
+        addForm.reset()
+        clearErrors()
+        {% if current_user.role == "Admin" %}
+        // New students default to the branch being viewed
+        addForm.branch.value = document.getElementById("branchFilter").value
+        {% endif %}
+        modalTitle.textContent = {{ t("Student Registration", "শিক্ষার্থী নিবন্ধন")|tojson }}
+        setSaveLabel()
+        addModal.show()
+    })
+
+    {% if current_user.role == "Admin" %}
+    function openEdit(s) {
+        editingId = s.id
+        clearErrors()
+        addForm.branch.value = s.branch
+        addForm.student_name.value = s.student_name
+        addForm.fathers_name.value = s.fathers_name
+        addForm.guardian_phone.value = s.guardian_phone
+        addForm.class_name.value = s.class_name
+        addForm.roll.value = s.roll
+        addForm.fixed_fee.value = s.fixed_fee == null ? "" : s.fixed_fee
+        addForm.fixed_exam_fee.value = s.fixed_exam_fee == null ? "" : s.fixed_exam_fee
+        addForm.address.value = s.address
+        modalTitle.textContent = {{ t("Edit Student", "শিক্ষার্থীর তথ্য সম্পাদনা")|tojson }}
+        setSaveLabel()
+        addModal.show()
+    }
+
+    async function studentAction(url, method, fallbackError) {
+        try {
+            const res = await fetch(url, {method})
+            const data = await res.json().catch(() => ({}))
+            if (!res.ok || !data.success) throw new Error(data.error || fallbackError)
+            searchStudents()
+        } catch (err) {
+            console.error(err)
+            alert({{ t("Error: ", "ত্রুটি: ")|tojson }} + err.message)
+        }
+    }
+
+    function approveStudent(s) {
+        if (!confirm(`{% if lang == "bn" %}${s.student_name} (রোল ${s.roll}) কে অনুমোদন করতে চান?{% else %}Approve ${s.student_name} (Roll ${s.roll})?{% endif %}`)) return
+        studentAction(`/api/approve-student/${s.id}`, "POST", {{ t("Could not approve student", "শিক্ষার্থী অনুমোদন করা যায়নি")|tojson }})
+    }
+
+    function deleteStudent(s) {
+        if (!confirm(`{% if lang == "bn" %}${s.student_name} (রোল ${s.roll}) কে মুছে ফেলতে চান?{% else %}Delete ${s.student_name} (Roll ${s.roll})?{% endif %}`)) return
+        studentAction(`/api/delete-student/${s.id}`, "DELETE", {{ t("Could not delete student", "শিক্ষার্থী মুছে ফেলা যায়নি")|tojson }})
+    }
+    {% endif %}
 
     // Put the cursor in the first field when the modal opens
     addModalEl.addEventListener("shown.bs.modal", () => document.getElementById("studentName").focus())
@@ -426,17 +624,23 @@
             class_name: addForm.class_name.value,
             roll: toEnglishDigits(addForm.roll.value),
             fixed_fee: toEnglishDigits(addForm.fixed_fee.value),
+            fixed_exam_fee: toEnglishDigits(addForm.fixed_exam_fee.value),
         }
+        {% if current_user.role == "Admin" %}
+        payload.branch = addForm.branch.value
+        {% endif %}
 
         // Highlight every empty or invalid field at once
         const invalid = Object.keys(payload).filter(key => !payload[key])
         if (payload.guardian_phone && !/^\+?\d{10,14}$/.test(payload.guardian_phone)) invalid.push("guardian_phone")
         if (payload.roll && !/^\d+$/.test(payload.roll)) invalid.push("roll")
-        if (payload.fixed_fee && !/^\d+(\.\d{1,2})?$/.test(payload.fixed_fee)) invalid.push("fixed_fee")
+        ;["fixed_fee", "fixed_exam_fee"].forEach(key => {
+            if (payload[key] && !/^\d+(\.\d{1,2})?$/.test(payload[key])) invalid.push(key)
+        })
 
         invalid.forEach(name => addForm[name].classList.add("is-invalid"))
         if (invalid.length) {
-            alert("অনুগ্রহ করে সবগুলো তথ্য সঠিকভাবে পূরণ করুন!")
+            alert({{ t("Please fill in all the information correctly!", "অনুগ্রহ করে সবগুলো তথ্য সঠিকভাবে পূরণ করুন!")|tojson }})
             addForm[invalid[0]].focus()
             return
         }
@@ -445,7 +649,8 @@
         addBtn.textContent = "Saving..."
 
         try {
-            const res = await fetch("/api/add-student", {
+            const url = editingId === null ? "/api/add-student" : `/api/update-student/${editingId}`
+            const res = await fetch(url, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(payload)
@@ -453,19 +658,25 @@
             const data = await res.json().catch(() => ({}))
 
             if (!res.ok || !data.success) {
-                throw new Error(data.error || "Could not add student")
+                throw new Error(data.error || {{ t("Could not add student", "শিক্ষার্থী যোগ করা যায়নি")|tojson }})
             }
 
-            alert("শিক্ষার্থী সংযোজন সফল হয়েছে। অনুগ্রহ করে এডমিনের অনুমোদনের অপেক্ষা করুন।")
-            bootstrap.Modal.getOrCreateInstance(addModalEl).hide()
+            {% if current_user.role == "Admin" %}
+            alert(editingId === null
+                ? {{ t("Student added and approved successfully.", "শিক্ষার্থী সংযোজন ও অনুমোদন সফল হয়েছে।")|tojson }}
+                : {{ t("Student information updated successfully.", "শিক্ষার্থীর তথ্য সফলভাবে হালনাগাদ হয়েছে।")|tojson }})
+            {% else %}
+            alert({{ t("Student added successfully. Please wait for the admin's approval.", "শিক্ষার্থী সংযোজন সফল হয়েছে। অনুগ্রহ করে এডমিনের অনুমোদনের অপেক্ষা করুন।")|tojson }})
+            {% endif %}
+            addModal.hide()
             addForm.reset()
             searchStudents()
         } catch (err) {
             console.error(err)
-            alert("Error: " + err.message)
+            alert({{ t("Error: ", "ত্রুটি: ")|tojson }} + err.message)
         } finally {
             addBtn.disabled = false
-            addBtn.textContent = "Add Student"
+            setSaveLabel()
         }
     })
 
@@ -473,5 +684,6 @@
     searchStudents()
 </script>
 
+{% include "_excel_export.html" %}
 </body>
 </html>

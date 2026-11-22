@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>Attendance Management</title>
+    <title>{{ t("Attendance Management", "হাজিরা ব্যবস্থাপনা") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -174,6 +174,7 @@
         .attendance-table td.mark-note { color: #94a3b8; }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-blue">
@@ -184,7 +185,7 @@
         <div class="d-flex">
             <div class="toast-body">{{ message }}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
-                    aria-label="Close"></button>
+                    aria-label="{{ t("Close", "বন্ধ করুন") }}"></button>
         </div>
     </div>
     {% endfor %}
@@ -216,16 +217,20 @@
             {% endif %}
 
             <div class="title">
-                Attendance Management
+                {{ t("Attendance Management", "হাজিরা ব্যবস্থাপনা") }}
             </div>
         </div>
 
-        {% if current_user.role in ("Admin", "Service Admin") %}
-        <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#uploadModal"
-                aria-label="Upload attendance">
-            <i class="bi bi-upload"></i><span class="d-none d-sm-inline ms-1">Upload</span>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
+
+            {% if current_user.role in ("Admin", "Service Admin") %}
+            <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#uploadModal"
+                aria-label="{{ t("Upload attendance", "হাজিরা আপলোড") }}">
+            <i class="bi bi-upload"></i><span class="d-none d-sm-inline ms-1">{{ t("Upload", "আপলোড") }}</span>
         </button>
-        {% endif %}
+            {% endif %}
+        </div>
     </div>
 
     <div class="page">
@@ -234,9 +239,9 @@
             <div class="row g-2 align-items-end">
                 {% if current_user.role == "Admin" %}
                 <div class="col-12 col-md">
-                    <label class="form-label" for="branchSelect">ব্রাঞ্চ</label>
+                    <label class="form-label" for="branchSelect">{{ t("Branch", "ব্রাঞ্চ") }}</label>
                     <select id="branchSelect" class="form-select">
-                        <option value="">Select Branch</option>
+                        <option value="">{{ t("Select Branch", "ব্রাঞ্চ নির্বাচন") }}</option>
                         {% for branch in get_branches() %}
                         <option value="{{ branch.name }}">{{ branch.name }}</option>
                         {% endfor %}
@@ -247,9 +252,9 @@
                 {% endif %}
 
                 <div class="col-12 col-md">
-                    <label class="form-label" for="classSelect">শ্রেণী</label>
+                    <label class="form-label" for="classSelect">{{ t("Class", "শ্রেণী") }}</label>
                     <select id="classSelect" class="form-select">
-                        <option value="">Select Class</option>
+                        <option value="">{{ t("Select Class", "শ্রেণী নির্বাচন") }}</option>
                         {% for class_name in classes %}
                         <option value="{{ class_name }}">{{ class_name }}</option>
                         {% endfor %}
@@ -257,7 +262,7 @@
                 </div>
 
                 <div class="col-7 col-md">
-                    <label class="form-label" for="monthSelect">মাস</label>
+                    <label class="form-label" for="monthSelect">{{ t("Month", "মাস") }}</label>
                     <select id="monthSelect" class="form-select">
                         {% for month in months %}
                         <option value="{{ month }}" {% if month == current_month %}selected{% endif %}>{{ month }}</option>
@@ -266,7 +271,7 @@
                 </div>
 
                 <div class="col-5 col-md-2">
-                    <label class="form-label" for="yearSelect">বছর</label>
+                    <label class="form-label" for="yearSelect">{{ t("Year", "বছর") }}</label>
                     <select id="yearSelect" class="form-select">
                         {% for year in years %}
                         <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
@@ -275,7 +280,7 @@
                 </div>
 
                 <div class="col-12 col-md-2">
-                    <button type="button" id="searchBtn" class="btn btn-success w-100">Search</button>
+                    <button type="button" id="searchBtn" class="btn btn-success w-100">{{ t("Search", "খুঁজুন") }}</button>
                 </div>
             </div>
         </div>
@@ -285,9 +290,9 @@
             <div class="section-title">
                 <span id="sheetTitle"></span>
                 <span class="small fw-normal text-muted">
-                    <span class="mark-present">✔</span> উপস্থিত &nbsp;
-                    <span class="mark-absent">✗</span> অনুপস্থিত &nbsp;
-                    <span class="mark-note">•</span> ছুটি / অন্যান্য
+                    <span class="mark-present">✔</span> {% if lang == "bn" %}উপস্থিত &nbsp;{% else %}Present &nbsp;{% endif %}
+                    <span class="mark-absent">✗</span> {% if lang == "bn" %}অনুপস্থিত &nbsp;{% else %}Absent &nbsp;{% endif %}
+                    <span class="mark-note">•</span> {{ t("Holiday / Other", "ছুটি / অন্যান্য") }}
                 </span>
             </div>
 
@@ -295,13 +300,13 @@
                 <table class="table table-bordered table-hover attendance-table">
                     <thead>
                     <tr>
-                        <th>ID</th>
-                        <th class="col-name">Student Name</th>
+                        <th>{{ t("ID", "আইডি") }}</th>
+                        <th class="col-name">{{ t("Student Name", "শিক্ষার্থীর নাম") }}</th>
                         {% for i in range(1, 32) %}
                         <th>{{ i }}</th>
                         {% endfor %}
-                        <th title="উপস্থিত">উপ.</th>
-                        <th title="অনুপস্থিত">অনু.</th>
+                        <th title="{{ t("Present", "উপস্থিত") }}">{{ t("P.", "উপ.") }}</th>
+                        <th title="{{ t("Absent", "অনুপস্থিত") }}">{{ t("A.", "অনু.") }}</th>
                         <th>%</th>
                     </tr>
                     </thead>
@@ -323,8 +328,8 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="uploadTitle">Upload Attendance Info</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="uploadTitle">{{ t("Upload Attendance Info", "হাজিরার তথ্য আপলোড") }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t("Close", "বন্ধ করুন") }}"></button>
                 </div>
 
                 <div class="modal-body">
@@ -333,9 +338,9 @@
 
                         {% if current_user.role == "Admin" %}
                         <div class="mb-3">
-                            <label class="form-label" for="uploadBranch">ব্রাঞ্চ</label>
+                            <label class="form-label" for="uploadBranch">{{ t("Branch", "ব্রাঞ্চ") }}</label>
                             <select id="uploadBranch" name="branch_name" class="form-select" required>
-                                <option value="">Select Branch</option>
+                                <option value="">{{ t("Select Branch", "ব্রাঞ্চ নির্বাচন") }}</option>
                                 {% for branch in get_branches() %}
                                 <option value="{{ branch.name }}">{{ branch.name }}</option>
                                 {% endfor %}
@@ -344,9 +349,9 @@
                         {% endif %}
 
                         <div class="mb-3">
-                            <label class="form-label" for="uploadClass">শ্রেণী</label>
+                            <label class="form-label" for="uploadClass">{{ t("Class", "শ্রেণী") }}</label>
                             <select id="uploadClass" name="class_name" class="form-select" required>
-                                <option value="">Select Class</option>
+                                <option value="">{{ t("Select Class", "শ্রেণী নির্বাচন") }}</option>
                                 {% for class_name in classes %}
                                 <option value="{{ class_name }}">{{ class_name }}</option>
                                 {% endfor %}
@@ -355,7 +360,7 @@
 
                         <div class="row g-2 mb-3">
                             <div class="col-7">
-                                <label class="form-label" for="uploadMonth">মাস</label>
+                                <label class="form-label" for="uploadMonth">{{ t("Month", "মাস") }}</label>
                                 <select id="uploadMonth" class="form-select">
                                     {% for month in months %}
                                     <option value="{{ month }}" {% if month == current_month %}selected{% endif %}>{{ month }}</option>
@@ -363,7 +368,7 @@
                                 </select>
                             </div>
                             <div class="col-5">
-                                <label class="form-label" for="uploadYear">বছর</label>
+                                <label class="form-label" for="uploadYear">{{ t("Year", "বছর") }}</label>
                                 <select id="uploadYear" class="form-select">
                                     {% for year in years %}
                                     <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
@@ -374,16 +379,15 @@
                         <input type="hidden" name="month_name" id="uploadMonthName">
 
                         <div class="mb-3">
-                            <label class="form-label" for="excelFile">Excel ফাইল (.xlsx)</label>
+                            <label class="form-label" for="excelFile">{{ t("Excel file (.xlsx)", "Excel ফাইল (.xlsx)") }}</label>
                             <input type="file" id="excelFile" name="excel_file" accept=".xlsx" class="form-control"
                                    required>
                             <div class="form-text">
-                                'ID' ও 'Student Name' কলাম এবং 1 থেকে 31 তারিখের কলাম থাকতে হবে।
-                                একই মাসের আগের আপলোড প্রতিস্থাপিত হবে।
+                                {{ t("Must have 'ID' and 'Student Name' columns and day columns 1 to 31. Replaces the previous upload for the same month.", "'ID' ও 'Student Name' কলাম এবং 1 থেকে 31 তারিখের কলাম থাকতে হবে। একই মাসের আগের আপলোড প্রতিস্থাপিত হবে।") }}
                             </div>
                         </div>
 
-                        <button type="submit" id="uploadBtn" class="btn btn-success w-100">Submit</button>
+                        <button type="submit" id="uploadBtn" class="btn btn-success w-100">{{ t("Submit", "জমা দিন") }}</button>
                     </form>
                 </div>
             </div>
@@ -435,13 +439,13 @@
 
     function render(rows, month, className) {
         if (rows.length === 0) {
-            showEmpty(`${className} শ্রেণীর ${month} মাসের উপস্থিতির তথ্য পাওয়া যায়নি !`)
+            showEmpty(`{% if lang == "bn" %}${className} শ্রেণীর ${month} মাসের উপস্থিতির তথ্য পাওয়া যায়নি !{% else %}No attendance found for class ${className} in ${month}!{% endif %}`)
             return
         }
 
         emptyCard.classList.add("d-none")
         card.classList.remove("d-none")
-        document.getElementById("sheetTitle").textContent = `${className} · ${month} · ${rows.length} জন`
+        document.getElementById("sheetTitle").textContent = `{% if lang == "bn" %}${className} · ${month} · ${rows.length} জন{% else %}${className} · ${month} · ${rows.length} students{% endif %}`
 
         tbody.innerHTML = ""
         const notes = {}  // day -> note (holidays are the same for the whole class)
@@ -472,7 +476,7 @@
         list.innerHTML = ""
         Object.keys(notes).forEach(day => {
             const li = document.createElement("li")
-            li.textContent = `${day} তারিখ: ${notes[day]}`
+            li.textContent = `{% if lang == "bn" %}${day} তারিখ: ${notes[day]}{% else %}Day ${day}: ${notes[day]}{% endif %}`
             list.appendChild(li)
         })
     }
@@ -483,7 +487,7 @@
         const month = selectedMonth("monthSelect", "yearSelect")
 
         if (!branch || !className) {
-            alert("Please select branch and class")
+            alert({{ t("Please select branch and class", "অনুগ্রহ করে ব্রাঞ্চ ও শ্রেণী নির্বাচন করুন")|tojson }})
             return
         }
 
@@ -500,10 +504,10 @@
             render(result.data, month, className)
         } catch (error) {
             console.error(error)
-            showEmpty("উপস্থিতির তথ্য লোড করা যায়নি: " + error.message)
+            showEmpty({{ t("Could not load attendance: ", "উপস্থিতির তথ্য লোড করা যায়নি: ")|tojson }} + error.message)
         } finally {
             searchBtn.disabled = false
-            searchBtn.textContent = "Search"
+            searchBtn.textContent = {{ t("Search", "খুঁজুন")|tojson }}
         }
     }
 
@@ -519,5 +523,6 @@
         })
     }
 </script>
+{% include "_excel_export.html" %}
 </body>
 </html>

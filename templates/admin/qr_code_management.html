@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="UTF-8">
@@ -7,7 +7,7 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>QR Code Management</title>
+    <title>{{ t("QR Code Management", "কিউআর কোড ব্যবস্থাপনা") }}</title>
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
@@ -254,6 +254,7 @@
     </style>
 
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-red">
@@ -292,12 +293,13 @@
             {% endif %}
 
             <div class="title">
-                QR Code Management
+                {{ t("QR Code Management", "কিউআর কোড ব্যবস্থাপনা") }}
             </div>
 
         </div>
-
-
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
+        </div>
     </div>
 
     <!-- DASHBOARD -->
@@ -307,14 +309,14 @@
         <a href="{{ url_for('qr_scanner') }}" class="card-link">
             <div class="card-btn t-red">
                 <div class="icon-circle qr"><i class="bi bi-qr-code-scan"></i></div>
-                <div class="card-title">QR Code Scanner</div>
+                <div class="card-title">{{ t("QR Code Scanner", "কিউআর কোড স্ক্যানার") }}</div>
             </div>
         </a>
 
         <a href="{{ url_for('tutorial_management') }}" class="card-link">
             <div class="card-btn t-orange">
                 <div class="icon-circle users"><i class="bi bi-youtube"></i></div>
-                <div class="card-title">Tutorial Management</div>
+                <div class="card-title">{{ t("Tutorial Management", "টিউটোরিয়াল ব্যবস্থাপনা") }}</div>
             </div>
         </a>
 

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>Call Service</title>
+    <title>{{ t("Call Service", "কল সার্ভিস") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -159,6 +159,7 @@
         }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-indigo">
@@ -169,7 +170,7 @@
         <div class="d-flex">
             <div class="toast-body">{{ message }}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
-                    aria-label="Close"></button>
+                    aria-label="{{ t("Close", "বন্ধ করুন") }}"></button>
         </div>
     </div>
     {% endfor %}
@@ -207,15 +208,19 @@
             {% endif %}
 
             <div class="title">
-                Call Service
+                {{ t("Call Service", "কল সার্ভিস") }}
             </div>
         </div>
 
-        {% if can_manage %}
-        <button type="button" class="btn btn-success" id="addBtn" aria-label="নতুন নাম্বার">
-            <i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline ms-1">নতুন নাম্বার</span>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
+
+            {% if can_manage %}
+            <button type="button" class="btn btn-success" id="addBtn" aria-label="{{ t("New Number", "নতুন নাম্বার") }}">
+            <i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline ms-1">{{ t("New Number", "নতুন নাম্বার") }}</span>
         </button>
-        {% endif %}
+            {% endif %}
+        </div>
     </div>
 
     <div class="page">
@@ -237,28 +242,28 @@
 
                 <div class="contact-actions">
                     <a href="tel:{{ phone.phone_number }}" class="btn btn-dark action-btn"
-                       title="Call" aria-label="Call {{ phone.name }}">
+                       title="{{ t("Call", "কল করুন") }}" aria-label="Call {{ phone.name }}">
                         <i class="bi bi-telephone-fill"></i>
                     </a>
                     <a href="sms:{{ phone.phone_number }}" class="btn btn-primary action-btn"
-                       title="Message" aria-label="Message {{ phone.name }}">
+                       title="{{ t("Message", "বার্তা") }}" aria-label="Message {{ phone.name }}">
                         <i class="bi bi-chat-dots-fill"></i>
                     </a>
                     <a href="https://wa.me/{{ phone.phone_number | whatsapp_number }}" target="_blank"
                        rel="noopener" class="btn btn-success action-btn"
-                       title="WhatsApp" aria-label="WhatsApp {{ phone.name }}">
+                       title="{{ t("WhatsApp", "হোয়াটসঅ্যাপ") }}" aria-label="WhatsApp {{ phone.name }}">
                         <i class="bi bi-whatsapp"></i>
                     </a>
 
                     {% if can_manage %}
-                    <button type="button" class="btn btn-light border action-btn edit-btn" title="Edit"
+                    <button type="button" class="btn btn-light border action-btn edit-btn" title="{{ t("Edit", "সম্পাদনা") }}"
                             aria-label="Edit {{ phone.name }}"
                             data-id="{{ phone.id }}" data-name="{{ phone.name }}"
                             data-phone="{{ phone.phone_number }}" data-branch="{{ phone.branch_name }}">
                         <i class="bi bi-pencil-square"></i>
                     </button>
                     <button type="button" class="btn btn-light border text-danger action-btn delete-btn"
-                            title="Delete" aria-label="Delete {{ phone.name }}"
+                            title="{{ t("Delete", "মুছুন") }}" aria-label="Delete {{ phone.name }}"
                             data-id="{{ phone.id }}" data-name="{{ phone.name }}">
                         <i class="bi bi-trash3"></i>
                     </button>
@@ -271,7 +276,7 @@
         <div class="contact-card">
             <div class="empty-state">
                 <i class="bi bi-telephone-x fs-3 d-block mb-2"></i>
-                কোন ফোন নাম্বার যোগ করা হয়নি
+                {{ t("No phone numbers added", "কোন ফোন নাম্বার যোগ করা হয়নি") }}
             </div>
         </div>
         {% endfor %}
@@ -284,8 +289,8 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="phoneModalTitle">নতুন ফোন নাম্বার</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="phoneModalTitle">{{ t("New Phone Number", "নতুন ফোন নাম্বার") }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t("Close", "বন্ধ করুন") }}"></button>
             </div>
 
             <div class="modal-body">
@@ -293,9 +298,9 @@
 
                     {% if current_user.role == "Admin" %}
                     <div class="mb-3">
-                        <label class="form-label" for="phoneBranch">ব্রাঞ্চ</label>
+                        <label class="form-label" for="phoneBranch">{{ t("Branch", "ব্রাঞ্চ") }}</label>
                         <select id="phoneBranch" name="branch_name" class="form-select" required>
-                            <option value="">Select Branch</option>
+                            <option value="">{{ t("Select Branch", "ব্রাঞ্চ নির্বাচন") }}</option>
                             {% for branch in get_branches() %}
                             <option value="{{ branch.name }}">{{ branch.name }}</option>
                             {% endfor %}
@@ -304,18 +309,18 @@
                     {% endif %}
 
                     <div class="mb-3">
-                        <label class="form-label" for="phoneName">নাম / পদবি</label>
-                        <input id="phoneName" name="name" class="form-control" placeholder="যেমন: অফিস, প্রধান শিক্ষক"
+                        <label class="form-label" for="phoneName">{{ t("Name / Designation", "নাম / পদবি") }}</label>
+                        <input id="phoneName" name="name" class="form-control" placeholder="{{ t("e.g. Office, Head Teacher", "যেমন: অফিস, প্রধান শিক্ষক") }}"
                                required>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label" for="phoneNumber">ফোন নাম্বার</label>
+                        <label class="form-label" for="phoneNumber">{{ t("Phone Number", "ফোন নাম্বার") }}</label>
                         <input id="phoneNumber" name="phone_number" type="tel" inputmode="tel"
-                               placeholder="01XXXXXXXXX" class="form-control" required>
+                               placeholder="{{ t("01XXXXXXXXX", "01XXXXXXXXX") }}" class="form-control" required>
                     </div>
 
-                    <button type="submit" id="phoneSubmit" class="btn btn-success w-100">Save</button>
+                    <button type="submit" id="phoneSubmit" class="btn btn-success w-100">{{ t("Save", "সংরক্ষণ") }}</button>
                 </form>
             </div>
         </div>
@@ -342,13 +347,13 @@
     }
 
     document.getElementById("addBtn").addEventListener("click", () => {
-        openModal("নতুন ফোন নাম্বার", ADD_URL, {})
+        openModal({{ t("New Phone Number", "নতুন ফোন নাম্বার")|tojson }}, ADD_URL, {})
     })
 
     document.querySelectorAll(".edit-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             const d = btn.dataset
-            openModal("ফোন নাম্বার সম্পাদনা", UPDATE_URL + d.id, {name: d.name, phone: d.phone, branch: d.branch})
+            openModal({{ t("Edit Phone Number", "ফোন নাম্বার সম্পাদনা")|tojson }}, UPDATE_URL + d.id, {name: d.name, phone: d.phone, branch: d.branch})
         })
     })
 
@@ -360,7 +365,7 @@
             .replace(/[০-৯]/g, d => "০১২৩৪৫৬৭৮৯".indexOf(d)).replace(/[^\d]/g, "")
         if (phone.length < 6 || phone.length > 15) {
             event.preventDefault()
-            alert("সঠিক ফোন নাম্বার লিখুন!")
+            alert({{ t("Enter a valid phone number!", "সঠিক ফোন নাম্বার লিখুন!")|tojson }})
             return
         }
         document.getElementById("phoneSubmit").disabled = true
@@ -368,7 +373,7 @@
 
     document.querySelectorAll(".delete-btn").forEach(btn => {
         btn.addEventListener("click", async () => {
-            if (!confirm(`"${btn.dataset.name}" নাম্বারটি মুছে ফেলতে চান?`)) return
+            if (!confirm(`{% if lang == "bn" %}"${btn.dataset.name}" নাম্বারটি মুছে ফেলতে চান?{% else %}Delete the number "${btn.dataset.name}"?{% endif %}`)) return
 
             try {
                 const res = await fetch({{ url_for('delete_phone_number', phone_id=0) | tojson }}.replace(/0$/, btn.dataset.id),
@@ -378,7 +383,7 @@
                 window.location.reload()
             } catch (error) {
                 console.error(error)
-                alert("মুছে ফেলা যায়নি: " + error.message)
+                alert({{ t("Could not delete: ", "মুছে ফেলা যায়নি: ")|tojson }} + error.message)
             }
         })
     })

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>আয়</title>
+    <title>{{ t("Income", "আয়") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -89,8 +89,34 @@
             }
 
         }
+
+        /* PAYMENT HISTORY */
+        .history-table {
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+
+        .history-table thead th {
+            background: #f8f9fc;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .history-table td {
+            vertical-align: middle;
+        }
+
+        .history-table .cancelled td {
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .history-table .cancelled td.col-status {
+            text-decoration: none;
+        }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-green">
@@ -124,8 +150,11 @@
             </a>
             {% endif %}
             <div class="title">
-                অভ্যন্তরীণ হিসাব - আয়
+                {{ t("Internal Accounts - Income", "অভ্যন্তরীণ হিসাব - আয়") }}
             </div>
+        </div>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
         </div>
     </div>
 
@@ -134,18 +163,22 @@
         <!-- FILTERS -->
         <div class="filter-card">
             <div class="row g-2">
+                {% if current_user.role == "Admin" %}
                 <div class="col-md">
-                    <select id="branchFilter" class="form-select" aria-label="ব্রাঞ্চ">
-                        <option value="">Select Branch</option>
+                    <select id="branchFilter" class="form-select" aria-label="{{ t("Branch", "ব্রাঞ্চ") }}">
+                        <option value="">{{ t("Select Branch", "ব্রাঞ্চ নির্বাচন") }}</option>
                         {% for branch in get_branches() %}
                         <option value="{{ branch.name }}">{{ branch.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
+                {% else %}
+                <input type="hidden" id="branchFilter" value="{{ current_user.branch.name }}">
+                {% endif %}
 
                 <div class="col-md">
-                    <select class="form-select" id="classFilter" aria-label="শ্রেণী">
-                        <option value="">Select Class</option>
+                    <select class="form-select" id="classFilter" aria-label="{{ t("Class", "শ্রেণী") }}">
+                        <option value="">{{ t("Select Class", "শ্রেণী নির্বাচন") }}</option>
                         <option value="Play">Play</option>
                         <option value="Nursery">Nursery</option>
                         <option value="One">One</option>
@@ -157,15 +190,15 @@
                 </div>
 
                 <div class="col-md">
-                    <input type="text" id="roll" placeholder="Roll" class="form-control" aria-label="রোল">
+                    <input type="text" id="roll" placeholder="{{ t("Roll", "রোল") }}" class="form-control" aria-label="{{ t("Roll", "রোল") }}">
                 </div>
 
                 <div class="col-md-3">
-                    <button type="button" id="searchBtn" class="btn btn-success w-100">Search</button>
+                    <button type="button" id="searchBtn" class="btn btn-success w-100">{{ t("Search", "খুঁজুন") }}</button>
                 </div>
 
                 <div class="col-12">
-                    <input type="text" id="studentName" placeholder="Name" class="form-control" aria-label="নাম">
+                    <input type="text" id="studentName" placeholder="{{ t("Name", "নাম") }}" class="form-control" aria-label="{{ t("Name", "নাম") }}">
                 </div>
 
                 <input type="hidden" name="role" value="Student">
@@ -174,18 +207,19 @@
 
         <!-- SALARY FEE -->
         <div class="accounts-card">
-            <div class="section-title">বেতন ফি</div>
+            <div class="section-title">{{ t("Tuition Fee", "বেতন ফি") }}</div>
 
             <div class="row g-2 mb-3">
                 <div class="col-12">
-                    <div class="sub-title">আদায় বিবরণ</div>
+                    <div class="sub-title">{{ t("Collection Details", "আদায় বিবরণ") }}</div>
                 </div>
 
                 <div class="col-6 col-md-3 d-flex align-items-center">
                     <div class="form-check mb-0">
                         <input class="form-check-input" type="checkbox" id="feeMonthly" name="fee_types"
                                value="monthly_fee">
-                        <label class="form-check-label" for="feeMonthly">মাসিক বেতন</label>
+                        <label class="form-check-label" for="feeMonthly">{{ t("Monthly Salary", "মাসিক বেতন") }}
+                            <span id="monthlyFeeAmount" class="text-muted small"></span></label>
                     </div>
                 </div>
 
@@ -193,38 +227,49 @@
                     <div class="form-check mb-0">
                         <input class="form-check-input" type="checkbox" id="feeExam" name="fee_types"
                                value="exam_fee">
-                        <label class="form-check-label" for="feeExam">পরীক্ষার ফি</label>
+                        <label class="form-check-label" for="feeExam">{{ t("Exam Fee", "পরীক্ষার ফি") }}
+                            <span id="examFeeAmount" class="text-muted small"></span></label>
                     </div>
                 </div>
 
-                <div class="col-12 col-md-6">
-                    <input type="text" id="feeOther" name="fee_other" class="form-control" placeholder="অন্যান্য"
-                           aria-label="অন্যান্য">
+                <div class="col-6 col-md-3 d-flex align-items-center">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="feeOthers" name="fee_types"
+                               value="other_income">
+                        <label class="form-check-label" for="feeOthers">{{ t("Others", "অন্যান্য") }}</label>
+                    </div>
+                </div>
+
+                <!-- Shown only while Others is ticked; the amount is never added to the total -->
+                <div class="col-6 col-md-3 d-none" id="feeOthersAmountBox">
+                    <input type="text" id="feeOthersAmount" inputmode="decimal" class="form-control"
+                           placeholder="{{ t("Others amount", "অন্যান্য টাকা") }}"
+                           aria-label="{{ t("Others amount", "অন্যান্য টাকা") }}">
                 </div>
 
                 <div class="col-12">
-                    <label class="form-label" for="monthSelect">মাস</label>
+                    <label class="form-label" for="monthSelect">{{ t("Month", "মাস") }}</label>
                     <select id="monthSelect" name="month" class="form-select">
-                        <option value="">মাস নির্বাচন</option>
-                        <option value="1">জানুয়ারী</option>
-                        <option value="2">ফেব্রুয়ারী</option>
-                        <option value="3">মার্চ</option>
-                        <option value="4">এপ্রিল</option>
-                        <option value="5">মে</option>
-                        <option value="6">জুন</option>
-                        <option value="7">জুলাই</option>
-                        <option value="8">আগস্ট</option>
-                        <option value="9">সেপ্টেম্বর</option>
-                        <option value="10">অক্টোবর</option>
-                        <option value="11">নভেম্বর</option>
-                        <option value="12">ডিসেম্বর</option>
+                        <option value="">{{ t("Select Month", "মাস নির্বাচন") }}</option>
+                        <option value="1">{{ t("January", "জানুয়ারী") }}</option>
+                        <option value="2">{{ t("February", "ফেব্রুয়ারী") }}</option>
+                        <option value="3">{{ t("March", "মার্চ") }}</option>
+                        <option value="4">{{ t("April", "এপ্রিল") }}</option>
+                        <option value="5">{{ t("May", "মে") }}</option>
+                        <option value="6">{{ t("June", "জুন") }}</option>
+                        <option value="7">{{ t("July", "জুলাই") }}</option>
+                        <option value="8">{{ t("August", "আগস্ট") }}</option>
+                        <option value="9">{{ t("September", "সেপ্টেম্বর") }}</option>
+                        <option value="10">{{ t("October", "অক্টোবর") }}</option>
+                        <option value="11">{{ t("November", "নভেম্বর") }}</option>
+                        <option value="12">{{ t("December", "ডিসেম্বর") }}</option>
                     </select>
                 </div>
             </div>
 
             <div class="row g-2 mb-3">
                 <div class="col-12">
-                    <div class="sub-title">বেতন বিবরণ</div>
+                    <div class="sub-title">{{ t("Salary Details", "বেতন বিবরণ") }}</div>
                 </div>
 
                 {% for key, label in [
@@ -242,68 +287,69 @@
 
             <div class="row g-2">
                 <div class="col-6 col-md-3">
-                    <label class="form-label" for="salaryPreviousDue">পূর্বের বকেয়া</label>
-                    <input type="text" id="salaryPreviousDue" name="salary_previous_due" class="form-control">
+                    <label class="form-label" for="salaryPreviousDue">{{ t("Previous Due", "পূর্বের বকেয়া") }}</label>
+                    <input type="text" id="salaryPreviousDue" name="salary_previous_due" class="form-control" readonly>
                 </div>
 
                 <div class="col-6 col-md-3">
-                    <label class="form-label" for="salaryTotal">মোট টাকা</label>
-                    <input type="text" id="salaryTotal" name="salary_total" class="form-control">
+                    <label class="form-label" for="salaryTotal">{{ t("Total Amount", "মোট টাকা") }}</label>
+                    <input type="text" id="salaryTotal" name="salary_total" inputmode="decimal" class="form-control">
                 </div>
 
                 <div class="col-6 col-md-3">
-                    <label class="form-label" for="salaryPaid">পরিশোধিত টাকা</label>
+                    <label class="form-label" for="salaryPaid">{{ t("Paid Amount", "পরিশোধিত টাকা") }}</label>
                     <input type="text" id="salaryPaid" name="salary_paid" class="form-control">
+                    <div id="paidSplitNote" class="form-text"></div>
                 </div>
 
                 <div class="col-6 col-md-3">
-                    <label class="form-label" for="salaryDue">বকেয়া</label>
-                    <input type="text" id="salaryDue" name="salary_due" class="form-control">
+                    <label class="form-label" for="salaryDue">{{ t("Due", "বকেয়া") }}</label>
+                    <input type="text" id="salaryDue" name="salary_due" inputmode="decimal" class="form-control">
                 </div>
             </div>
         </div>
 
         <!-- MISC INCOME -->
         <div class="accounts-card">
-            <div class="section-title">বিবিধ আয়</div>
+            <div class="section-title">{{ t("Miscellaneous Income", "বিবিধ আয়") }}</div>
 
             <div id="student-info" class="text-center"></div>
 
             <div class="row g-2 mb-3">
                 <div class="col-12">
-                    <div class="sub-title">আদায় বিবরণ</div>
+                    <div class="sub-title">{{ t("Collection Details", "আদায় বিবরণ") }}</div>
                 </div>
 
                 <div class="col-6 col-md-3">
-                    <label class="form-label" for="miscAdmission">ভর্তি ফি</label>
+                    <label class="form-label" for="miscAdmission">{{ t("Admission Fee", "ভর্তি ফি") }}</label>
                     <input type="text" id="miscAdmission" name="admission_fee" class="form-control">
                 </div>
 
                 <div class="col-6 col-md-3">
-                    <label class="form-label" for="miscBook">বই</label>
+                    <label class="form-label" for="miscBook">{{ t("Books", "বই") }}</label>
                     <input type="text" id="miscBook" name="book_fee" class="form-control">
                 </div>
 
                 <div class="col-6 col-md-3">
-                    <label class="form-label" for="miscNotebook">খাতা</label>
+                    <label class="form-label" for="miscNotebook">{{ t("Notebooks", "খাতা") }}</label>
                     <input type="text" id="miscNotebook" name="notebook_fee" class="form-control">
                 </div>
 
                 <div class="col-6 col-md-3">
-                    <label class="form-label" for="miscIdCard">আইডি কার্ড</label>
+                    <label class="form-label" for="miscIdCard">{{ t("ID Card", "আইডি কার্ড") }}</label>
                     <input type="text" id="miscIdCard" name="id_card_fee" class="form-control">
                 </div>
 
                 <div class="col-12">
-                    <label class="form-label" for="miscOtherName">অন্যান্য</label>
+                    <label class="form-label" for="miscOtherName">{{ t("Others", "অন্যান্য") }}</label>
                     <div class="row g-2">
                         <div class="col-7 col-md-9">
                             <input type="text" id="miscOtherName" name="misc_other_name" class="form-control"
-                                   placeholder="বিবরণ">
+                                   placeholder="{{ t("Description", "বিবরণ") }}">
                         </div>
                         <div class="col-5 col-md-3">
                             <input type="text" id="miscOtherAmount" name="misc_other_amount" class="form-control"
-                                   placeholder="টাকা" aria-label="অন্যান্য টাকা">
+                                   placeholder="{{ t(" Taka", " টাকা") }}" aria-label="{{ t("Other amount", "অন্যান্য টাকা") }}">
                         </div>
                     </div>
                 </div>
@@ -311,35 +357,56 @@
 
             <div class="row g-2">
                 <div class="col-6 col-md">
-                    <label class="form-label" for="miscSubtotal">মোট</label>
-                    <input type="text" id="miscSubtotal" name="misc_subtotal" class="form-control">
+                    <label class="form-label" for="miscSubtotal">{{ t("Total", "মোট") }}</label>
+                    <input type="text" id="miscSubtotal" name="misc_subtotal" class="form-control" readonly>
                 </div>
 
                 <div class="col-6 col-md">
-                    <label class="form-label" for="miscPreviousDue">পূর্বের বকেয়া</label>
-                    <input type="text" id="miscPreviousDue" name="misc_previous_due" class="form-control">
+                    <label class="form-label" for="miscPreviousDue">{{ t("Previous Due", "পূর্বের বকেয়া") }}</label>
+                    <input type="text" id="miscPreviousDue" name="misc_previous_due" class="form-control" readonly>
                 </div>
 
                 <div class="col-6 col-md">
-                    <label class="form-label" for="miscTotal">মোট টাকা</label>
-                    <input type="text" id="miscTotal" name="misc_total" class="form-control">
+                    <label class="form-label" for="miscTotal">{{ t("Total Amount", "মোট টাকা") }}</label>
+                    <input type="text" id="miscTotal" name="misc_total" class="form-control" readonly>
                 </div>
 
                 <div class="col-6 col-md">
-                    <label class="form-label" for="miscPaid">পরিশোধিত টাকা</label>
+                    <label class="form-label" for="miscPaid">{{ t("Paid Amount", "পরিশোধিত টাকা") }}</label>
                     <input type="text" id="miscPaid" name="misc_paid" class="form-control">
                 </div>
 
                 <div class="col-12 col-md">
-                    <label class="form-label" for="miscDue">বকেয়া</label>
-                    <input type="text" id="miscDue" name="misc_due" class="form-control">
+                    <label class="form-label" for="miscDue">{{ t("Due", "বকেয়া") }}</label>
+                    <input type="text" id="miscDue" name="misc_due" inputmode="decimal" class="form-control">
                 </div>
 
                 <input type="hidden" name="role" id="roleFilter" value="Student">
             </div>
         </div>
 
-        <button type="button" id="saveBtn" class="btn btn-success w-100 mb-3">Save</button>
+        <button type="button" id="saveBtn" class="btn btn-success w-100 mb-3">{{ t("Save", "সংরক্ষণ") }}</button>
+
+        <!-- PAYMENT HISTORY of the searched student -->
+        <div class="accounts-card d-none" id="historyCard">
+            <div class="section-title">{{ t("Payment History", "পরিশোধের ইতিহাস") }}</div>
+            <div class="table-responsive">
+                <table class="table table-bordered history-table">
+                    <thead>
+                    <tr>
+                        <th>{{ t("Date", "তারিখ") }}</th>
+                        <th>{{ t("Month", "মাস") }}</th>
+                        <th class="text-end">{{ t("Paid", "পরিশোধ") }}</th>
+                        <th>{{ t("Recorded as", "যে খাতে") }}</th>
+                        <th class="text-end">{{ t("Due After", "পরের বকেয়া") }}</th>
+                        <th>{{ t("Collected By", "আদায়কারী") }}</th>
+                        <th>{{ t("Status", "অবস্থা") }}</th>
+                    </tr>
+                    </thead>
+                    <tbody id="historyBody"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
 
@@ -367,27 +434,37 @@
         MONTHS.forEach(month => {
             document.getElementById("month_" + month).value = ""
         })
-        document.getElementById("salaryPreviousDue").value = ""
-        document.getElementById("miscPreviousDue").value = ""
-        updateSalaryTotal()
+        currentStudent = null
+        currentRecord = null
+        historyBody.innerHTML = ""
+        historyCard.classList.add("d-none")
+        setStudentFees(null, null)
+        updatePreviousDue()
+        updateMiscPreviousDue()
     }
 
-    async function getStudent() {
-
+    // Search button: check the inputs, then load that student
+    function getStudent() {
         const branchName = document.getElementById("branchFilter").value
         const className = document.getElementById("classFilter").value
         const studentId = document.getElementById("roll").value.trim()
 
         if (!branchName || !className || !studentId) {
-            alert("Please select branch and class, and enter the roll!")
+            alert({{ t("Please select branch and class, and enter the roll!", "অনুগ্রহ করে ব্রাঞ্চ ও শ্রেণী নির্বাচন করে রোল লিখুন!")|tojson }})
             return
         }
 
         if (!/^\d+$/.test(studentId)) {
-            alert("Roll must be a number!")
+            alert({{ t("Roll must be a number!", "রোল অবশ্যই সংখ্যা হতে হবে!")|tojson }})
             return
         }
 
+        loadStudent({branch: branchName, class: className, student_id: studentId}, true)
+    }
+
+    // Load a student's accounts row; `announce` shows the missing-fee messages (skipped when
+    // reloading after a save)
+    async function loadStudent(target, announce) {
         clearStudent()
         searchBtn.disabled = true
         searchBtn.textContent = "Searching..."
@@ -395,17 +472,9 @@
         let result
         try {
             const response = await fetch("/api/search-accounts", {
-
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify({
-                    branch: branchName,
-                    class: className,
-                    student_id: studentId,
-                })
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(target)
             })
 
             if (!response.ok) {
@@ -415,18 +484,18 @@
             result = await response.json()
         } catch (error) {
             console.error(error)
-            alert("Could not load the student. Please try again.")
+            alert({{ t("Could not load the student. Please try again.", "শিক্ষার্থীর তথ্য লোড করা যায়নি। আবার চেষ্টা করুন।")|tojson }})
             return
         } finally {
             searchBtn.disabled = false
-            searchBtn.textContent = "Search"
+            searchBtn.textContent = {{ t("Search", "খুঁজুন")|tojson }}
         }
 
         // The API returns a list of matching records
         const record = result.data && result.data[0]
 
         if (!record) {
-            alert("No student found!")
+            alert({{ t("No student found!", "কোন শিক্ষার্থী পাওয়া যায়নি!")|tojson }})
             return
         }
 
@@ -436,15 +505,87 @@
             document.getElementById("month_" + month).value = formatAmount(record[month])
         })
 
-        const previousDue = formatAmount(record.due)
-        document.getElementById("salaryPreviousDue").value = previousDue
-        document.getElementById("miscPreviousDue").value = previousDue
+        currentStudent = target
+        currentRecord = record
+        setStudentFees(record.fixed_fee, record.fixed_exam_fee)
+        if (announce && record.fixed_fee == null) {
+            alert({{ t("This student has no fixed fee in Student Registration, so the monthly salary cannot be added.", "শিক্ষার্থী নিবন্ধনে এই শিক্ষার্থীর ধার্যকৃত বেতন নেই, তাই মাসিক বেতন যোগ করা যাবে না।")|tojson }})
+        } else if (announce && record.fixed_exam_fee == null) {
+            alert({{ t("This student has no fixed exam fee in Student Registration, so the exam fee cannot be added.", "শিক্ষার্থী নিবন্ধনে এই শিক্ষার্থীর ধার্যকৃত পরীক্ষার ফি নেই, তাই পরীক্ষার ফি যোগ করা যাবে না।")|tojson }})
+        }
+        updatePreviousDue()
+        updateMiscPreviousDue()
+        loadHistory(target)
+    }
+
+    // The loaded student (what Save collects for) and their accounts row; null until searched
+    let currentStudent = null
+    let currentRecord = null
+
+    function selectedMonth() {
+        return Number(document.getElementById("monthSelect").value) || new Date().getMonth() + 1
+    }
+
+    // Previous dues are always shown once a student is loaded, 0 included (negative = advance)
+    function showSigned(input, amount) {
+        input.value = String(Number(amount) || 0)
+    }
+
+    // Tuition previous due: the same Due the student sees on their accounts page (negative = paid in advance)
+    function updatePreviousDue() {
+        const input = document.getElementById("salaryPreviousDue")
+        if (currentRecord) {
+            showSigned(input, currentRecord.due)
+        } else {
+            input.value = ""
+        }
         updateSalaryTotal()
     }
 
-    // FEE TOTAL: previous due + monthly fee + exam fee + other amount -> salaryTotal
-    const MONTHLY_FEE = 1000
-    const EXAM_FEE = 350
+    // Has the user changed Total Amount away from the previous due?
+    function totalEdited() {
+        return parseAmount(document.getElementById("salaryTotal").value)
+            !== parseAmount(document.getElementById("salaryPreviousDue").value)
+    }
+
+    // Misc previous due: the student's separate misc due, kept apart from the monthly fee due
+    // (negative = paid in advance)
+    function updateMiscPreviousDue() {
+        const input = document.getElementById("miscPreviousDue")
+        if (currentRecord) {
+            showSigned(input, currentRecord.misc_due)
+        } else {
+            input.value = ""
+        }
+        updateMiscTotal()
+    }
+
+    // TUITION: total = previous due; the fee checkboxes only pick the payment categories (no amount
+    // is added anywhere). The paid amount is split into those categories by splitPaid()
+    // The searched student's fixed monthly and exam fees from Student Registration; null until a
+    // student with that fee is loaded
+    let monthlyFee = null
+    let examFee = null
+
+    // Enable a fee checkbox only when the student has that fee, and show the fixed amount beside it
+    // (for information only; it is never added to the total)
+    function showFee(checkboxId, amountId, fee) {
+        const checkbox = document.getElementById(checkboxId)
+        checkbox.disabled = fee === null
+        if (checkbox.disabled) checkbox.checked = false
+        document.getElementById(amountId).textContent = fee === null ? "" : `(${fee})`
+    }
+
+    function setStudentFees(fee, exam) {
+        monthlyFee = fee == null ? null : Number(fee)
+        examFee = exam == null ? null : Number(exam)
+        showFee("feeMonthly", "monthlyFeeAmount", monthlyFee)
+        showFee("feeExam", "examFeeAmount", examFee)
+        updateSalaryTotal()
+        updatePaidSplit()
+    }
+
+    setStudentFees(null, null)
 
     // Accepts English or Bengali digits; anything that is not a number counts as 0
     function parseAmount(text) {
@@ -453,15 +594,46 @@
         return Number.isFinite(number) ? number : 0
     }
 
+    // TOTAL starts as the previous due (ticking a checkbox never adds an amount); the user may then
+    // edit it, and the edited total is what gets saved
     function updateSalaryTotal() {
-        let total = 0
-        if (document.getElementById("feeMonthly").checked) total += MONTHLY_FEE
-        if (document.getElementById("feeExam").checked) total += EXAM_FEE
-        total += parseAmount(document.getElementById("feeOther").value)
-        total += parseAmount(document.getElementById("salaryPreviousDue").value)
-
+        const total = Math.round(parseAmount(document.getElementById("salaryPreviousDue").value) * 100) / 100
         document.getElementById("salaryTotal").value = total === 0 ? "" : total
         updateSalaryDue()
+    }
+
+    // How the paid amount is saved in the data sheet (the server uses the same rule): Monthly Salary
+    // (if ticked) takes up to the previous due only (the previous due is the monthly fee due); then
+    // Exam Fee (if ticked) up to the student's exam fee; whatever is left counts as Others.
+    function splitPaid() {
+        let rest = parseAmount(document.getElementById("salaryPaid").value)
+        const split = {monthly_fee: 0, exam_fee: 0, other_income: 0}
+        if (rest <= 0) return split
+
+        if (document.getElementById("feeMonthly").checked && monthlyFee !== null) {
+            const previousDue = parseAmount(document.getElementById("salaryPreviousDue").value)
+            split.monthly_fee = Math.min(rest, Math.max(0, previousDue))
+            rest -= split.monthly_fee
+        }
+        if (document.getElementById("feeExam").checked && examFee !== null) {
+            split.exam_fee = Math.min(rest, examFee)
+            rest -= split.exam_fee
+        }
+        split.monthly_fee = Math.round(split.monthly_fee * 100) / 100
+        split.other_income = Math.round(rest * 100) / 100
+        return split
+    }
+
+    // Show the split under the paid amount so the user sees what will be saved
+    function updatePaidSplit() {
+        const split = splitPaid()
+        const parts = [
+            [{{ t("Monthly Salary", "মাসিক বেতন")|tojson }}, split.monthly_fee],
+            [{{ t("Exam Fee", "পরীক্ষার ফি")|tojson }}, split.exam_fee],
+            [{{ t("Others", "অন্যান্য")|tojson }}, split.other_income],
+        ].filter(([, amount]) => amount > 0)
+        document.getElementById("paidSplitNote").textContent =
+            parts.map(([label, amount]) => `${label}: ${amount}`).join(" · ")
     }
 
     // DUE / ADVANCE: salaryTotal - salaryPaid -> salaryDue
@@ -473,11 +645,12 @@
         // Nothing paid in yet, so there is nothing to work out
         if (paidText === "") {
             dueInput.value = ""
-            return
+        } else {
+            const total = parseAmount(document.getElementById("salaryTotal").value)
+            dueInput.value = Math.round((total - parseAmount(paidText)) * 100) / 100
         }
-
-        const total = parseAmount(document.getElementById("salaryTotal").value)
-        dueInput.value = Math.round((total - parseAmount(paidText)) * 100) / 100
+        // The misc section continues from whatever due the tuition part leaves
+        updateMiscPreviousDue()
     }
 
     // MISC SUBTOTAL: sum the five misc income amount fields.
@@ -522,12 +695,28 @@
     document.getElementById("miscTotal").addEventListener("input", updateMiscDue)
     updateMiscSubtotal()
 
-    document.getElementById("salaryPaid").addEventListener("input", updateSalaryDue)
+    document.getElementById("salaryPaid").addEventListener("input", () => {
+        updateSalaryDue()
+        updatePaidSplit()
+    })
     document.getElementById("salaryTotal").addEventListener("input", updateSalaryDue)
 
-    document.getElementById("feeMonthly").addEventListener("change", updateSalaryTotal)
-    document.getElementById("feeExam").addEventListener("change", updateSalaryTotal)
-    document.getElementById("feeOther").addEventListener("input", updateSalaryTotal)
+    // These only change the payment categories, so they leave an edited Total Amount alone
+    document.getElementById("monthSelect").addEventListener("change", updatePaidSplit)
+    document.getElementById("feeMonthly").addEventListener("change", () => {
+        updateMiscPreviousDue()
+        updatePaidSplit()
+    })
+    document.getElementById("feeOthers").addEventListener("change", event => {
+        document.getElementById("feeOthersAmountBox").classList.toggle("d-none", !event.target.checked)
+        if (event.target.checked) document.getElementById("feeOthersAmount").focus()
+    })
+    ;["feeOthers", "feeExam"].forEach(id => {
+        document.getElementById(id).addEventListener("change", () => {
+            updateMiscPreviousDue()
+            updatePaidSplit()
+        })
+    })
     document.getElementById("salaryPreviousDue").addEventListener("input", updateSalaryTotal)
 
     searchBtn.addEventListener("click", getStudent)
@@ -540,21 +729,56 @@
         return parseAmount(document.getElementById(id).value)
     }
 
+    function isBlank(id) {
+        return document.getElementById(id).value.trim() === ""
+    }
+
+    // Due fields start as total - paid but can be edited; blank lets the server work it out
+    function dueOf(id) {
+        return isBlank(id) ? null : amountOf(id)
+    }
+
+    // SAVE: the server works out the split, adds a DataSheet row for today, writes the monthly
+    // amount into the selected month and stores the new dues (negative = advance).
     async function saveIncome() {
-        const payload = {
-            monthly_fee: document.getElementById("feeMonthly").checked ? MONTHLY_FEE : 0,
-            exam_fee: document.getElementById("feeExam").checked ? EXAM_FEE : 0,
-            admission_fee: amountOf("miscAdmission"),
-            book_fee: amountOf("miscBook"),
-            copy_fee: amountOf("miscNotebook"),
-            id_card_fee: amountOf("miscIdCard"),
-            other_income: amountOf("feeOther") + amountOf("miscOtherAmount"),
+        if (!currentStudent) {
+            alert({{ t("Please search a student first!", "অনুগ্রহ করে আগে শিক্ষার্থী খুঁজুন!")|tojson }})
+            return
         }
 
-        const total = Object.values(payload).reduce((sum, value) => sum + value, 0)
-        if (total === 0) {
-            alert("Please enter at least one income amount!")
+        const othersTicked = document.getElementById("feeOthers").checked
+        const tuitionUsed = !isBlank("salaryPaid") || totalEdited() || document.getElementById("feeExam").checked
+            || document.getElementById("feeMonthly").checked || othersTicked || !isBlank("salaryDue")
+        const miscUsed = !isBlank("miscPaid") || amountOf("miscSubtotal") > 0 || !isBlank("miscDue")
+        if (!tuitionUsed && !miscUsed) {
+            alert({{ t("Please enter at least one income amount!", "অন্তত একটি আয়ের পরিমাণ লিখুন!")|tojson }})
             return
+        }
+        // A blank paid amount would silently count as nothing paid
+        if ((tuitionUsed && isBlank("salaryPaid")) || (miscUsed && isBlank("miscPaid"))) {
+            alert({{ t("Please enter the paid amount (0 if nothing was paid)!", "অনুগ্রহ করে পরিশোধিত টাকা লিখুন (কিছু না দিলে 0)!")|tojson }})
+            document.getElementById(tuitionUsed && isBlank("salaryPaid") ? "salaryPaid" : "miscPaid").focus()
+            return
+        }
+
+        const payload = {
+            ...currentStudent,
+            month: selectedMonth(),
+            monthly: document.getElementById("feeMonthly").checked,
+            exam: document.getElementById("feeExam").checked,
+            others: othersTicked,
+            tuition_total: amountOf("salaryTotal"),
+            tuition_paid: amountOf("salaryPaid"),
+            tuition_due: dueOf("salaryDue"),
+            misc: {
+                admission_fee: amountOf("miscAdmission"),
+                book_fee: amountOf("miscBook"),
+                copy_fee: amountOf("miscNotebook"),
+                id_card_fee: amountOf("miscIdCard"),
+                other_income: amountOf("miscOtherAmount"),
+            },
+            misc_paid: amountOf("miscPaid"),
+            misc_due: dueOf("miscDue"),
         }
 
         saveBtn.disabled = true
@@ -572,14 +796,134 @@
                 throw new Error(result.error || "Request failed: " + response.status)
             }
 
-            alert("Saved! Total income: " + result.total_income)
+            alert(savedMessage(result))
             clearIncomeForm()
+            // Reload so the new dues and this month's paid amount are shown
+            await loadStudent(currentStudent, false)
         } catch (error) {
             console.error(error)
-            alert("Could not save: " + error.message)
+            alert({{ t("Could not save: ", "সংরক্ষণ করা যায়নি: ")|tojson }} + error.message)
         } finally {
             saveBtn.disabled = false
-            saveBtn.textContent = "Save"
+            saveBtn.textContent = {{ t("Save", "সংরক্ষণ")|tojson }}
+        }
+    }
+
+    // Data sheet income columns, as shown to the user
+    const INCOME_LABELS = {
+        monthly_fee: {{ t("Monthly Salary", "মাসিক বেতন")|tojson }},
+        exam_fee: {{ t("Exam Fee", "পরীক্ষার ফি")|tojson }},
+        admission_fee: {{ t("Admission Fee", "ভর্তি ফি")|tojson }},
+        book_fee: {{ t("Books", "বই")|tojson }},
+        copy_fee: {{ t("Notebooks", "খাতা")|tojson }},
+        id_card_fee: {{ t("ID Card", "আইডি কার্ড")|tojson }},
+        other_income: {{ t("Others", "অন্যান্য")|tojson }},
+    }
+
+    // {monthly_fee: 1300, exam_fee: 350} -> "Monthly Salary: 1300 · Exam Fee: 350"
+    function incomeParts(income) {
+        return Object.entries(income)
+            .filter(([, amount]) => amount > 0)
+            .map(([field, amount]) => `${INCOME_LABELS[field]}: ${amount}`)
+            .join(" · ")
+    }
+
+    // "Saved! Total income: 1650 (Monthly Salary: 1300 · Exam Fee: 350) · Due: 0"
+    function savedMessage(result) {
+        const parts = incomeParts(result.income)
+        let message = {{ t("Saved! Total income: ", "সংরক্ষিত হয়েছে! মোট আয়: ")|tojson }} + result.total_income
+        if (parts) message += ` (${parts})`
+        const dueText = amount => amount < 0
+            ? `${amount} ({{ t("advance", "অগ্রিম") }})`
+            : String(amount)
+        message += "\n" + {{ t("Due: ", "বকেয়া: ")|tojson }} + dueText(result.due)
+        message += "\n" + {{ t("Misc due: ", "বিবিধ বকেয়া: ")|tojson }} + dueText(result.misc_due)
+        return message
+    }
+
+    // PAYMENT HISTORY: every save for the searched student, newest first. Only the latest active
+    // payment can be cancelled (later saves were worked out on top of it).
+    const historyCard = document.getElementById("historyCard")
+    const historyBody = document.getElementById("historyBody")
+
+    function historyCell(text, className) {
+        const td = document.createElement("td")
+        td.textContent = text ?? ""
+        if (className) td.className = className
+        return td
+    }
+
+    async function loadHistory(target) {
+        historyBody.innerHTML = ""
+        try {
+            const response = await fetch("/api/student-payments", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(target)
+            })
+            const result = await response.json().catch(() => ({}))
+            if (!response.ok || !result.success) throw new Error(result.error || "Request failed: " + response.status)
+            renderHistory(result.data)
+        } catch (error) {
+            console.error(error)
+            historyCard.classList.add("d-none")
+        }
+    }
+
+    function renderHistory(payments) {
+        historyBody.innerHTML = ""
+        historyCard.classList.toggle("d-none", payments.length === 0)
+        const monthOptions = document.getElementById("monthSelect").options
+
+        payments.forEach(p => {
+            const tr = document.createElement("tr")
+            if (p.cancelled) tr.className = "cancelled"
+            const [year, month, day] = p.date.split("-")
+            tr.appendChild(historyCell(`${day}/${month}/${year} ${p.time}`, "text-nowrap"))
+            tr.appendChild(historyCell(monthOptions[p.month].text, "text-nowrap"))
+            tr.appendChild(historyCell(String(p.tuition_paid + p.misc_paid), "text-end"))
+            // The misc due left by this save, listed with the items (admission, books, ...)
+            const parts = [incomeParts(p.income)]
+            if (p.misc_due_after != null && (p.misc_paid > 0 || p.misc_due_after !== 0)) {
+                parts.push({{ t("Misc Due", "বিবিধ বকেয়া")|tojson }} + `: ${p.misc_due_after}`)
+            }
+            tr.appendChild(historyCell(parts.filter(Boolean).join(" · ") || "-"))
+            tr.appendChild(historyCell(p.due_after == null ? "-" : String(p.due_after), "text-end"))
+            tr.appendChild(historyCell(p.collected_by))
+
+            const status = historyCell("", "col-status text-nowrap")
+            if (p.cancelled) {
+                status.textContent = {{ t("Cancelled", "বাতিল")|tojson }} + (p.cancelled_by ? ` (${p.cancelled_by})` : "")
+            } else if (p.can_cancel) {
+                const btn = document.createElement("button")
+                btn.type = "button"
+                btn.className = "btn btn-sm btn-outline-danger"
+                btn.textContent = {{ t("Cancel", "বাতিল করুন")|tojson }}
+                btn.addEventListener("click", () => cancelPayment(p))
+                status.appendChild(btn)
+            } else {
+                status.textContent = {{ t("Saved", "সংরক্ষিত")|tojson }}
+            }
+            tr.appendChild(status)
+            historyBody.appendChild(tr)
+        })
+    }
+
+    async function cancelPayment(p) {
+        const amount = p.tuition_paid + p.misc_paid
+        if (!confirm(`{% if lang == "bn" %}${amount} টাকার এই পরিশোধ বাতিল করবেন? ডাটাশিট থেকে আয় মুছে যাবে এবং বকেয়া আগের মতো হবে।{% else %}Cancel this payment of ${amount}? Its income is removed from the data sheet and the due goes back to what it was.{% endif %}`)) return
+
+        try {
+            const response = await fetch(`/api/cancel-payment/${p.id}`, {method: "POST"})
+            const result = await response.json().catch(() => ({}))
+            if (!response.ok || !result.success) throw new Error(result.error || "Request failed: " + response.status)
+            if (!result.accounts_restored) {
+                alert({{ t("Payment cancelled. The class's accounts were uploaded again after this payment, so only the income was removed; the due was not changed.", "পরিশোধ বাতিল হয়েছে। এই পরিশোধের পরে শ্রেণীর হিসাব আবার আপলোড হয়েছে, তাই শুধু আয় মুছে ফেলা হয়েছে; বকেয়া পরিবর্তন হয়নি।")|tojson }})
+            }
+            await loadStudent(currentStudent, false)
+        } catch (error) {
+            console.error(error)
+            alert({{ t("Error: ", "ত্রুটি: ")|tojson }} + error.message)
         }
     }
 
@@ -587,11 +931,14 @@
     function clearIncomeForm() {
         document.getElementById("feeMonthly").checked = false
         document.getElementById("feeExam").checked = false
-        ;["feeOther", "salaryPaid", "miscAdmission", "miscBook", "miscNotebook",
+        document.getElementById("feeOthers").checked = false
+        document.getElementById("feeOthersAmountBox").classList.add("d-none")
+        ;["salaryPaid", "feeOthersAmount", "miscAdmission", "miscBook", "miscNotebook",
             "miscIdCard", "miscOtherName", "miscOtherAmount", "miscPaid"].forEach(id => {
             document.getElementById(id).value = ""
         })
         updateSalaryTotal()
+        updatePaidSplit()
         updateMiscSubtotal()
     }
 
@@ -607,5 +954,6 @@
 </script>
 
 
+{% include "_excel_export.html" %}
 </body>
 </html>

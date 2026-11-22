@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>Scan Tutorial QR</title>
+    <title>{{ t("Scan Tutorial QR", "টিউটোরিয়াল QR স্ক্যান") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -162,6 +162,7 @@
         }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-red">
@@ -196,15 +197,18 @@
             {% endif %}
 
             <div class="title">
-                QR Code Scanner
+                {{ t("QR Code Scanner", "কিউআর কোড স্ক্যানার") }}
             </div>
+        </div>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
         </div>
     </div>
 
     <div class="page">
         <div class="scanner-card">
-            <div class="scanner-title">বইয়ের QR কোড স্ক্যান করুন</div>
-            <div class="scanner-subtitle">ক্যামেরা QR কোডের দিকে ধরুন, লেসন ভিডিও খুলে যাবে</div>
+            <div class="scanner-title">{{ t("Scan the QR code in the book", "বইয়ের QR কোড স্ক্যান করুন") }}</div>
+            <div class="scanner-subtitle">{{ t("Point the camera at the QR code to open the lesson video", "ক্যামেরা QR কোডের দিকে ধরুন, লেসন ভিডিও খুলে যাবে") }}</div>
 
             <div class="camera-wrapper" id="cameraWrapper">
                 <div id="reader"></div>
@@ -212,16 +216,16 @@
             </div>
 
             <div class="controls">
-                <button type="button" class="btn btn-success icon-btn" id="flashBtn" title="Flash" aria-label="Flash">
+                <button type="button" class="btn btn-success icon-btn" id="flashBtn" title="{{ t("Flash", "ফ্ল্যাশ") }}" aria-label="{{ t("Flash", "ফ্ল্যাশ") }}">
                     <i class="bi bi-lightning-charge-fill"></i>
                 </button>
-                <button type="button" class="btn btn-success icon-btn" id="switchBtn" title="Switch camera"
-                        aria-label="Switch camera">
+                <button type="button" class="btn btn-success icon-btn" id="switchBtn" title="{{ t("Switch camera", "ক্যামেরা পরিবর্তন") }}"
+                        aria-label="{{ t("Switch camera", "ক্যামেরা পরিবর্তন") }}">
                     <i class="bi bi-arrow-repeat"></i>
                 </button>
             </div>
 
-            <div id="msg" class="msg">ক্যামেরা চালু হচ্ছে...</div>
+            <div id="msg" class="msg">{{ t("Starting camera...", "ক্যামেরা চালু হচ্ছে...") }}</div>
         </div>
     </div>
 </div>
@@ -257,13 +261,13 @@
         const id = videoIdFrom(decodedText)
         if (!id) {
             // Not one of our tutorial codes: say so and keep scanning
-            showMessage("এটি টিউটোরিয়াল QR কোড নয়। আবার চেষ্টা করুন।", "error")
+            showMessage({{ t("This is not a tutorial QR code. Please try again.", "এটি টিউটোরিয়াল QR কোড নয়। আবার চেষ্টা করুন।")|tojson }}, "error")
             return
         }
 
         handling = true
         if (navigator.vibrate) navigator.vibrate(200)
-        showMessage("লেসন টিউটোরিয়াল খোলা হচ্ছে...", "success")
+        showMessage({{ t("Opening the lesson tutorial...", "লেসন টিউটোরিয়াল খোলা হচ্ছে...")|tojson }}, "success")
 
         scanner.stop().catch(() => {}).finally(() => {
             window.location.href = "/video/" + encodeURIComponent(id)
@@ -282,7 +286,7 @@
         flashOn = false
         flashBtn.classList.remove("active")
         updateFlashButton()
-        showMessage("QR কোড খোঁজা হচ্ছে...")
+        showMessage({{ t("Looking for a QR code...", "QR কোড খোঁজা হচ্ছে...")|tojson }})
     }
 
     // Only the main back camera of most Android phones has a torch; iPhone browsers don't allow it at all
@@ -298,7 +302,7 @@
     function updateFlashButton() {
         const supported = torchSupported()
         flashBtn.disabled = !supported
-        flashBtn.title = supported ? "Flash" : "এই ক্যামেরায় ফ্ল্যাশ নেই"
+        flashBtn.title = supported ? {{ t("Flash", "ফ্ল্যাশ")|tojson }} : {{ t("This camera has no flash", "এই ক্যামেরায় ফ্ল্যাশ নেই")|tojson }}
     }
 
     function isRunning() {
@@ -310,19 +314,19 @@
         wrapper.classList.remove("scanning")
         const text = String(error && (error.name || error.message || error))
         if (!window.isSecureContext) {
-            showMessage("ক্যামেরা ব্যবহার করতে সাইটটি HTTPS এ খুলতে হবে।", "error")
+            showMessage({{ t("The site must be opened over HTTPS to use the camera.", "ক্যামেরা ব্যবহার করতে সাইটটি HTTPS এ খুলতে হবে।")|tojson }}, "error")
         } else if (/NotAllowed|Permission/i.test(text)) {
-            showMessage("ক্যামেরার অনুমতি দেওয়া হয়নি। ব্রাউজার সেটিংসে অনুমতি দিন।", "error")
+            showMessage({{ t("Camera permission was denied. Allow it in the browser settings.", "ক্যামেরার অনুমতি দেওয়া হয়নি। ব্রাউজার সেটিংসে অনুমতি দিন।")|tojson }}, "error")
         } else if (/NotFound|no camera|Requested device/i.test(text)) {
-            showMessage("কোন ক্যামেরা পাওয়া যায়নি।", "error")
+            showMessage({{ t("No camera found.", "কোন ক্যামেরা পাওয়া যায়নি।")|tojson }}, "error")
         } else {
-            showMessage("ক্যামেরা চালু করা যায়নি: " + text, "error")
+            showMessage({{ t("Could not start the camera: ", "ক্যামেরা চালু করা যায়নি: ")|tojson }} + text, "error")
         }
     }
 
     async function init() {
         if (typeof Html5Qrcode === "undefined") {
-            showMessage("স্ক্যানার লোড করা যায়নি। ইন্টারনেট সংযোগ দেখে পেজটি আবার খুলুন।", "error")
+            showMessage({{ t("Could not load the scanner. Check your internet connection and reopen the page.", "স্ক্যানার লোড করা যায়নি। ইন্টারনেট সংযোগ দেখে পেজটি আবার খুলুন।")|tojson }}, "error")
             return
         }
         try {
@@ -359,7 +363,7 @@
         if (!isRunning()) return
         if (!torchSupported()) {
             updateFlashButton()
-            showMessage("এই ক্যামেরায় ফ্ল্যাশ সাপোর্ট করে না।", "error")
+            showMessage({{ t("This camera does not support flash.", "এই ক্যামেরায় ফ্ল্যাশ সাপোর্ট করে না।")|tojson }}, "error")
             return
         }
         try {
@@ -367,7 +371,7 @@
             flashOn = !flashOn
             flashBtn.classList.toggle("active", flashOn)
         } catch (e) {
-            showMessage("ফ্ল্যাশ চালু করা যায়নি। আবার চেষ্টা করুন।", "error")
+            showMessage({{ t("Could not turn on the flash. Please try again.", "ফ্ল্যাশ চালু করা যায়নি। আবার চেষ্টা করুন।")|tojson }}, "error")
         }
     })
 

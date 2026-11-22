@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>Lesson Schedule</title>
+    <title>{{ t("Lesson Schedule", "পাঠ পরিকল্পনা") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -161,6 +161,7 @@
         }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 <body class="kids t-green">
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;">
@@ -227,17 +228,21 @@
         {% endif %}
 
         <div class="title">
-            Lesson Schedule
+            {{ t("Lesson Schedule", "পাঠ পরিকল্পনা") }}
         </div>
 
     </div>
 
-    {% if current_user.role not in ("Student", "Teacher") %}
-    <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#uploadModal"
-            aria-label="Upload lesson schedule">
-        <i class="bi bi-upload"></i><span class="d-none d-sm-inline ms-1">Upload</span>
+    <div class="header-actions">
+            {% include "_lang_switch.html" %}
+
+            {% if current_user.role not in ("Student", "Teacher") %}
+            <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#uploadModal"
+            aria-label="{{ t("Upload lesson schedule", "পাঠ পরিকল্পনা আপলোড") }}">
+        <i class="bi bi-upload"></i><span class="d-none d-sm-inline ms-1">{{ t("Upload", "আপলোড") }}</span>
     </button>
-    {% endif %}
+            {% endif %}
+        </div>
 
 </div>
 
@@ -246,21 +251,21 @@
         <div class="filter-card">
             <div class="row g-2">
                 <div class="col-12 col-md-6">
-                    <label class="form-label" for="classSelect">শ্রেণী</label>
+                    <label class="form-label" for="classSelect">{{ t("Class", "শ্রেণী") }}</label>
                     <select id="classSelect" class="form-select">
-                        <option value="">Select Class</option>
+                        <option value="">{{ t("Select Class", "শ্রেণী নির্বাচন") }}</option>
                         {% for class_name in classes %}
                         <option value="{{ class_name }}">{{ class_name }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="col-12 col-md-6">
-                    <label class="form-label" for="dateSelect">তারিখ</label>
+                    <label class="form-label" for="dateSelect">{{ t("Date", "তারিখ") }}</label>
                     <div class="day-nav">
-                        <button type="button" class="btn btn-light border" id="prevDay" aria-label="Previous day">
+                        <button type="button" class="btn btn-light border" id="prevDay" aria-label="{{ t("Previous day", "আগের দিন") }}">
                             <i class="bi bi-chevron-left"></i></button>
                         <input id="dateSelect" type="date" class="form-control" value="{{ today }}">
-                        <button type="button" class="btn btn-light border" id="nextDay" aria-label="Next day">
+                        <button type="button" class="btn btn-light border" id="nextDay" aria-label="{{ t("Next day", "পরের দিন") }}">
                             <i class="bi bi-chevron-right"></i></button>
                     </div>
                 </div>
@@ -274,8 +279,8 @@
                 <table class="table table-bordered curriculum-table align-middle mb-0">
                     <thead>
                     <tr>
-                        <th style="width:30%;">Subject</th>
-                        <th>Topic</th>
+                        <th style="width:30%;">{{ t("Subject", "বিষয়") }}</th>
+                        <th>{{ t("Topic", "টপিক") }}</th>
                     </tr>
                     </thead>
                     <tbody id="curriculumBody"></tbody>
@@ -291,40 +296,39 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="uploadTitle">Upload Lesson Schedule</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="uploadTitle">{{ t("Upload Lesson Schedule", "পাঠ পরিকল্পনা আপলোড") }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t("Close", "বন্ধ করুন") }}"></button>
                 </div>
                 <div class="modal-body">
                     <form method="POST" action="{{ url_for('upload_curriculum') }}" enctype="multipart/form-data"
                           id="uploadForm">
                         <div class="mb-3">
-                            <label for="class_select" class="form-label">শ্রেণী</label>
+                            <label for="class_select" class="form-label">{{ t("Class", "শ্রেণী") }}</label>
                             <select id="class_select" name="class_name" class="form-select" required>
-                                <option value="">Select Class</option>
+                                <option value="">{{ t("Select Class", "শ্রেণী নির্বাচন") }}</option>
                                 {% for class_name in classes %}
                                 <option value="{{ class_name }}">{{ class_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="subject_select" class="form-label">বিষয়</label>
+                            <label for="subject_select" class="form-label">{{ t("Subject", "বিষয়") }}</label>
                             <select id="subject_select" name="subject_name" class="form-select" required>
-                                <option value="">Select Subject</option>
+                                <option value="">{{ t("Select Subject", "বিষয় নির্বাচন") }}</option>
                                 {% for subject in subjects %}
                                 <option value="{{ subject }}">{{ subject }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="file_select" class="form-label">Excel ফাইল (.xlsx)</label>
+                            <label for="file_select" class="form-label">{{ t("Excel file (.xlsx)", "Excel ফাইল (.xlsx)") }}</label>
                             <input id="file_select" type="file" accept=".xlsx" name="excel_file"
                                    class="form-control" required>
                             <div class="form-text">
-                                'Date' ও 'Topic' কলাম থাকতে হবে। তারিখ দিন/মাস/বছর (25/01/2026) হিসেবে লিখুন।
-                                এই শ্রেণী ও বিষয়ের আগের সিডিউল প্রতিস্থাপিত হবে।
+                                {{ t("Must have 'Date' and 'Topic' columns. Write dates as day/month/year (25/01/2026). Replaces the previous schedule for this class and subject.", "'Date' ও 'Topic' কলাম থাকতে হবে। তারিখ দিন/মাস/বছর (25/01/2026) হিসেবে লিখুন। এই শ্রেণী ও বিষয়ের আগের সিডিউল প্রতিস্থাপিত হবে।") }}
                             </div>
                         </div>
-                        <button type="submit" id="uploadBtn" class="btn btn-success w-100">Submit</button>
+                        <button type="submit" id="uploadBtn" class="btn btn-success w-100">{{ t("Submit", "জমা দিন") }}</button>
                     </form>
                 </div>
             </div>
@@ -358,7 +362,7 @@
             return
         }
         card.classList.remove("d-none")
-        document.getElementById("sheetTitle").textContent = "লোড হচ্ছে..."
+        document.getElementById("sheetTitle").textContent = {{ t("Loading...", "লোড হচ্ছে...")|tojson }}
         tbody.innerHTML = ""
         empty.classList.add("d-none")
         try {
@@ -382,13 +386,13 @@
                 tbody.appendChild(tr)
             })
             if (result.data.length === 0) {
-                empty.textContent = "এই তারিখে কোন পাঠ নেই।"
+                empty.textContent = {{ t("No lesson on this date.", "এই তারিখে কোন পাঠ নেই।")|tojson }}
                 empty.classList.remove("d-none")
             }
         } catch (error) {
             console.error(error)
-            document.getElementById("sheetTitle").textContent = "Lesson Schedule"
-            empty.textContent = "পাঠ সিডিউল লোড করা যায়নি: " + error.message
+            document.getElementById("sheetTitle").textContent = {{ t("Lesson Schedule", "পাঠ পরিকল্পনা")|tojson }}
+            empty.textContent = {{ t("Could not load the lesson schedule: ", "পাঠ সিডিউল লোড করা যায়নি: ")|tojson }} + error.message
             empty.classList.remove("d-none")
         }
     }
@@ -408,5 +412,6 @@
         })
     }
 </script>
+{% include "_excel_export.html" %}
 </body>
 </html>

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>ডাটা শীট</title>
+    <title>{{ t("Data Sheet", "ডাটা শীট") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -131,6 +131,7 @@
         }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-green">
@@ -163,8 +164,11 @@
             </a>
             {% endif %}
             <div class="title">
-                অভ্যন্তরীণ হিসাব - ডাটা শীট
+                {{ t("Internal Accounts - Data Sheet", "অভ্যন্তরীণ হিসাব - ডাটা শীট") }}
             </div>
+        </div>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
         </div>
     </div>
 
@@ -173,18 +177,32 @@
         <!-- FILTERS -->
         <div class="filter-card">
             <div class="row g-2 align-items-end">
+                {% if current_user.role == "Admin" %}
+                <div class="col-12 col-md">
+                    <label class="form-label" for="branchSelect">{{ t("Branch", "ব্রাঞ্চ") }}</label>
+                    <select id="branchSelect" class="form-select">
+                        <option value="all">{{ t("All Branches", "সকল ব্রাঞ্চ") }}</option>
+                        {% for branch in get_branches() %}
+                        <option value="{{ branch.name }}">{{ branch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% else %}
+                <input type="hidden" id="branchSelect" value="{{ current_user.branch.name }}">
+                {% endif %}
+
                 <div class="col-6 col-md">
-                    <label class="form-label" for="fromDate">শুরুর তারিখ</label>
+                    <label class="form-label" for="fromDate">{{ t("Start Date", "শুরুর তারিখ") }}</label>
                     <input type="date" id="fromDate" class="form-control">
                 </div>
 
                 <div class="col-6 col-md">
-                    <label class="form-label" for="toDate">শেষ তারিখ</label>
+                    <label class="form-label" for="toDate">{{ t("End Date", "শেষ তারিখ") }}</label>
                     <input type="date" id="toDate" class="form-control">
                 </div>
 
                 <div class="col-12 col-md-3">
-                    <button type="button" id="searchBtn" class="btn btn-success w-100">Search</button>
+                    <button type="button" id="searchBtn" class="btn btn-success w-100">{{ t("Search", "খুঁজুন") }}</button>
                 </div>
             </div>
         </div>
@@ -195,29 +213,29 @@
                 <table class="table table-bordered table-hover sheet-table">
                     <thead>
                     <tr>
-                        <th rowspan="2">তারিখ</th>
-                        <th colspan="8" class="text-center group-income">আয়</th>
-                        <th colspan="5" class="text-center group-expense">ব্যয়</th>
+                        <th rowspan="2">{{ t("Date", "তারিখ") }}</th>
+                        <th colspan="8" class="text-center group-income">{{ t("Income", "আয়") }}</th>
+                        <th colspan="5" class="text-center group-expense">{{ t("Expense", "ব্যয়") }}</th>
                     </tr>
                     <tr>
-                        <th>মাসিক বেতন</th>
-                        <th>পরীক্ষার ফি</th>
-                        <th>ভর্তি ফি</th>
-                        <th>বই</th>
-                        <th>খাতা</th>
-                        <th>আইডি কার্ড</th>
-                        <th>অন্যান্য</th>
-                        <th class="col-total">মোট আয়</th>
-                        <th>দৈনিক খরচ</th>
-                        <th>ভাড়া ও বিল</th>
-                        <th>স্টাফ বেতন</th>
-                        <th>অন্যান্য</th>
-                        <th class="col-total">মোট ব্যয়</th>
+                        <th>{{ t("Monthly Salary", "মাসিক বেতন") }}</th>
+                        <th>{{ t("Exam Fee", "পরীক্ষার ফি") }}</th>
+                        <th>{{ t("Admission Fee", "ভর্তি ফি") }}</th>
+                        <th>{{ t("Books", "বই") }}</th>
+                        <th>{{ t("Notebooks", "খাতা") }}</th>
+                        <th>{{ t("ID Card", "আইডি কার্ড") }}</th>
+                        <th>{{ t("Others", "অন্যান্য") }}</th>
+                        <th class="col-total">{{ t("Total Income", "মোট আয়") }}</th>
+                        <th>{{ t("Daily Expense", "দৈনিক খরচ") }}</th>
+                        <th>{% if lang == "bn" %}ভাড়া ও বিল{% else %}Rent & Bills{% endif %}</th>
+                        <th>{{ t("Staff Salary", "স্টাফ বেতন") }}</th>
+                        <th>{{ t("Others", "অন্যান্য") }}</th>
+                        <th class="col-total">{{ t("Total Expense", "মোট ব্যয়") }}</th>
                     </tr>
                     </thead>
                     <tbody id="sheetBody">
                     <tr>
-                        <td colspan="14" class="empty-state">Select a date range and press Search</td>
+                        <td colspan="14" class="empty-state">{{ t("Select a date range and press Search", "তারিখের সীমা নির্বাচন করে খুঁজুন চাপুন") }}</td>
                     </tr>
                     </tbody>
                     <tfoot id="sheetFoot"></tfoot>
@@ -278,7 +296,7 @@
 
     function renderSheet(records) {
         if (records.length === 0) {
-            showMessage("No records found for this date range")
+            showMessage({{ t("No records found for this date range", "এই তারিখের সীমায় কোন তথ্য পাওয়া যায়নি")|tojson }})
             return
         }
 
@@ -298,7 +316,7 @@
         // Grand total row
         sheetFoot.innerHTML = ""
         const tr = document.createElement("tr")
-        tr.appendChild(cell("সর্বমোট"))
+        tr.appendChild(cell({{ t("Grand Total", "সর্বমোট")|tojson }}))
         COLUMNS.forEach(column => tr.appendChild(cell(formatAmount(sums[column]))))
         sheetFoot.appendChild(tr)
     }
@@ -308,12 +326,12 @@
         const to = document.getElementById("toDate").value
 
         if (!from || !to) {
-            alert("Please select both dates!")
+            alert({{ t("Please select both dates!", "অনুগ্রহ করে দুটি তারিখই নির্বাচন করুন!")|tojson }})
             return
         }
 
         if (from > to) {
-            alert("Start date must be before end date!")
+            alert({{ t("Start date must be before end date!", "শুরুর তারিখ শেষ তারিখের আগে হতে হবে!")|tojson }})
             return
         }
 
@@ -324,7 +342,7 @@
             const response = await fetch("/api/search-datasheet", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({from, to})
+                body: JSON.stringify({from, to, branch: document.getElementById("branchSelect").value})
             })
             const result = await response.json().catch(() => ({}))
 
@@ -335,10 +353,10 @@
             renderSheet(result.data)
         } catch (error) {
             console.error(error)
-            showMessage("Could not load the data sheet: " + error.message)
+            showMessage({{ t("Could not load the data sheet: ", "ডাটা শীট লোড করা যায়নি: ")|tojson }} + error.message)
         } finally {
             searchBtn.disabled = false
-            searchBtn.textContent = "Search"
+            searchBtn.textContent = {{ t("Search", "খুঁজুন")|tojson }}
         }
     }
 
@@ -351,5 +369,6 @@
     loadSheet()
 </script>
 
+{% include "_excel_export.html" %}
 </body>
 </html>

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>ব্যয়</title>
+    <title>{{ t("Expense", "ব্যয়") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -131,8 +131,34 @@
                 width: 100px;
             }
         }
+
+        /* STAFF PAYMENT HISTORY */
+        .history-table {
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+
+        .history-table thead th {
+            background: #f8f9fc;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .history-table td {
+            vertical-align: middle;
+        }
+
+        .history-table .cancelled td {
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .history-table .cancelled td.col-status {
+            text-decoration: none;
+        }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-green">
@@ -166,8 +192,11 @@
             </a>
             {% endif %}
             <div class="title">
-                অভ্যন্তরীণ হিসাব - ব্যয়
+                {{ t("Internal Accounts - Expense", "অভ্যন্তরীণ হিসাব - ব্যয়") }}
             </div>
+        </div>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
         </div>
     </div>
 
@@ -175,55 +204,62 @@
 
         <!-- MISC EXPENSE -->
         <div class="accounts-card">
-            <div class="section-title">বিবিধ ব্যয়</div>
+            <div class="section-title">{{ t("Miscellaneous Expense", "বিবিধ ব্যয়") }}</div>
 
             <div class="row g-2 mb-3">
+                {% if current_user.role == "Admin" %}
                 <div class="col-12 col-md-6">
-                    <label class="form-label" for="branchFilter">ব্রাঞ্চ</label>
+                    <label class="form-label" for="branchFilter">{{ t("Branch", "ব্রাঞ্চ") }}</label>
                     <select id="branchFilter" name="branch" class="form-select">
-                        <option value="">Select Branch</option>
+                        <option value="">{{ t("Select Branch", "ব্রাঞ্চ নির্বাচন") }}</option>
                         {% for branch in get_branches() %}
                         <option value="{{ branch.name }}">{{ branch.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
+                {% else %}
+                <input type="hidden" id="branchFilter" name="branch" value="{{ current_user.branch.name }}">
+                {% endif %}
 
                 <div class="col-12 col-md-6">
-                    <label class="form-label" for="voucherNo">ভাউচার নম্বর</label>
+                    <label class="form-label" for="voucherNo">{{ t("Voucher No.", "ভাউচার নম্বর") }}</label>
                     <input type="text" id="voucherNo" name="voucher_no" class="form-control">
                 </div>
             </div>
 
             <div class="row g-2 mb-3">
                 <div class="col-12">
-                    <div class="sub-title">ব্যয়ের ধরন</div>
+                    <div class="sub-title">{{ t("Expense Type", "ব্যয়ের ধরন") }}</div>
                 </div>
 
-                <div class="col-6 col-md-3 d-flex align-items-center">
+                <div class="col-6 col-md-4 d-flex align-items-center">
                     <div class="form-check mb-0">
                         <input class="form-check-input" type="checkbox" id="typeDaily" name="expense_types"
                                value="daily_expense">
-                        <label class="form-check-label" for="typeDaily">দৈনিক খরচ</label>
+                        <label class="form-check-label" for="typeDaily">{{ t("Daily Expense", "দৈনিক খরচ") }}</label>
                     </div>
                 </div>
 
-                <div class="col-6 col-md-3 d-flex align-items-center">
+                <div class="col-6 col-md-4 d-flex align-items-center">
                     <div class="form-check mb-0">
                         <input class="form-check-input" type="checkbox" id="typeRentBills" name="expense_types"
                                value="all_rent_and_bills">
-                        <label class="form-check-label" for="typeRentBills">সকল ভাড়া এবং বিল</label>
+                        <label class="form-check-label" for="typeRentBills">{{ t("All Rent and Bills", "সকল ভাড়া এবং বিল") }}</label>
                     </div>
                 </div>
 
-                <div class="col-12 col-md-6">
-                    <input type="text" id="typeOther" name="other_expense_type" class="form-control"
-                           placeholder="অন্যান্য" aria-label="অন্যান্য">
+                <div class="col-6 col-md-4 d-flex align-items-center">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="typeOther" name="expense_types"
+                               value="other_expenses">
+                        <label class="form-check-label" for="typeOther">{{ t("Others", "অন্যান্য") }}</label>
+                    </div>
                 </div>
             </div>
 
             <div class="row g-2">
                 <div class="col-12">
-                    <div class="sub-title">ব্যয়ের বিবরণ</div>
+                    <div class="sub-title">{{ t("Expense Details", "ব্যয়ের বিবরণ") }}</div>
                 </div>
 
                 <div class="col-12">
@@ -231,19 +267,19 @@
                         <table class="table table-bordered items-table">
                             <thead>
                             <tr>
-                                <th class="col-serial">ক্রমিক নং</th>
-                                <th>ব্যয়ের বিবরণ</th>
-                                <th class="col-amount">টাকা</th>
-                                <th class="col-action"><span class="visually-hidden">Remove</span></th>
+                                <th class="col-serial">{{ t("Serial No.", "ক্রমিক নং") }}</th>
+                                <th>{{ t("Expense Details", "ব্যয়ের বিবরণ") }}</th>
+                                <th class="col-amount">{{ t(" Taka", " টাকা") }}</th>
+                                <th class="col-action"><span class="visually-hidden">{{ t("Remove", "সরান") }}</span></th>
                             </tr>
                             </thead>
                             <tbody id="itemsBody"></tbody>
                             <tfoot>
                             <tr>
-                                <td colspan="2" class="text-end">মোট</td>
+                                <td colspan="2" class="text-end">{{ t("Total", "মোট") }}</td>
                                 <td>
                                     <input type="text" id="expenseTotal" name="expense_total"
-                                           class="form-control" readonly aria-label="মোট">
+                                           class="form-control" readonly aria-label="{{ t("Total", "মোট") }}">
                                 </td>
                                 <td></td>
                             </tr>
@@ -254,7 +290,7 @@
 
                 <div class="col-12">
                     <button type="button" id="addRowBtn" class="btn btn-outline-success btn-sm">
-                        <i class="bi bi-plus-lg"></i> নতুন সারি
+                        <i class="bi bi-plus-lg"></i> {{ t("New Row", "নতুন সারি") }}
                     </button>
                 </div>
             </div>
@@ -262,73 +298,85 @@
 
         <!-- STAFF SALARY -->
         <div class="accounts-card">
-            <div class="section-title">স্টাফ বেতন</div>
+            <div class="section-title">{{ t("Staff Salary", "স্টাফ বেতন") }}</div>
 
             <div class="row g-2 mb-3">
-                <div class="col-12">
-                    <label class="form-label" for="staffBranch">ব্রাঞ্চ</label>
+                {% if current_user.role == "Admin" %}
+                <div class="col-12 col-md-6">
+                    <label class="form-label" for="staffBranch">{{ t("Branch", "ব্রাঞ্চ") }}</label>
                     <select id="staffBranch" name="staff_branch" class="form-select">
-                        <option value="">Select Branch</option>
+                        <option value="">{{ t("Select Branch", "ব্রাঞ্চ নির্বাচন") }}</option>
                         {% for branch in get_branches() %}
                         <option value="{{ branch.name }}">{{ branch.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
+                {% else %}
+                <input type="hidden" id="staffBranch" name="staff_branch" value="{{ current_user.branch.name }}">
+                {% endif %}
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label" for="teacherPicker">{{ t("Registered Teacher", "নিবন্ধিত শিক্ষক") }}</label>
+                    <select id="teacherPicker" class="form-select" disabled>
+                        <option value="">{{ t("Select a branch first", "আগে ব্রাঞ্চ নির্বাচন করুন") }}</option>
+                    </select>
+                    <div class="form-text" id="teacherSalaryHint"></div>
+                </div>
             </div>
 
             <div class="row g-2 mb-3">
                 <div class="col-12">
-                    <div class="sub-title">বেতন বিবরণ</div>
+                    <div class="sub-title">{{ t("Salary Details", "বেতন বিবরণ") }}</div>
                 </div>
 
                 <div class="col-6 col-md-3 d-flex align-items-center">
                     <div class="form-check mb-0">
                         <input class="form-check-input" type="checkbox" id="salaryStaff" name="salary_types"
                                value="staff_salary">
-                        <label class="form-check-label" for="salaryStaff">স্টাফ বেতন</label>
+                        <label class="form-check-label" for="salaryStaff">{{ t("Staff Salary", "স্টাফ বেতন") }}</label>
                     </div>
                 </div>
 
                 <div class="col-12 col-md-9">
                     <input type="text" id="salaryOther" name="salary_other" class="form-control"
-                           placeholder="অন্যান্য বেতন" aria-label="অন্যান্য বেতন">
+                           placeholder="{{ t("Other salary", "অন্যান্য বেতন") }}" aria-label="{{ t("Other salary", "অন্যান্য বেতন") }}">
                 </div>
             </div>
 
             <div class="row g-2 mb-3">
                 <div class="col-12 col-md-4">
-                    <label class="form-label" for="staffName">স্টাফের নাম</label>
+                    <label class="form-label" for="staffName">{{ t("Staff Name", "স্টাফের নাম") }}</label>
                     <input type="text" id="staffName" name="staff_name" class="form-control">
                 </div>
 
                 <div class="col-6 col-md-4">
-                    <label class="form-label" for="staffId">স্টাফ আইডি</label>
+                    <label class="form-label" for="staffId">{{ t("Staff ID", "স্টাফ আইডি") }}</label>
                     <input type="text" id="staffId" name="staff_id" class="form-control">
                 </div>
 
                 <div class="col-6 col-md-4">
-                    <label class="form-label" for="staffMonthSelect">মাস</label>
+                    <label class="form-label" for="staffMonthSelect">{{ t("Month", "মাস") }}</label>
                     <select id="staffMonthSelect" name="month" class="form-select">
-                        <option value="">মাস নির্বাচন</option>
-                        <option value="1">জানুয়ারী</option>
-                        <option value="2">ফেব্রুয়ারী</option>
-                        <option value="3">মার্চ</option>
-                        <option value="4">এপ্রিল</option>
-                        <option value="5">মে</option>
-                        <option value="6">জুন</option>
-                        <option value="7">জুলাই</option>
-                        <option value="8">আগস্ট</option>
-                        <option value="9">সেপ্টেম্বর</option>
-                        <option value="10">অক্টোবর</option>
-                        <option value="11">নভেম্বর</option>
-                        <option value="12">ডিসেম্বর</option>
+                        <option value="">{{ t("Select Month", "মাস নির্বাচন") }}</option>
+                        <option value="1">{{ t("January", "জানুয়ারী") }}</option>
+                        <option value="2">{{ t("February", "ফেব্রুয়ারী") }}</option>
+                        <option value="3">{{ t("March", "মার্চ") }}</option>
+                        <option value="4">{{ t("April", "এপ্রিল") }}</option>
+                        <option value="5">{{ t("May", "মে") }}</option>
+                        <option value="6">{{ t("June", "জুন") }}</option>
+                        <option value="7">{{ t("July", "জুলাই") }}</option>
+                        <option value="8">{{ t("August", "আগস্ট") }}</option>
+                        <option value="9">{{ t("September", "সেপ্টেম্বর") }}</option>
+                        <option value="10">{{ t("October", "অক্টোবর") }}</option>
+                        <option value="11">{{ t("November", "নভেম্বর") }}</option>
+                        <option value="12">{{ t("December", "ডিসেম্বর") }}</option>
                     </select>
                 </div>
             </div>
 
             <div class="row g-2 mb-3">
                 <div class="col-12">
-                    <div class="sub-title">বেতন বিবরণ</div>
+                    <div class="sub-title">{{ t("Paid per Month (this year)", "মাসভিত্তিক পরিশোধ (এই বছর)") }}</div>
                 </div>
 
                 {% for key, label in [
@@ -339,40 +387,61 @@
                 ] %}
                 <div class="col-4 col-md-2">
                     <label class="form-label" for="staffMonth_{{ key }}">{{ label }}</label>
-                    <input type="text" id="staffMonth_{{ key }}" name="staff_{{ key }}" class="form-control">
+                    <input type="text" id="staffMonth_{{ key }}" name="staff_{{ key }}" class="form-control" readonly>
                 </div>
                 {% endfor %}
             </div>
 
             <div class="row g-2">
                 <div class="col-6 col-md">
-                    <label class="form-label" for="staffSubtotal">মোট</label>
+                    <label class="form-label" for="staffSubtotal">{{ t("Total", "মোট") }}</label>
                     <input type="text" id="staffSubtotal" name="staff_subtotal" class="form-control">
                 </div>
 
                 <div class="col-6 col-md">
-                    <label class="form-label" for="staffPreviousDue">পূর্বের বকেয়া</label>
+                    <label class="form-label" for="staffPreviousDue">{{ t("Previous Due", "পূর্বের বকেয়া") }}</label>
                     <input type="text" id="staffPreviousDue" name="staff_previous_due" class="form-control">
                 </div>
 
                 <div class="col-6 col-md">
-                    <label class="form-label" for="staffTotal">মোট টাকা</label>
+                    <label class="form-label" for="staffTotal">{{ t("Total Amount", "মোট টাকা") }}</label>
                     <input type="text" id="staffTotal" name="staff_total" class="form-control">
                 </div>
 
                 <div class="col-6 col-md">
-                    <label class="form-label" for="staffPaid">পরিশোধিত টাকা</label>
+                    <label class="form-label" for="staffPaid">{{ t("Paid Amount", "পরিশোধিত টাকা") }}</label>
                     <input type="text" id="staffPaid" name="staff_paid" class="form-control">
                 </div>
 
                 <div class="col-12 col-md">
-                    <label class="form-label" for="staffDue">বকেয়া</label>
-                    <input type="text" id="staffDue" name="staff_due" class="form-control">
+                    <label class="form-label" for="staffDue">{{ t("Due", "বকেয়া") }}</label>
+                    <input type="text" id="staffDue" name="staff_due" class="form-control" readonly>
                 </div>
             </div>
         </div>
 
-        <button type="button" id="saveBtn" class="btn btn-success w-100 mb-3">Save</button>
+        <button type="button" id="saveBtn" class="btn btn-success w-100 mb-3">{{ t("Save", "সংরক্ষণ") }}</button>
+
+        <!-- SALARY PAYMENT HISTORY of the picked teacher -->
+        <div class="accounts-card d-none" id="staffHistoryCard">
+            <div class="section-title">{{ t("Salary Payment History", "বেতন পরিশোধের ইতিহাস") }}</div>
+            <div class="table-responsive">
+                <table class="table table-bordered history-table">
+                    <thead>
+                    <tr>
+                        <th>{{ t("Date", "তারিখ") }}</th>
+                        <th>{{ t("Month", "মাস") }}</th>
+                        <th class="text-end">{{ t("Total", "মোট") }}</th>
+                        <th class="text-end">{{ t("Paid", "পরিশোধ") }}</th>
+                        <th class="text-end">{{ t("Due After", "পরের বকেয়া") }}</th>
+                        <th>{{ t("Paid By", "পরিশোধকারী") }}</th>
+                        <th>{{ t("Status", "অবস্থা") }}</th>
+                    </tr>
+                    </thead>
+                    <tbody id="staffHistoryBody"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
 </div>
@@ -409,10 +478,10 @@
         const row = document.createElement("tr")
         row.innerHTML = `
             <td class="col-serial item-serial"></td>
-            <td><input type="text" class="form-control item-description" aria-label="ব্যয়ের বিবরণ"></td>
-            <td class="col-amount"><input type="text" class="form-control item-amount" inputmode="decimal" aria-label="টাকা"></td>
+            <td><input type="text" class="form-control item-description" aria-label="{{ t("Expense Details", "ব্যয়ের বিবরণ") }}"></td>
+            <td class="col-amount"><input type="text" class="form-control item-amount" inputmode="decimal" aria-label="{{ t("Taka", "টাকা") }}"></td>
             <td class="col-action">
-                <button type="button" class="btn btn-sm btn-outline-danger remove-row" aria-label="Remove row">
+                <button type="button" class="btn btn-sm btn-outline-danger remove-row" aria-label="{{ t("Remove row", "সারি মুছুন") }}">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </td>`
@@ -440,18 +509,152 @@
     // Pre-select the current month (option values are 1-12)
     document.getElementById("staffMonthSelect").value = String(new Date().getMonth() + 1)
 
-    // মোট = অন্যান্য বেতন typed above; it stays editable so the staff salary amount can be added
+    // REGISTERED TEACHERS: picking one fills name, ID, their monthly salary (from Teacher Registration),
+    // their salary due and what they were paid for each month this year
+    const MONTH_KEYS = ["january", "february", "march", "april", "may", "june",
+        "july", "august", "september", "october", "november", "december"]
+    const teacherPicker = document.getElementById("teacherPicker")
+    const teacherSalaryHint = document.getElementById("teacherSalaryHint")
+    const staffMonthSelect = document.getElementById("staffMonthSelect")
+    const staffPreviousDue = document.getElementById("staffPreviousDue")
+    const staffHistoryCard = document.getElementById("staffHistoryCard")
+    const staffHistoryBody = document.getElementById("staffHistoryBody")
+    let branchTeachers = []
+    let selectedTeacher = null
+
+    async function loadBranchTeachers(keepTeacherId) {
+        const branch = document.getElementById("staffBranch").value
+        branchTeachers = []
+        teacherPicker.innerHTML = ""
+        teacherPicker.disabled = true
+        teacherSalaryHint.textContent = ""
+
+        if (!branch) {
+            teacherPicker.add(new Option({{ t("Select a branch first", "আগে ব্রাঞ্চ নির্বাচন করুন")|tojson }}, ""))
+            return
+        }
+        teacherPicker.add(new Option({{ t("Loading...", "লোড হচ্ছে...")|tojson }}, ""))
+
+        try {
+            const res = await fetch("/api/search-teachers", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({branch})
+            })
+            if (!res.ok) throw new Error("Request failed: " + res.status)
+            branchTeachers = (await res.json()).teachers || []
+        } catch (err) {
+            console.error(err)
+        }
+
+        teacherPicker.innerHTML = ""
+        if (branchTeachers.length === 0) {
+            teacherPicker.add(new Option({{ t("No registered teachers in this branch", "এই ব্রাঞ্চে কোনো নিবন্ধিত শিক্ষক নেই")|tojson }}, ""))
+            return
+        }
+        teacherPicker.add(new Option({{ t("Select a teacher", "শিক্ষক নির্বাচন করুন")|tojson }}, ""))
+        branchTeachers.forEach(t => {
+            teacherPicker.add(new Option(`{% if lang == "bn" %}${t.teacher_name} (${t.staff_id}) - ${Number(t.monthly_salary)} টাকা{% else %}${t.teacher_name} (${t.staff_id}) - ${Number(t.monthly_salary)} Taka{% endif %}`, t.id))
+        })
+        teacherPicker.disabled = false
+        if (keepTeacherId) {
+            teacherPicker.value = String(keepTeacherId)
+            pickTeacher()
+        }
+    }
+
+    // Month boxes show what was paid for each month this year; they are filled from the saved payments
+    function showMonthsPaid(months) {
+        MONTH_KEYS.forEach((key, index) => {
+            const amount = months ? months[index] : 0
+            document.getElementById("staffMonth_" + key).value = amount ? String(amount) : ""
+        })
+    }
+
+    // A registered teacher's previous due is their saved due (not editable); for anyone else it is typed
+    async function loadTeacherSalary() {
+        const teacher = selectedTeacher
+        staffPreviousDue.readOnly = !!teacher
+        staffHistoryBody.innerHTML = ""
+        staffHistoryCard.classList.add("d-none")
+        showMonthsPaid(null)
+        if (!teacher) {
+            staffPreviousDue.value = ""
+            updateStaffTotal()
+            return
+        }
+
+        staffPreviousDue.value = String(Number(teacher.salary_due) || 0)
+        updateStaffTotal()
+        try {
+            const res = await fetch("/api/staff-salary-info", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({teacher_id: teacher.id})
+            })
+            const result = await res.json().catch(() => ({}))
+            if (!res.ok || !result.success) throw new Error(result.error || "Request failed: " + res.status)
+            if (selectedTeacher !== teacher) return  // another teacher was picked meanwhile
+            staffPreviousDue.value = String(result.due)
+            showMonthsPaid(result.months)
+            renderStaffHistory(result.payments)
+            updateStaffTotal()
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    function pickTeacher() {
+        const previous = selectedTeacher
+        selectedTeacher = branchTeachers.find(t => String(t.id) === teacherPicker.value) || null
+
+        // Clear what the previous pick filled in; leave anything typed by hand
+        if (previous) {
+            if (document.getElementById("staffName").value === previous.teacher_name) document.getElementById("staffName").value = ""
+            if (document.getElementById("staffId").value === previous.staff_id) document.getElementById("staffId").value = ""
+        }
+
+        const nameInputs = ["staffName", "staffId"].map(id => document.getElementById(id))
+        if (selectedTeacher) {
+            document.getElementById("staffName").value = selectedTeacher.teacher_name
+            document.getElementById("staffId").value = selectedTeacher.staff_id
+            document.getElementById("salaryStaff").checked = true
+            teacherSalaryHint.textContent = `{% if lang == "bn" %}মাসিক বেতন: ${Number(selectedTeacher.monthly_salary)} টাকা{% else %}Monthly salary: ${Number(selectedTeacher.monthly_salary)} Taka{% endif %}`
+        } else {
+            teacherSalaryHint.textContent = ""
+        }
+        // A registered teacher's name and ID come from Teacher Registration
+        nameInputs.forEach(input => input.readOnly = !!selectedTeacher)
+
+        updateStaffSubtotal()
+        loadTeacherSalary()
+    }
+
+    document.getElementById("staffBranch").addEventListener("change", () => {
+        teacherPicker.value = ""
+        pickTeacher()
+        loadBranchTeachers()
+    })
+    teacherPicker.addEventListener("change", pickTeacher)
+    // A Service Admin's branch is fixed, so their teachers can be listed straight away
+    if (document.getElementById("staffBranch").value) loadBranchTeachers()
+    document.getElementById("salaryStaff").addEventListener("change", updateStaffSubtotal)
+
+    // মোট = স্টাফ বেতন (registered monthly salary, when ticked) + অন্যান্য বেতন; it stays editable
     function updateStaffSubtotal() {
         const other = parseAmount(document.getElementById("salaryOther").value)
-        document.getElementById("staffSubtotal").value = other === 0 ? "" : other
+        const staff = selectedTeacher && document.getElementById("salaryStaff").checked
+            ? Number(selectedTeacher.monthly_salary) || 0 : 0
+        const subtotal = other + staff
+        document.getElementById("staffSubtotal").value = subtotal === 0 ? "" : subtotal
         updateStaffTotal()
     }
 
     // মোট টাকা = মোট + পূর্বের বকেয়া
     function updateStaffTotal() {
         const subtotal = parseAmount(document.getElementById("staffSubtotal").value)
-        const previousDue = parseAmount(document.getElementById("staffPreviousDue").value)
-        const total = subtotal + previousDue
+        const previousDue = parseAmount(staffPreviousDue.value)
+        const total = Math.round((subtotal + previousDue) * 100) / 100
 
         document.getElementById("staffTotal").value = total === 0 ? "" : total
         updateStaffDue()
@@ -475,10 +678,243 @@
 
     document.getElementById("salaryOther").addEventListener("input", updateStaffSubtotal)
     document.getElementById("staffSubtotal").addEventListener("input", updateStaffTotal)
-    document.getElementById("staffPreviousDue").addEventListener("input", updateStaffTotal)
+    staffPreviousDue.addEventListener("input", updateStaffTotal)
     document.getElementById("staffTotal").addEventListener("input", updateStaffDue)
     document.getElementById("staffPaid").addEventListener("input", updateStaffDue)
+
+    // STAFF PAYMENT HISTORY of the picked teacher, newest first. Only the latest active payment can be
+    // cancelled (later payments were worked out on top of its due).
+    function historyCell(text, className) {
+        const td = document.createElement("td")
+        td.textContent = text ?? ""
+        if (className) td.className = className
+        return td
+    }
+
+    function renderStaffHistory(payments) {
+        staffHistoryBody.innerHTML = ""
+        staffHistoryCard.classList.toggle("d-none", payments.length === 0)
+        const monthOptions = staffMonthSelect.options
+
+        payments.forEach(p => {
+            const tr = document.createElement("tr")
+            if (p.cancelled) tr.className = "cancelled"
+            const [year, month, day] = p.date.split("-")
+            tr.appendChild(historyCell(`${day}/${month}/${year} ${p.time}`, "text-nowrap"))
+            tr.appendChild(historyCell(`${monthOptions[p.month].text} ${p.year}`, "text-nowrap"))
+            tr.appendChild(historyCell(String(p.total), "text-end"))
+            tr.appendChild(historyCell(String(p.paid), "text-end"))
+            tr.appendChild(historyCell(String(p.due_after), "text-end"))
+            tr.appendChild(historyCell(p.paid_by))
+
+            const status = historyCell("", "col-status text-nowrap")
+            if (p.cancelled) {
+                status.textContent = {{ t("Cancelled", "বাতিল")|tojson }} + (p.cancelled_by ? ` (${p.cancelled_by})` : "")
+            } else if (p.can_cancel) {
+                const btn = document.createElement("button")
+                btn.type = "button"
+                btn.className = "btn btn-sm btn-outline-danger"
+                btn.textContent = {{ t("Cancel", "বাতিল করুন")|tojson }}
+                btn.addEventListener("click", () => cancelStaffPayment(p))
+                status.appendChild(btn)
+            } else {
+                status.textContent = {{ t("Saved", "সংরক্ষিত")|tojson }}
+            }
+            tr.appendChild(status)
+            staffHistoryBody.appendChild(tr)
+        })
+    }
+
+    async function cancelStaffPayment(p) {
+        if (!confirm(`{% if lang == "bn" %}${p.staff_name} এর ${p.paid} টাকার এই বেতন পরিশোধ বাতিল করবেন? ডাটাশিট থেকে ব্যয় মুছে যাবে এবং বকেয়া আগের মতো হবে।{% else %}Cancel this salary payment of ${p.paid} to ${p.staff_name}? Its expense is removed from the data sheet and the due goes back to what it was.{% endif %}`)) return
+
+        try {
+            const res = await fetch(`/api/cancel-staff-payment/${p.id}`, {method: "POST"})
+            const result = await res.json().catch(() => ({}))
+            if (!res.ok || !result.success) throw new Error(result.error || "Request failed: " + res.status)
+            // Reload so the restored due shows on the teacher too
+            await loadBranchTeachers(selectedTeacher && selectedTeacher.id)
+        } catch (error) {
+            console.error(error)
+            alert({{ t("Error: ", "ত্রুটি: ")|tojson }} + error.message)
+        }
+    }
+
+    // EXPENSE TYPE: the whole total goes into one data sheet column, so only one type can be ticked
+    const TYPE_IDS = ["typeDaily", "typeRentBills", "typeOther"]
+    TYPE_IDS.forEach(id => {
+        document.getElementById(id).addEventListener("change", event => {
+            if (!event.target.checked) return
+            TYPE_IDS.filter(other => other !== id).forEach(other => {
+                document.getElementById(other).checked = false
+            })
+        })
+    })
+
+    function checkedType() {
+        const box = TYPE_IDS.map(id => document.getElementById(id)).find(el => el.checked)
+        return box ? box.value : null
+    }
+
+    async function postJson(url, body) {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(body)
+        })
+        const result = await response.json().catch(() => ({}))
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || "Request failed: " + response.status)
+        }
+        return result
+    }
+
+    // Is anything filled in? (decides which sections the Save button saves)
+    function miscInUse() {
+        return checkedType() !== null
+            || [...itemsBody.querySelectorAll(".item-amount")].some(input => input.value.trim() !== "")
+    }
+
+    function staffInUse() {
+        return selectedTeacher !== null
+            || ["staffName", "salaryOther", "staffPaid"].some(id => document.getElementById(id).value.trim() !== "")
+    }
+
+    // MISC EXPENSE: check the form; returns what to send, or null after telling the user what is missing
+    function miscPayload() {
+        const branch = document.getElementById("branchFilter").value
+        if (!branch) {
+            alert({{ t("Please select a branch!", "অনুগ্রহ করে ব্রাঞ্চ নির্বাচন করুন!")|tojson }})
+            return null
+        }
+        const category = checkedType()
+        if (!category) {
+            alert({{ t("Please tick an expense type!", "অনুগ্রহ করে ব্যয়ের ধরন টিক দিন!")|tojson }})
+            return null
+        }
+
+        const invalid = [...itemsBody.querySelectorAll(".item-amount")].find(input => {
+            const text = input.value.trim()
+            return text !== "" && !(parseAmount(text) > 0)
+        })
+        if (invalid) {
+            alert({{ t("Please enter a valid amount in every row!", "অনুগ্রহ করে প্রতিটি সারিতে সঠিক টাকা লিখুন!")|tojson }})
+            invalid.focus()
+            return null
+        }
+
+        const amount = parseAmount(document.getElementById("expenseTotal").value)
+        if (!(amount > 0)) {
+            alert({{ t("Please enter at least one expense amount!", "অন্তত একটি ব্যয়ের পরিমাণ লিখুন!")|tojson }})
+            return null
+        }
+        return {branch, category, amount}
+    }
+
+    // STAFF SALARY: check the form; returns what to send, or null after telling the user what is missing
+    function staffPayload() {
+        const branch = document.getElementById("staffBranch").value
+        if (!branch) {
+            alert({{ t("Please select the staff salary branch!", "অনুগ্রহ করে স্টাফ বেতনের ব্রাঞ্চ নির্বাচন করুন!")|tojson }})
+            return null
+        }
+        const name = document.getElementById("staffName").value.trim()
+        if (!name) {
+            alert({{ t("Please enter the staff name!", "অনুগ্রহ করে স্টাফের নাম লিখুন!")|tojson }})
+            document.getElementById("staffName").focus()
+            return null
+        }
+        if (!staffMonthSelect.value) {
+            alert({{ t("Please select the salary month!", "অনুগ্রহ করে বেতনের মাস নির্বাচন করুন!")|tojson }})
+            return null
+        }
+        const paidText = document.getElementById("staffPaid").value.trim()
+        if (paidText === "" || !(parseAmount(paidText) >= 0)) {
+            alert({{ t("Please enter the paid amount (0 if nothing was paid)!", "অনুগ্রহ করে পরিশোধিত টাকা লিখুন (কিছু না দিলে 0)!")|tojson }})
+            document.getElementById("staffPaid").focus()
+            return null
+        }
+        const totalText = document.getElementById("staffTotal").value.trim()
+        return {
+            branch,
+            teacher_id: selectedTeacher ? selectedTeacher.id : null,
+            staff_name: name,
+            staff_id: document.getElementById("staffId").value.trim(),
+            month: Number(staffMonthSelect.value),
+            subtotal: parseAmount(document.getElementById("staffSubtotal").value),
+            previous_due: parseAmount(staffPreviousDue.value),
+            total: totalText === "" ? "" : parseAmount(totalText),
+            paid: parseAmount(paidText),
+        }
+    }
+
+    // SAVE: saves whichever sections are filled in. Misc expense: the total of all rows goes into the
+    // data sheet under the ticked type. Staff salary: the paid amount goes into the Staff Salary column.
+    const saveBtn = document.getElementById("saveBtn")
+
+    async function saveExpense() {
+        const useMisc = miscInUse()
+        const useStaff = staffInUse()
+        if (!useMisc && !useStaff) {
+            alert({{ t("Please enter at least one expense amount!", "অন্তত একটি ব্যয়ের পরিমাণ লিখুন!")|tojson }})
+            return
+        }
+        // Check both sections before saving either, so nothing is saved half way
+        const misc = useMisc ? miscPayload() : null
+        if (useMisc && !misc) return
+        const staff = useStaff ? staffPayload() : null
+        if (useStaff && !staff) return
+
+        saveBtn.disabled = true
+        saveBtn.textContent = {{ t("Saving...", "সংরক্ষণ হচ্ছে...")|tojson }}
+        const messages = []
+        try {
+            if (misc) {
+                const result = await postJson("/api/save-expense", misc)
+                const label = document.querySelector(`label[for="${TYPE_IDS.find(id => document.getElementById(id).value === misc.category)}"]`).textContent.trim()
+                messages.push(`${result.branch} · ${label}: ${result.amount}`)
+                clearExpenseForm()
+            }
+            if (staff) {
+                const result = await postJson("/api/save-staff-salary", staff)
+                messages.push(`${result.branch} · {{ t("Staff Salary", "স্টাফ বেতন") }} (${result.staff_name}): ${result.paid} · {{ t("Due", "বকেয়া") }}: ${result.due}`)
+                await clearStaffForm()
+            }
+            alert({{ t("Saved to the data sheet!", "ডাটাশিটে সংরক্ষিত হয়েছে!")|tojson }} + "\n" + messages.join("\n"))
+        } catch (error) {
+            console.error(error)
+            const saved = messages.length ? "\n" + {{ t("Already saved: ", "ইতিমধ্যে সংরক্ষিত: ")|tojson }} + messages.join("; ") : ""
+            alert({{ t("Could not save: ", "সংরক্ষণ করা যায়নি: ")|tojson }} + error.message + saved)
+        } finally {
+            saveBtn.disabled = false
+            saveBtn.textContent = {{ t("Save", "সংরক্ষণ")|tojson }}
+        }
+    }
+
+    // Empty the expense rows after a save so the same entry is not saved twice
+    function clearExpenseForm() {
+        TYPE_IDS.forEach(id => document.getElementById(id).checked = false)
+        document.getElementById("voucherNo").value = ""
+        itemsBody.innerHTML = ""
+        for (let i = 0; i < STARTING_ROWS; i++) addRow()
+        updateTotal()
+    }
+
+    // Empty the staff payment after a save; a registered teacher stays picked, with the new due shown
+    async function clearStaffForm() {
+        ;["salaryOther", "staffPaid"].forEach(id => document.getElementById(id).value = "")
+        const teacherId = selectedTeacher && selectedTeacher.id
+        if (teacherId) {
+            await loadBranchTeachers(teacherId)  // fresh salary due for the teacher
+        } else {
+            ;["staffName", "staffId", "staffPreviousDue"].forEach(id => document.getElementById(id).value = "")
+            updateStaffSubtotal()
+        }
+    }
+
+    saveBtn.addEventListener("click", saveExpense)
 </script>
 
+{% include "_excel_export.html" %}
 </body>
 </html>

@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>Accounts Management</title>
+    <title>{{ t("Accounts Management", "হিসাব ব্যবস্থাপনা") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -150,6 +150,7 @@
         .accounts-table td.col-due { color: #dc2626; }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-yellow">
@@ -160,7 +161,7 @@
         <div class="d-flex">
             <div class="toast-body">{{ message }}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
-                    aria-label="Close"></button>
+                    aria-label="{{ t("Close", "বন্ধ করুন") }}"></button>
         </div>
     </div>
     {% endfor %}
@@ -186,14 +187,18 @@
             {% endif %}
 
             <div class="title">
-                Accounts Management
+                {{ t("Accounts Management", "হিসাব ব্যবস্থাপনা") }}
             </div>
         </div>
 
-        <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#uploadModal"
-                aria-label="Upload accounts">
-            <i class="bi bi-upload"></i><span class="d-none d-sm-inline ms-1">Upload</span>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
+
+            <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#uploadModal"
+                aria-label="{{ t("Upload accounts", "হিসাব আপলোড") }}">
+            <i class="bi bi-upload"></i><span class="d-none d-sm-inline ms-1">{{ t("Upload", "আপলোড") }}</span>
         </button>
+        </div>
     </div>
 
     <div class="page">
@@ -202,9 +207,9 @@
             <div class="row g-2 align-items-end">
                 {% if current_user.role == "Admin" %}
                 <div class="col-12 col-md">
-                    <label class="form-label" for="branchSelect">ব্রাঞ্চ</label>
+                    <label class="form-label" for="branchSelect">{{ t("Branch", "ব্রাঞ্চ") }}</label>
                     <select id="branchSelect" class="form-select">
-                        <option value="">Select Branch</option>
+                        <option value="">{{ t("Select Branch", "ব্রাঞ্চ নির্বাচন") }}</option>
                         {% for branch in get_branches() %}
                         <option value="{{ branch.name }}">{{ branch.name }}</option>
                         {% endfor %}
@@ -215,9 +220,9 @@
                 {% endif %}
 
                 <div class="col-7 col-md">
-                    <label class="form-label" for="classSelect">শ্রেণী</label>
+                    <label class="form-label" for="classSelect">{{ t("Class", "শ্রেণী") }}</label>
                     <select id="classSelect" class="form-select">
-                        <option value="">Select Class</option>
+                        <option value="">{{ t("Select Class", "শ্রেণী নির্বাচন") }}</option>
                         {% for class_name in classes %}
                         <option value="{{ class_name }}">{{ class_name }}</option>
                         {% endfor %}
@@ -225,12 +230,12 @@
                 </div>
 
                 <div class="col-5 col-md-2">
-                    <label class="form-label" for="idFilter">রোল</label>
-                    <input id="idFilter" type="text" inputmode="numeric" placeholder="সকল" class="form-control">
+                    <label class="form-label" for="idFilter">{{ t("Roll", "রোল") }}</label>
+                    <input id="idFilter" type="text" inputmode="numeric" placeholder="{{ t("All", "সকল") }}" class="form-control">
                 </div>
 
                 <div class="col-12 col-md-3">
-                    <button type="button" id="searchBtn" class="btn btn-success w-100">Search</button>
+                    <button type="button" id="searchBtn" class="btn btn-success w-100">{{ t("Search", "খুঁজুন") }}</button>
                 </div>
             </div>
         </div>
@@ -242,22 +247,23 @@
                 <table class="table table-bordered table-hover accounts-table">
                     <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Student Name</th>
-                        <th>January</th>
-                        <th>February</th>
-                        <th>March</th>
-                        <th>April</th>
-                        <th>May</th>
-                        <th>June</th>
-                        <th>July</th>
-                        <th>August</th>
-                        <th>September</th>
-                        <th>October</th>
-                        <th>November</th>
-                        <th>December</th>
-                        <th>মোট প্রদান</th>
-                        <th>Due</th>
+                        <th>{{ t("ID", "আইডি") }}</th>
+                        <th>{{ t("Student Name", "শিক্ষার্থীর নাম") }}</th>
+                        <th>{{ t("January", "জানুয়ারী") }}</th>
+                        <th>{{ t("February", "ফেব্রুয়ারী") }}</th>
+                        <th>{{ t("March", "মার্চ") }}</th>
+                        <th>{{ t("April", "এপ্রিল") }}</th>
+                        <th>{{ t("May", "মে") }}</th>
+                        <th>{{ t("June", "জুন") }}</th>
+                        <th>{{ t("July", "জুলাই") }}</th>
+                        <th>{{ t("August", "আগস্ট") }}</th>
+                        <th>{{ t("September", "সেপ্টেম্বর") }}</th>
+                        <th>{{ t("October", "অক্টোবর") }}</th>
+                        <th>{{ t("November", "নভেম্বর") }}</th>
+                        <th>{{ t("December", "ডিসেম্বর") }}</th>
+                        <th>{{ t("Total Paid", "মোট প্রদান") }}</th>
+                        <th>{{ t("Due", "বকেয়া") }}</th>
+                        <th>{{ t("Misc Due", "বিবিধ বকেয়া") }}</th>
                     </tr>
                     </thead>
                     <tbody id="accountsBody"></tbody>
@@ -276,8 +282,8 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="uploadTitle">Upload Accounts Info</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="uploadTitle">{{ t("Upload Accounts Info", "হিসাবের তথ্য আপলোড") }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t("Close", "বন্ধ করুন") }}"></button>
                 </div>
 
                 <div class="modal-body">
@@ -286,9 +292,9 @@
 
                         {% if current_user.role == "Admin" %}
                         <div class="mb-3">
-                            <label class="form-label" for="uploadBranch">ব্রাঞ্চ</label>
+                            <label class="form-label" for="uploadBranch">{{ t("Branch", "ব্রাঞ্চ") }}</label>
                             <select id="uploadBranch" name="branch_name" class="form-select" required>
-                                <option value="">Select Branch</option>
+                                <option value="">{{ t("Select Branch", "ব্রাঞ্চ নির্বাচন") }}</option>
                                 {% for branch in get_branches() %}
                                 <option value="{{ branch.name }}">{{ branch.name }}</option>
                                 {% endfor %}
@@ -297,9 +303,9 @@
                         {% endif %}
 
                         <div class="mb-3">
-                            <label class="form-label" for="uploadClass">শ্রেণী</label>
+                            <label class="form-label" for="uploadClass">{{ t("Class", "শ্রেণী") }}</label>
                             <select id="uploadClass" name="class_name" class="form-select" required>
-                                <option value="">Select Class</option>
+                                <option value="">{{ t("Select Class", "শ্রেণী নির্বাচন") }}</option>
                                 {% for class_name in classes %}
                                 <option value="{{ class_name }}">{{ class_name }}</option>
                                 {% endfor %}
@@ -307,16 +313,15 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label" for="excelFile">Excel ফাইল (.xlsx)</label>
+                            <label class="form-label" for="excelFile">{{ t("Excel file (.xlsx)", "Excel ফাইল (.xlsx)") }}</label>
                             <input type="file" id="excelFile" name="excel_file" accept=".xlsx" class="form-control"
                                    required>
                             <div class="form-text">
-                                'ID', 'Student Name', January থেকে December এবং 'Due' কলাম থাকতে হবে।
-                                এই শ্রেণীর আগের আপলোড প্রতিস্থাপিত হবে।
+                                {{ t("Must have 'ID', 'Student Name', January to December and 'Due' columns. Replaces this class's previous upload.", "'ID', 'Student Name', January থেকে December এবং 'Due' কলাম থাকতে হবে। এই শ্রেণীর আগের আপলোড প্রতিস্থাপিত হবে।") }}
                             </div>
                         </div>
 
-                        <button type="submit" id="uploadBtn" class="btn btn-success w-100">Submit</button>
+                        <button type="submit" id="uploadBtn" class="btn btn-success w-100">{{ t("Submit", "জমা দিন") }}</button>
                     </form>
                 </div>
             </div>
@@ -364,16 +369,16 @@
 
     function render(rows, className) {
         if (rows.length === 0) {
-            showEmpty(`${className} শ্রেণীর হিসাবের তথ্য পাওয়া যায়নি !`)
+            showEmpty(`{% if lang == "bn" %}${className} শ্রেণীর হিসাবের তথ্য পাওয়া যায়নি !{% else %}No accounts found for class ${className}!{% endif %}`)
             return
         }
 
         emptyCard.classList.add("d-none")
         card.classList.remove("d-none")
-        document.getElementById("sheetTitle").textContent = `${className} · ${rows.length} জন`
+        document.getElementById("sheetTitle").textContent = `{% if lang == "bn" %}${className} · ${rows.length} জন{% else %}${className} · ${rows.length} students{% endif %}`
 
         tbody.innerHTML = ""
-        const totals = Object.fromEntries([...MONTHS, "paid", "due"].map(key => [key, 0]))
+        const totals = Object.fromEntries([...MONTHS, "paid", "due", "misc_due"].map(key => [key, 0]))
 
         rows.forEach(row => {
             const tr = document.createElement("tr")
@@ -388,19 +393,21 @@
             })
             totals.paid += paid
             totals.due += amount(row.due)
+            totals.misc_due += amount(row.misc_due)
 
             tr.appendChild(cell(formatValue(paid || ""), "col-total"))
             tr.appendChild(cell(formatValue(row.due), amount(row.due) > 0 ? "col-due" : ""))
+            tr.appendChild(cell(formatValue(row.misc_due || ""), amount(row.misc_due) > 0 ? "col-due" : ""))
             tbody.appendChild(tr)
         })
 
         // Class totals
         tfoot.innerHTML = ""
         const tr = document.createElement("tr")
-        const label = cell("সর্বমোট", "col-name")
+        const label = cell({{ t("Grand Total", "সর্বমোট")|tojson }}, "col-name")
         label.colSpan = 2
         tr.appendChild(label)
-        ;[...MONTHS, "paid", "due"].forEach(key => tr.appendChild(cell(formatValue(totals[key] || ""))))
+        ;[...MONTHS, "paid", "due", "misc_due"].forEach(key => tr.appendChild(cell(formatValue(totals[key] || ""))))
         tfoot.appendChild(tr)
     }
 
@@ -410,11 +417,11 @@
         const studentId = toEnglishDigits(document.getElementById("idFilter").value)
 
         if (!branch || !className) {
-            alert("Please select branch and class!")
+            alert({{ t("Please select branch and class!", "অনুগ্রহ করে ব্রাঞ্চ ও শ্রেণী নির্বাচন করুন!")|tojson }})
             return
         }
         if (studentId && !/^\d+$/.test(studentId)) {
-            alert("Roll must be a number!")
+            alert({{ t("Roll must be a number!", "রোল অবশ্যই সংখ্যা হতে হবে!")|tojson }})
             return
         }
 
@@ -431,10 +438,10 @@
             render(result.data, className)
         } catch (error) {
             console.error(error)
-            showEmpty("হিসাবের তথ্য লোড করা যায়নি: " + error.message)
+            showEmpty({{ t("Could not load accounts: ", "হিসাবের তথ্য লোড করা যায়নি: ")|tojson }} + error.message)
         } finally {
             searchBtn.disabled = false
-            searchBtn.textContent = "Search"
+            searchBtn.textContent = {{ t("Search", "খুঁজুন")|tojson }}
         }
     }
 
@@ -452,5 +459,6 @@
         btn.textContent = "Uploading..."
     })
 </script>
+{% include "_excel_export.html" %}
 </body>
 </html>

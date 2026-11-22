@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="UTF-8">
@@ -7,7 +7,7 @@
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="robots" content="noindex, nofollow">
 
-    <title>Lesson Tutorial</title>
+    <title>{{ t("Lesson Tutorial", "লেসন টিউটোরিয়াল") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -238,6 +238,7 @@
         }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-red">
@@ -272,13 +273,17 @@
             {% endif %}
 
             <div class="title">
-                Lesson Tutorial
+                {{ t("Lesson Tutorial", "লেসন টিউটোরিয়াল") }}
             </div>
         </div>
 
-        <a href="{{ url_for('qr_scanner') }}" class="btn btn-success" aria-label="আরেকটি স্ক্যান করুন">
-            <i class="bi bi-qr-code-scan"></i><span class="d-none d-sm-inline ms-1">আবার স্ক্যান</span>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
+
+            <a href="{{ url_for('qr_scanner') }}" class="btn btn-success" aria-label="{{ t("Scan another", "আরেকটি স্ক্যান করুন") }}">
+            <i class="bi bi-qr-code-scan"></i><span class="d-none d-sm-inline ms-1">{{ t("Scan Again", "আবার স্ক্যান") }}</span>
         </a>
+        </div>
     </div>
 
     <div class="page">
@@ -289,11 +294,11 @@
                 {{ error }}
                 <div class="small text-muted mt-1">QR ID: {{ video_id }}</div>
                 <a href="{{ url_for('qr_scanner') }}" class="btn btn-success mt-3">
-                    <i class="bi bi-qr-code-scan me-1"></i>আবার স্ক্যান করুন
+                    <i class="bi bi-qr-code-scan me-1"></i>{{ t("Scan Again", "আবার স্ক্যান করুন") }}
                 </a>
             </div>
             {% else %}
-            <div class="video-title">আল-আকসা ইসলামী একাডেমী - লেসন টিউটোরিয়াল</div>
+            <div class="video-title">{{ t("Al-Aqsa Islami Academy - Lesson Tutorial", "আল-আকসা ইসলামী একাডেমী - লেসন টিউটোরিয়াল") }}</div>
             <div class="video-meta">{{ class_name }}</div>
 
             <div class="player" id="player">
@@ -302,24 +307,24 @@
 
                 <div class="cover" id="cover">
                     <div class="big-play"><i class="bi bi-play-fill" id="coverIcon"></i></div>
-                    <div class="cover-text" id="coverText">ভিডিও লোড হচ্ছে...</div>
+                    <div class="cover-text" id="coverText">{{ t("Loading video...", "ভিডিও লোড হচ্ছে...") }}</div>
                 </div>
 
                 <div class="watermark" id="watermark">{{ watermark }}</div>
 
                 <div class="controls">
-                    <button type="button" id="playBtn" aria-label="Play / Pause"><i class="bi bi-play-fill"></i></button>
+                    <button type="button" id="playBtn" aria-label="{{ t("Play / Pause", "চালান / থামান") }}"><i class="bi bi-play-fill"></i></button>
                     <span class="time" id="timeNow">0:00</span>
-                    <input type="range" id="seek" min="0" max="100" step="0.1" value="0" aria-label="Seek">
+                    <input type="range" id="seek" min="0" max="100" step="0.1" value="0" aria-label="{{ t("Seek", "সামনে-পেছনে") }}">
                     <span class="time" id="timeTotal">0:00</span>
-                    <button type="button" id="muteBtn" aria-label="Mute"><i class="bi bi-volume-up-fill"></i></button>
-                    <button type="button" id="fullBtn" aria-label="Full screen"><i class="bi bi-fullscreen"></i></button>
+                    <button type="button" id="muteBtn" aria-label="{{ t("Mute", "মিউট") }}"><i class="bi bi-volume-up-fill"></i></button>
+                    <button type="button" id="fullBtn" aria-label="{{ t("Full screen", "ফুল স্ক্রিন") }}"><i class="bi bi-fullscreen"></i></button>
                 </div>
             </div>
 
             <div class="private-note">
                 <i class="bi bi-shield-lock"></i>
-                এই ভিডিওটি শুধুমাত্র আপনার জন্য। শেয়ার বা রেকর্ড করা নিষেধ — ভিডিওতে আপনার নাম ও আইডি দেখা যায়।
+                {{ t("This video is for you only. Sharing or recording is not allowed — your name and ID are shown on the video.", "এই ভিডিওটি শুধুমাত্র আপনার জন্য। শেয়ার বা রেকর্ড করা নিষেধ — ভিডিওতে আপনার নাম ও আইডি দেখা যায়।") }}
             </div>
             {% endif %}
         </div>
@@ -405,9 +410,9 @@
         if (playing) {
             cover.classList.add("hidden")
         } else if (state === YT.PlayerState.ENDED) {
-            showCover("আবার দেখতে চাপুন", "bi-arrow-counterclockwise")
+            showCover({{ t("Tap to watch again", "আবার দেখতে চাপুন")|tojson }}, "bi-arrow-counterclockwise")
         } else if (state === YT.PlayerState.PAUSED) {
-            showCover("চালাতে চাপুন", "bi-play-fill")
+            showCover({{ t("Tap to play", "চালাতে চাপুন")|tojson }}, "bi-play-fill")
         }
     }
 
@@ -420,7 +425,7 @@
         iframe.setAttribute("tabindex", "-1")
         iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin")
 
-        showCover("চালাতে চাপুন", "bi-play-fill")
+        showCover({{ t("Tap to play", "চালাতে চাপুন")|tojson }}, "bi-play-fill")
         setInterval(() => {
             if (!ready || seeking) return
             const duration = player.getDuration() || 0
@@ -433,7 +438,7 @@
 
     function onError() {
         ready = false
-        showCover("ভিডিওটি চালানো যাচ্ছে না। পরে আবার চেষ্টা করুন।", "bi-exclamation-triangle")
+        showCover({{ t("The video can't be played. Please try again later.", "ভিডিওটি চালানো যাচ্ছে না। পরে আবার চেষ্টা করুন।")|tojson }}, "bi-exclamation-triangle")
     }
 
     async function loadVideoId() {
@@ -465,8 +470,8 @@
         })
     }).catch(error => {
         showCover(error.message === "expired"
-            ? "সময় শেষ হয়ে গেছে। পেজটি আবার লোড করুন।"
-            : "ভিডিওটি লোড করা যায়নি।", "bi-arrow-clockwise")
+            ? {{ t("Time is up. Please reload the page.", "সময় শেষ হয়ে গেছে। পেজটি আবার লোড করুন।")|tojson }}
+            : {{ t("Could not load the video.", "ভিডিওটি লোড করা যায়নি।")|tojson }}, "bi-arrow-clockwise")
         cover.addEventListener("click", () => window.location.reload(), {once: true})
     })
 
@@ -500,15 +505,15 @@
 
     // Pause whenever the page is not in front: switching tab/app, opening another window or a recorder
     document.addEventListener("visibilitychange", () => {
-        if (document.hidden) pauseForPrivacy("চালাতে চাপুন")
+        if (document.hidden) pauseForPrivacy({{ t("Tap to play", "চালাতে চাপুন")|tojson }})
     })
-    window.addEventListener("blur", () => pauseForPrivacy("চালাতে চাপুন"))
+    window.addEventListener("blur", () => pauseForPrivacy({{ t("Tap to play", "চালাতে চাপুন")|tojson }}))
     window.addEventListener("pagehide", () => pauseForPrivacy())
 
     // Print Screen: pause, cover the video and try to clear the copied screenshot
     document.addEventListener("keyup", e => {
         if (e.key === "PrintScreen") {
-            pauseForPrivacy("স্ক্রিনশট নেওয়া নিষেধ")
+            pauseForPrivacy({{ t("Screenshots are not allowed", "স্ক্রিনশট নেওয়া নিষেধ")|tojson }})
             if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText("").catch(() => {})
         }
     })

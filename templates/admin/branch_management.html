@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Branch Management</title>
+    <title>{{ t("Branch Management", "ব্রাঞ্চ ব্যবস্থাপনা") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -120,6 +120,7 @@
         }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-blue">
@@ -155,15 +156,19 @@
             {% endif %}
 
             <div class="title">
-                Branch Management
+                {{ t("Branch Management", "ব্রাঞ্চ ব্যবস্থাপনা") }}
             </div>
 
         </div>
 
-        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal"
-                aria-label="Add branch">
-            <i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline ms-1">Add Branch</span>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
+
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal"
+                aria-label="{{ t("Add branch", "ব্রাঞ্চ যোগ করুন") }}">
+            <i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline ms-1">{{ t("Add Branch", "ব্রাঞ্চ যোগ করুন") }}</span>
         </button>
+        </div>
 
     </div>
 
@@ -173,20 +178,20 @@
         <!-- TABLE -->
         <div id="tableSection" class="table-card">
             <div class="section-title">
-                <span>Branch List <span class="badge text-bg-light border">{{ branches|length }}</span></span>
+                <span>{{ t("Branch List", "ব্রাঞ্চ তালিকা") }} <span class="badge text-bg-light border">{{ branches|length }}</span></span>
             </div>
 
             <div class="table-responsive">
                 <table class="table table-bordered table-hover branch-table">
                     <thead>
                     <tr>
-                        <th>Code</th>
-                        <th>Branch</th>
-                        <th>Director</th>
-                        <th>Phone</th>
-                        <th>Users</th>
-                        <th>Students</th>
-                        <th class="col-actions">Actions</th>
+                        <th>{{ t("Code", "কোড") }}</th>
+                        <th>{{ t("Branch", "ব্রাঞ্চ") }}</th>
+                        <th>{{ t("Director", "পরিচালক") }}</th>
+                        <th>{{ t("Phone", "ফোন") }}</th>
+                        <th>{{ t("Users", "ইউজার") }}</th>
+                        <th>{{ t("Students", "শিক্ষার্থী") }}</th>
+                        <th class="col-actions">{{ t("Actions", "অ্যাকশন") }}</th>
                     </tr>
                     </thead>
                     <tbody id="userTable">
@@ -200,7 +205,7 @@
                         <td><span class="count-badge">{{ row.users }}</span></td>
                         <td><span class="count-badge">{{ row.students }}</span></td>
                         <td class="col-actions">
-                            <button type="button" class="btn btn-light btn-sm me-1" title="Edit" aria-label="Edit"
+                            <button type="button" class="btn btn-light btn-sm me-1" title="{{ t("Edit", "সম্পাদনা") }}" aria-label="{{ t("Edit", "সম্পাদনা") }}"
                                     onclick='openEdit({ branch_id: {{ branch.id|tojson }},
                                                         code: {{ branch.code|tojson }},
                                                         name: {{ branch.name|tojson }},
@@ -210,11 +215,11 @@
                             </button>
                             {% if row.users or row.students %}
                             <button type="button" class="btn btn-light btn-sm text-muted" disabled
-                                    title="ইউজার বা শিক্ষার্থী থাকা অবস্থায় শাখা মোছা যাবে না" aria-label="Delete">
+                                    title="{{ t("A branch with users or students cannot be deleted", "ইউজার বা শিক্ষার্থী থাকা অবস্থায় শাখা মোছা যাবে না") }}" aria-label="{{ t("Delete", "মুছুন") }}">
                                 <i class="bi bi-trash3"></i>
                             </button>
                             {% else %}
-                            <button type="button" class="btn btn-light btn-sm text-danger" title="Delete" aria-label="Delete"
+                            <button type="button" class="btn btn-light btn-sm text-danger" title="{{ t("Delete", "মুছুন") }}" aria-label="{{ t("Delete", "মুছুন") }}"
                                     onclick='deleteBranch({{ branch.id|tojson }}, {{ branch.name|tojson }})'>
                                 <i class="bi bi-trash3"></i>
                             </button>
@@ -222,7 +227,7 @@
                         </td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="7" class="text-center text-muted py-4">কোন শাখা নেই।</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted py-4">{{ t("No branches.", "কোন শাখা নেই।") }}</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>
@@ -237,7 +242,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Add Branch</h5>
+                <h5 class="modal-title">{{ t("Add Branch", "ব্রাঞ্চ যোগ করুন") }}</h5>
                 <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
@@ -245,28 +250,28 @@
                 <form id="addUserForm">
 
                     <div class="mb-2">
-                        <label class="form-label">Code</label>
-                        <input id="code" name="code" placeholder="e.g. NK" class="form-control" required>
+                        <label class="form-label">{{ t("Code", "কোড") }}</label>
+                        <input id="code" name="code" placeholder="{{ t("e.g. NK", "যেমন: NK") }}" class="form-control" required>
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label">Branch</label>
-                        <input id="branch" name="branch" placeholder="e.g. Netrakona" class="form-control" required>
+                        <label class="form-label">{{ t("Branch", "ব্রাঞ্চ") }}</label>
+                        <input id="branch" name="branch" placeholder="{{ t("e.g. Netrakona", "যেমন: Netrakona") }}" class="form-control" required>
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label">Director</label>
-                        <input id="director" name="director" placeholder="e.g. Md Atikur Rahman Sharif"
+                        <label class="form-label">{{ t("Director", "পরিচালক") }}</label>
+                        <input id="director" name="director" placeholder="{{ t("e.g. Md Atikur Rahman Sharif", "যেমন: মো: আতিকুর রহমান শরিফ") }}"
                                class="form-control" required>
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label">Phone</label>
-                        <input id="phone" name="phone" placeholder="e.g. 01711484011" class="form-control" required>
+                        <label class="form-label">{{ t("Phone", "ফোন") }}</label>
+                        <input id="phone" name="phone" placeholder="{{ t("e.g. 01711484011", "যেমন: 01711484011") }}" class="form-control" required>
                     </div>
 
 
-                    <button type="submit" class="btn btn-success w-100 mt-2">Add Branch</button>
+                    <button type="submit" class="btn btn-success w-100 mt-2">{{ t("Add Branch", "ব্রাঞ্চ যোগ করুন") }}</button>
                 </form>
             </div>
         </div>
@@ -278,7 +283,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Edit Branch</h5>
+                <h5 class="modal-title">{{ t("Edit Branch", "ব্রাঞ্চ সম্পাদনা") }}</h5>
                 <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
@@ -286,28 +291,28 @@
                 <form id="editUserForm">
                     <input type="hidden" name="branch_id" id="branch_id">
                     <div class="mb-2">
-                        <label class="form-label">Code</label>
+                        <label class="form-label">{{ t("Code", "কোড") }}</label>
                         <input id="edit_code" name="edit_code" class="form-control" required>
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label">Branch</label>
+                        <label class="form-label">{{ t("Branch", "ব্রাঞ্চ") }}</label>
                         <input id="edit_branch" name="edit_branch" class="form-control" required>
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label">Director</label>
+                        <label class="form-label">{{ t("Director", "পরিচালক") }}</label>
                         <input id="edit_director" name="edit_director" class="form-control" required>
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label">Phone</label>
+                        <label class="form-label">{{ t("Phone", "ফোন") }}</label>
                         <input name="edit_phone" id="edit_phone" class="form-control" required>
                     </div>
 
 
-                    <div class="form-text mb-2">নাম পরিবর্তন করলে শাখার সকল শিক্ষার্থী, হাজিরা, হিসাব, ফলাফল, ফোন নম্বর ও নোটিশ নতুন নামে চলে যাবে।</div>
-                    <button class="btn btn-success w-100">Update</button>
+                    <div class="form-text mb-2">{{ t("Renaming moves all of the branch's students, attendance, accounts, results, phone numbers and notices to the new name.", "নাম পরিবর্তন করলে শাখার সকল শিক্ষার্থী, হাজিরা, হিসাব, ফলাফল, ফোন নম্বর ও নোটিশ নতুন নামে চলে যাবে।") }}</div>
+                    <button class="btn btn-success w-100">{{ t("Update", "আপডেট") }}</button>
                 </form>
             </div>
         </div>
@@ -332,7 +337,7 @@
 
         // Validate required fields
         if (!code || !branch || !director || !phone) {
-            alert("অনুগ্রহ করে সকল তথ্য পূরণ করুন!");
+            alert({{ t("Please fill in all the information!", "অনুগ্রহ করে সকল তথ্য পূরণ করুন!")|tojson }});
             return;
         }
 
@@ -347,7 +352,7 @@
             const data = await res.json();
 
             if (data.success) {
-                alert("শাখা সফলভাবে যুক্ত হয়েছে!");
+                alert({{ t("Branch added successfully!", "শাখা সফলভাবে যুক্ত হয়েছে!")|tojson }});
 
                 // Close modal
                 const addModal = bootstrap.Modal.getInstance(document.getElementById("addUserModal"));
@@ -359,11 +364,11 @@
                 // Refresh tab
                 window.location.reload();
             } else {
-                alert("Error: " + (data.error || "দুঃখিত, শাখা যোগ করা সম্ভব হয়নি!"));
+                alert({{ t("Error: ", "ত্রুটি: ")|tojson }} + (data.error || {{ t("Sorry, the branch could not be added!", "দুঃখিত, শাখা যোগ করা সম্ভব হয়নি!")|tojson }}));
             }
         } catch (err) {
             console.error(err);
-            alert("একটি অপ্রত্যাশিত ত্রুটির জন্য শাখা যোগ করা সম্ভব হয়নি!");
+            alert({{ t("The branch could not be added due to an unexpected error!", "একটি অপ্রত্যাশিত ত্রুটির জন্য শাখা যোগ করা সম্ভব হয়নি!")|tojson }});
         }
     });
 
@@ -406,7 +411,7 @@
             const data = await res.json();
 
             if (data.success) {
-                alert("ব্রাঞ্চ সফলভাবে আপডেট করা হয়েছে!");
+                alert({{ t("Branch updated successfully!", "ব্রাঞ্চ সফলভাবে আপডেট করা হয়েছে!")|tojson }});
 
                 // Close modal
                 const editModal = bootstrap.Modal.getInstance(document.getElementById("editUserModal"));
@@ -417,18 +422,18 @@
 
                 window.location.reload()
             } else {
-                alert("Error: " + (data.error || "ব্রাঞ্চ আপডেট সফল হয়নি!"));
+                alert({{ t("Error: ", "ত্রুটি: ")|tojson }} + (data.error || {{ t("Branch update failed!", "ব্রাঞ্চ আপডেট সফল হয়নি!")|tojson }}));
             }
         } catch (err) {
             console.error(err);
-            alert("অপ্রত্যাশিত ত্রুটির জন্য ব্রাঞ্চ আপডেট করা সম্ভব হয়নি!");
+            alert({{ t("The branch could not be updated due to an unexpected error!", "অপ্রত্যাশিত ত্রুটির জন্য ব্রাঞ্চ আপডেট করা সম্ভব হয়নি!")|tojson }});
         }
     });
 
 
 
     async function deleteBranch(id, name) {
-        if (!confirm(`আপনি কি নিশ্চিতভাবে "${name}" শাখাটি মুছতে চান?`)) return
+        if (!confirm(`{% if lang == "bn" %}আপনি কি নিশ্চিতভাবে "${name}" শাখাটি মুছতে চান?{% else %}Are you sure you want to delete the branch "${name}"?{% endif %}`)) return
 
         try {
             const res = await fetch("/api/delete-branch/" + id, {method: "DELETE"})
@@ -436,17 +441,18 @@
 
             // Only reload when the branch was really deleted; otherwise say why
             if (!res.ok || !data.success) {
-                alert("ব্রাঞ্চ মুছে ফেলা যায়নি: " + (data.error || "Request failed: " + res.status))
+                alert({{ t("Could not delete the branch: ", "ব্রাঞ্চ মুছে ফেলা যায়নি: ")|tojson }} + (data.error || "Request failed: " + res.status))
                 return
             }
             window.location.reload()
         } catch (err) {
             console.error(err)
-            alert("An unexpected error occurred")
+            alert({{ t("An unexpected error occurred", "একটি অপ্রত্যাশিত ত্রুটি হয়েছে")|tojson }})
         }
     }
 
 </script>
 
+{% include "_excel_export.html" %}
 </body>
 </html>

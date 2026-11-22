@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>Notice Board Management</title>
+    <title>{{ t("Notice Board Management", "নোটিশ বোর্ড ব্যবস্থাপনা") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -201,6 +201,7 @@
         }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-orange">
@@ -268,17 +269,21 @@
             {% endif %}
 
             <div class="title">
-                Notice Board
+                {{ t("Notice Board", "নোটিশ বোর্ড") }}
             </div>
 
         </div>
 
-        {% if can_manage %}
-        <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#uploadModal"
-                aria-label="Upload notice">
-            <i class="bi bi-upload"></i><span class="d-none d-sm-inline ms-1">Upload</span>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
+
+            {% if can_manage %}
+            <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#uploadModal"
+                aria-label="{{ t("Upload notice", "নোটিশ আপলোড") }}">
+            <i class="bi bi-upload"></i><span class="d-none d-sm-inline ms-1">{{ t("Upload", "আপলোড") }}</span>
         </button>
-        {% endif %}
+            {% endif %}
+        </div>
 
     </div>
 
@@ -287,7 +292,7 @@
         {% if current_user.role == "Admin" %}
         <!-- BRANCH (Admins can view every branch's board) -->
         <form class="filter-card" method="GET" action="{{ url_for('notice_board_management') }}">
-            <label class="form-label" for="branchSelect">শাখা</label>
+            <label class="form-label" for="branchSelect">{{ t("Branch", "শাখা") }}</label>
             <select id="branchSelect" name="branch" class="form-select" onchange="this.form.submit()">
                 {% for name in branches %}
                 <option value="{{ name }}" {% if name == branch %}selected{% endif %}>{{ name }}</option>
@@ -304,13 +309,13 @@
             </div>
             <div class="notice-meta">
                 <span>
-                    {% if loop.first %}<span class="notice-badge me-1">নতুন</span>{% endif %}
+                    {% if loop.first %}<span class="notice-badge me-1">{{ t("New", "নতুন") }}</span>{% endif %}
                     <i class="bi bi-calendar3 me-1"></i>{{ notice.date }}
                 </span>
                 {% if can_manage %}
                 <button type="button" class="btn btn-outline-danger btn-sm delete-btn" data-src="{{ notice.url }}"
-                        aria-label="Delete notice">
-                    <i class="bi bi-trash"></i> Delete
+                        aria-label="{{ t("Delete notice", "নোটিশ মুছুন") }}">
+                    <i class="bi bi-trash"></i> {{ t("Delete", "মুছুন") }}
                 </button>
                 {% endif %}
             </div>
@@ -326,15 +331,15 @@
     </div>
 
     <!-- FULL-SIZE VIEWER -->
-    <div class="modal fade" id="viewerModal" tabindex="-1" aria-label="Notice" aria-hidden="true">
+    <div class="modal fade" id="viewerModal" tabindex="-1" aria-label="{{ t("Notice", "নোটিশ") }}" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h5 class="modal-title">Notice</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title">{{ t("Notice", "নোটিশ") }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t("Close", "বন্ধ করুন") }}"></button>
                 </div>
                 <div class="modal-body p-2">
-                    <img id="viewerImg" class="viewer-img" alt="Notice">
+                    <img id="viewerImg" class="viewer-img" alt="{{ t("Notice", "নোটিশ") }}">
                 </div>
             </div>
         </div>
@@ -346,8 +351,8 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="uploadTitle">Upload Notice</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="uploadTitle">{{ t("Upload Notice", "নোটিশ আপলোড") }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t("Close", "বন্ধ করুন") }}"></button>
                 </div>
 
                 <div class="modal-body">
@@ -355,7 +360,7 @@
                           id="uploadForm">
                         {% if current_user.role == "Admin" %}
                         <div class="mb-3">
-                            <label class="form-label" for="uploadBranch">শাখা</label>
+                            <label class="form-label" for="uploadBranch">{{ t("Branch", "শাখা") }}</label>
                             <select id="uploadBranch" name="branch_name" class="form-select" required>
                                 {% for name in branches %}
                                 <option value="{{ name }}" {% if name == branch %}selected{% endif %}>{{ name }}</option>
@@ -364,21 +369,21 @@
                         </div>
                         {% else %}
                         <div class="mb-3">
-                            <label class="form-label">শাখা</label>
+                            <label class="form-label">{{ t("Branch", "শাখা") }}</label>
                             <input type="text" class="form-control" value="{{ branch }}" disabled>
                         </div>
                         {% endif %}
 
                         <div class="mb-3">
-                            <label class="form-label" for="noticeFile">নোটিশের ছবি</label>
+                            <label class="form-label" for="noticeFile">{{ t("Notice image", "নোটিশের ছবি") }}</label>
                             <input type="file" id="noticeFile" name="img" class="form-control" required
                                    accept=".png,.jpg,.jpeg,.gif,.webp,.bmp,image/*">
-                            <div class="form-text">PNG, JPG, GIF, WEBP বা BMP · সর্বোচ্চ {{ max_mb }} MB</div>
+                            <div class="form-text">{% if lang == "bn" %}PNG, JPG, GIF, WEBP বা BMP · সর্বোচ্চ {{ max_mb }} MB{% else %}PNG, JPG, GIF, WEBP or BMP · max {{ max_mb }} MB{% endif %}</div>
                         </div>
 
-                        <img id="preview" class="viewer-img rounded border mb-3 d-none" alt="Preview">
+                        <img id="preview" class="viewer-img rounded border mb-3 d-none" alt="{{ t("Preview", "প্রিভিউ") }}">
 
-                        <button type="submit" id="uploadBtn" class="btn btn-success w-100">Upload</button>
+                        <button type="submit" id="uploadBtn" class="btn btn-success w-100">{{ t("Upload", "আপলোড") }}</button>
                     </form>
                 </div>
             </div>
@@ -406,7 +411,7 @@
         preview.classList.add("d-none")
         if (!file) return
         if (!file.type.startsWith("image/")) {
-            alert("শুধু ছবি আপলোড করা যাবে।")
+            alert({{ t("Only images can be uploaded.", "শুধু ছবি আপলোড করা যাবে।")|tojson }})
             fileInput.value = ""
             return
         }
@@ -426,7 +431,7 @@
     })
 
     document.querySelectorAll(".delete-btn").forEach(btn => btn.addEventListener("click", async () => {
-        if (!confirm("এই নোটিশটি মুছে ফেলবেন?")) return
+        if (!confirm({{ t("Delete this notice?", "এই নোটিশটি মুছে ফেলবেন?")|tojson }})) return
         btn.disabled = true
         try {
             const response = await fetch("{{ url_for('delete_notice') }}", {
@@ -435,7 +440,7 @@
                 body: JSON.stringify({notice_path: btn.dataset.src})
             })
             const result = await response.json().catch(() => ({}))
-            if (!response.ok || !result.success) throw new Error(result.error || "Failed to delete.")
+            if (!response.ok || !result.success) throw new Error(result.error || {{ t("Failed to delete.", "মুছে ফেলা যায়নি।")|tojson }})
             btn.closest(".notice-card").remove()
             if (!document.querySelector(".delete-btn")) location.reload()
         } catch (error) {

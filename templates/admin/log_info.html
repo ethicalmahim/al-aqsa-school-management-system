@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>Log Info</title>
+    <title>{{ t("Log Info", "লগইন তথ্য") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -161,6 +161,7 @@
         }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 <body class="kids t-pink">
 <div class="container-fluid p-0">
@@ -195,29 +196,31 @@
         {% endif %}
 
         <div class="title">
-            Log Info
+            {{ t("Log Info", "লগইন তথ্য") }}
         </div>
 
     </div>
-
-</div>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
+        </div>
+    </div>
 
     <div class="page">
         <!-- DATE -->
         <div class="filter-card">
-            <label class="form-label" for="dateSelect">তারিখ</label>
+            <label class="form-label" for="dateSelect">{{ t("Date", "তারিখ") }}</label>
             <div class="row g-2">
                 <div class="col-12 col-md-8">
                     <div class="day-nav">
-                        <button type="button" class="btn btn-light border" id="prevDay" aria-label="Previous day">
+                        <button type="button" class="btn btn-light border" id="prevDay" aria-label="{{ t("Previous day", "আগের দিন") }}">
                             <i class="bi bi-chevron-left"></i></button>
                         <input id="dateSelect" type="date" class="form-control" value="{{ today }}">
-                        <button type="button" class="btn btn-light border" id="nextDay" aria-label="Next day">
+                        <button type="button" class="btn btn-light border" id="nextDay" aria-label="{{ t("Next day", "পরের দিন") }}">
                             <i class="bi bi-chevron-right"></i></button>
                     </div>
                 </div>
                 <div class="col-12 col-md-4">
-                    <input id="userFilter" type="search" class="form-control" placeholder="Username / শাখা খুঁজুন">
+                    <input id="userFilter" type="search" class="form-control" placeholder="{{ t("Search username / branch", "Username / শাখা খুঁজুন") }}">
                 </div>
             </div>
         </div>
@@ -225,7 +228,7 @@
         <!-- LOG INFO TABLE -->
         <div id="logCard" class="log-info-card">
             <div class="section-title">
-                <span id="sheetTitle">Login History</span>
+                <span id="sheetTitle">{{ t("Login History", "লগইন ইতিহাস") }}</span>
                 <span class="count" id="logCount"></span>
             </div>
             <div class="table-responsive">
@@ -233,10 +236,10 @@
                     <thead>
                     <tr>
                         <th style="width:50px;">#</th>
-                        <th>Username</th>
-                        <th>Role</th>
-                        <th>শাখা</th>
-                        <th>Login Time</th>
+                        <th>{{ t("Username", "ইউজারনেম") }}</th>
+                        <th>{{ t("Role", "ভূমিকা") }}</th>
+                        <th>{{ t("Branch", "শাখা") }}</th>
+                        <th>{{ t("Login Time", "লগইনের সময়") }}</th>
                     </tr>
                     </thead>
                     <tbody id="logBody"></tbody>
@@ -275,14 +278,14 @@
             })
             tbody.appendChild(tr)
         })
-        document.getElementById("logCount").textContent = q ? `${rows.length} / ${logs.length} টি লগইন` : `${logs.length} টি লগইন`
-        empty.textContent = logs.length ? "কোন মিল পাওয়া যায়নি।" : "এই তারিখে কেউ লগইন করেনি।"
+        document.getElementById("logCount").textContent = q ? `{% if lang == "bn" %}${rows.length} / ${logs.length} টি লগইন{% else %}${rows.length} / ${logs.length} logins{% endif %}` : `{% if lang == "bn" %}${logs.length} টি লগইন{% else %}${logs.length} logins{% endif %}`
+        empty.textContent = logs.length ? {{ t("No matches found.", "কোন মিল পাওয়া যায়নি।")|tojson }} : {{ t("Nobody logged in on this date.", "এই তারিখে কেউ লগইন করেনি।")|tojson }}
         empty.classList.toggle("d-none", rows.length > 0)
     }
 
     async function search() {
         if (!dateInput.value) return
-        document.getElementById("sheetTitle").textContent = "লোড হচ্ছে..."
+        document.getElementById("sheetTitle").textContent = {{ t("Loading...", "লোড হচ্ছে...")|tojson }}
         try {
             const response = await fetch("{{ url_for('search_login_info') }}", {
                 method: "POST",
@@ -293,13 +296,13 @@
             if (!response.ok || !result.success) throw new Error(result.error || "Request failed: " + response.status)
             logs = result.data
             const [y, m, d] = dateInput.value.split("-")
-            document.getElementById("sheetTitle").textContent = `Login History · ${d}-${m}-${y}`
+            document.getElementById("sheetTitle").textContent = `{% if lang == "bn" %}লগইন ইতিহাস · ${d}-${m}-${y}{% else %}Login History · ${d}-${m}-${y}{% endif %}`
             render()
         } catch (error) {
             console.error(error)
             logs = []
             render()
-            empty.textContent = "লগ লোড করা যায়নি: " + error.message
+            empty.textContent = {{ t("Could not load the log: ", "লগ লোড করা যায়নি: ")|tojson }} + error.message
         }
     }
 
@@ -309,5 +312,6 @@
     filterInput.addEventListener("input", render)
     search()
 </script>
+{% include "_excel_export.html" %}
 </body>
 </html>

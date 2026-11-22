@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="UTF-8">
@@ -7,7 +7,7 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>User Management</title>
+    <title>{{ t("User Management", "ইউজার ব্যবস্থাপনা") }}</title>
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
@@ -206,6 +206,7 @@
     </style>
 
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-indigo">
@@ -241,11 +242,13 @@
             {% endif %}
 
             <div class="title">
-                User Management
+                {{ t("User Management", "ইউজার ব্যবস্থাপনা") }}
             </div>
 
         </div>
-
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
+        </div>
     </div>
 
     <!-- DASHBOARD -->
@@ -254,21 +257,21 @@
         <a href="{{ url_for('service_admin_user_management') }}" class="card-link">
             <div class="card-btn t-purple">
                 <div class="icon-circle users"><i class="bi bi-people"></i></div>
-                <div class="card-title">Service Admin</div>
+                <div class="card-title">{{ t("Service Admin", "সার্ভিস এডমিন") }}</div>
             </div>
         </a>
 
         <a href="{{ url_for('teacher_user_management') }}" class="card-link">
             <div class="card-btn t-blue">
                 <div class="icon-circle users"><i class="bi bi-people"></i></div>
-                <div class="card-title">Teacher</div>
+                <div class="card-title">{{ t("Teacher", "শিক্ষক") }}</div>
             </div>
         </a>
 
          <a href="{{ url_for('student_user_management') }}" class="card-link">
             <div class="card-btn t-green">
                 <div class="icon-circle users"><i class="bi bi-people"></i></div>
-                <div class="card-title">Student</div>
+                <div class="card-title">{{ t("Student", "শিক্ষার্থী") }}</div>
             </div>
         </a>
     </div>

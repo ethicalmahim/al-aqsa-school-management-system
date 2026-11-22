@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>অভ্যন্তরীণ হিসাব</title>
+    <title>{{ t("Internal Accounts", "অভ্যন্তরীণ হিসাব") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -204,6 +204,7 @@
     </style>
 
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-green">
@@ -240,11 +241,13 @@
             {% endif %}
 
             <div class="title">
-                অভ্যন্তরীণ হিসাব
+                {{ t("Internal Accounts", "অভ্যন্তরীণ হিসাব") }}
             </div>
 
         </div>
-
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
+        </div>
     </div>
 
     <!-- DASHBOARD -->
@@ -253,28 +256,28 @@
         <a href="{{ url_for('internal_accounts_income') }}" class="card-link">
             <div class="card-btn t-green">
                 <div class="icon-circle schedule"><i class="bi bi-cash-coin"></i></div>
-                <div class="card-title">আয়</div>
+                <div class="card-title">{{ t("Income", "আয়") }}</div>
             </div>
         </a>
 
         <a href="{{ url_for('internal_accounts_expense') }}" class="card-link">
             <div class="card-btn t-red">
                 <div class="icon-circle qr"><i class="bi bi-receipt"></i></div>
-                <div class="card-title">ব্যয়</div>
+                <div class="card-title">{{ t("Expense", "ব্যয়") }}</div>
             </div>
         </a>
 
         <a href="{{ url_for('internal_accounts_datasheet') }}" class="card-link">
             <div class="card-btn t-blue">
                 <div class="icon-circle attendance"><i class="bi bi-table"></i></div>
-                <div class="card-title">ডাটা শীট</div>
+                <div class="card-title">{{ t("Data Sheet", "ডাটা শীট") }}</div>
             </div>
         </a>
 
         <a href="{{ url_for('internal_accounts_balance_sheet') }}" class="card-link">
             <div class="card-btn t-purple">
                 <div class="icon-circle result"><i class="bi bi-bank"></i></div>
-                <div class="card-title">ব্যালেন্স শীট</div>
+                <div class="card-title">{{ t("Balance Sheet", "ব্যালেন্স শীট") }}</div>
             </div>
         </a>
     </div>

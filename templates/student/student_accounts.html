@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>Accounts</title>
+    <title>{{ t("Accounts", "হিসাব") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -81,7 +81,7 @@
         /* SUMMARY TILES */
         .summary {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 8px;
             margin-bottom: 12px;
         }
@@ -153,6 +153,7 @@
         .accounts-table td.text-paid { color: #059669; }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-yellow">
@@ -166,21 +167,24 @@
             </a>
 
             <div class="title">
-                Accounts
+                {{ t("Accounts", "হিসাব") }}
             </div>
+        </div>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
         </div>
     </div>
 
     <div class="page">
         <div class="accounts-card">
             <div class="report-head">
-                <h4>আল-আকসা ইসলামী একাডেমী</h4>
-                <h5>বেতন কার্ড</h5>
-                <div class="meta">রোলঃ {{ current_user.school_id }}{% if student_class %} · {{ student_class }}{% endif %}</div>
+                <h4>{{ t("Al-Aqsa Islami Academy", "আল-আকসা ইসলামী একাডেমী") }}</h4>
+                <h5>{{ t("Salary Card", "বেতন কার্ড") }}</h5>
+                <div class="meta">{% if lang == "bn" %}রোলঃ {{ current_user.school_id }}{% if student_class %} · {{ student_class }}{% endif %}{% else %}Roll: {{ current_user.school_id }}{% if student_class %} · {{ student_class }}{% endif %}{% endif %}</div>
             </div>
 
             <div id="reportBody">
-                <div class="empty-state">Loading...</div>
+                <div class="empty-state">{{ t("Loading...", "লোড হচ্ছে...") }}</div>
             </div>
         </div>
     </div>
@@ -190,9 +194,9 @@
 <script>
     const STUDENT_CLASS = {{ student_class | tojson }}
     const MONTHS = [
-        ["january", "জানুয়ারী"], ["february", "ফেব্রুয়ারী"], ["march", "মার্চ"], ["april", "এপ্রিল"],
-        ["may", "মে"], ["june", "জুন"], ["july", "জুলাই"], ["august", "আগস্ট"],
-        ["september", "সেপ্টেম্বর"], ["october", "অক্টোবর"], ["november", "নভেম্বর"], ["december", "ডিসেম্বর"],
+        ["january", {{ t("January", "জানুয়ারী")|tojson }}], ["february", {{ t("February", "ফেব্রুয়ারী")|tojson }}], ["march", {{ t("March", "মার্চ")|tojson }}], ["april", {{ t("April", "এপ্রিল")|tojson }}],
+        ["may", {{ t("May", "মে")|tojson }}], ["june", {{ t("June", "জুন")|tojson }}], ["july", {{ t("July", "জুলাই")|tojson }}], ["august", {{ t("August", "আগস্ট")|tojson }}],
+        ["september", {{ t("September", "সেপ্টেম্বর")|tojson }}], ["october", {{ t("October", "অক্টোবর")|tojson }}], ["november", {{ t("November", "নভেম্বর")|tojson }}], ["december", {{ t("December", "ডিসেম্বর")|tojson }}],
     ]
     const reportBody = document.getElementById("reportBody")
 
@@ -225,7 +229,7 @@
 
         let paid = 0
         const table = element("table", undefined, "table table-bordered accounts-table")
-        table.innerHTML = '<thead><tr><th>মাসের নাম</th><th class="col-amount">প্রদানকৃত টাকা</th></tr></thead>'
+        table.innerHTML = {{ t("<thead><tr><th>Month</th><th class=\"col-amount\">Amount Paid</th></tr></thead>", "<thead><tr><th>মাসের নাম</th><th class=\"col-amount\">প্রদানকৃত টাকা</th></tr></thead>")|tojson }}
         const tbody = element("tbody")
 
         MONTHS.forEach(([key, label]) => {
@@ -240,14 +244,22 @@
 
         const due = typeof row.due === "number" ? row.due : 0
         const dueRow = element("tr")
-        dueRow.appendChild(element("td", "বকেয়া", "text-due"))
+        dueRow.appendChild(element("td", {{ t("Due", "বকেয়া")|tojson }}, "text-due"))
         dueRow.appendChild(element("td", formatValue(row.due), "col-amount" + (due > 0 ? " text-due" : "")))
         tbody.appendChild(dueRow)
+
+        // Miscellaneous-income due (admission, books, ...), kept apart from the monthly fee due
+        const miscDue = typeof row.misc_due === "number" ? row.misc_due : 0
+        const miscRow = element("tr")
+        miscRow.appendChild(element("td", {{ t("Misc Due", "বিবিধ বকেয়া")|tojson }}, "text-due"))
+        miscRow.appendChild(element("td", formatValue(miscDue), "col-amount" + (miscDue > 0 ? " text-due" : "")))
+        tbody.appendChild(miscRow)
         table.appendChild(tbody)
 
         const summary = element("div", undefined, "summary")
-        summary.appendChild(summaryTile(formatValue(paid || 0), "মোট প্রদান", "text-paid"))
-        summary.appendChild(summaryTile(formatValue(due), "বকেয়া", due > 0 ? "text-due" : ""))
+        summary.appendChild(summaryTile(formatValue(paid || 0), {{ t("Total Paid", "মোট প্রদান")|tojson }}, "text-paid"))
+        summary.appendChild(summaryTile(formatValue(due), {{ t("Due", "বকেয়া")|tojson }}, due > 0 ? "text-due" : ""))
+        summary.appendChild(summaryTile(formatValue(miscDue), {{ t("Misc Due", "বিবিধ বকেয়া")|tojson }}, miscDue > 0 ? "text-due" : ""))
 
         const wrap = element("div", undefined, "table-responsive")
         wrap.appendChild(table)
@@ -257,7 +269,7 @@
 
     async function loadAccount() {
         if (!STUDENT_CLASS) {
-            showMessage("আপনার শ্রেণী নির্ধারণ করা যায়নি। অনুগ্রহ করে অফিসে যোগাযোগ করুন।")
+            showMessage({{ t("Your class could not be determined. Please contact the office.", "আপনার শ্রেণী নির্ধারণ করা যায়নি। অনুগ্রহ করে অফিসে যোগাযোগ করুন।")|tojson }})
             return
         }
 
@@ -272,13 +284,13 @@
             if (!response.ok || !result.success) throw new Error(result.error || "Request failed: " + response.status)
 
             if (result.data.length === 0) {
-                showMessage("কোন হিসাবের তথ্য পাওয়া যায়নি")
+                showMessage({{ t("No accounts information found", "কোন হিসাবের তথ্য পাওয়া যায়নি")|tojson }})
             } else {
                 render(result.data[0])
             }
         } catch (error) {
             console.error(error)
-            showMessage("হিসাবের তথ্য লোড করা যায়নি: " + error.message)
+            showMessage({{ t("Could not load accounts: ", "হিসাবের তথ্য লোড করা যায়নি: ")|tojson }} + error.message)
         }
     }
 

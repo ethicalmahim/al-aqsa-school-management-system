@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>শ্রেণী মূল্যায়ন</title>
+    <title>{{ t("Class Assessment", "শ্রেণী মূল্যায়ন") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -208,6 +208,7 @@
         }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-indigo">
@@ -221,8 +222,11 @@
             </a>
 
             <div class="title">
-                Class Assessment
+                {{ t("Class Assessment", "শ্রেণী মূল্যায়ন") }}
             </div>
+        </div>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
         </div>
     </div>
 
@@ -233,7 +237,7 @@
         <div class="filter-card">
             <div class="row g-2 align-items-end">
                 <div class="col-12 col-md-8">
-                    <label class="form-label" for="periodSelect">মাস</label>
+                    <label class="form-label" for="periodSelect">{{ t("Month", "মাস") }}</label>
                     <select id="periodSelect" class="form-select">
                         {% for period in periods %}
                         <option value="{{ period }}">{{ period }}</option>
@@ -241,7 +245,7 @@
                     </select>
                 </div>
                 <div class="col-12 col-md-4">
-                    <button type="button" id="searchBtn" class="btn btn-success w-100">Search</button>
+                    <button type="button" id="searchBtn" class="btn btn-success w-100">{{ t("Search", "খুঁজুন") }}</button>
                 </div>
             </div>
         </div>
@@ -249,19 +253,19 @@
 
         <div class="report-card">
             <div class="report-head">
-                <h4>আল-আকসা ইসলামী একাডেমী</h4>
-                <h5>প্রোগ্রেস রিপোর্ট</h5>
+                <h4>{{ t("Al-Aqsa Islami Academy", "আল-আকসা ইসলামী একাডেমী") }}</h4>
+                <h5>{{ t("Progress Report", "প্রোগ্রেস রিপোর্ট") }}</h5>
                 <div class="meta" id="reportMeta">
-                    রোলঃ {{ current_user.school_id }}{% if student_class %} · {{ student_class }}{% endif %}
+                    {% if lang == "bn" %}রোলঃ {{ current_user.school_id }}{% if student_class %} · {{ student_class }}{% endif %}{% else %}Roll: {{ current_user.school_id }}{% if student_class %} · {{ student_class }}{% endif %}{% endif %}
                 </div>
             </div>
             <div id="reportBody">
                 {% if not student_class %}
-                <div class="empty-state">আপনার শ্রেণী নির্ধারণ করা যায়নি। অনুগ্রহ করে অফিসে যোগাযোগ করুন।</div>
+                <div class="empty-state">{{ t("Your class could not be determined. Please contact the office.", "আপনার শ্রেণী নির্ধারণ করা যায়নি। অনুগ্রহ করে অফিসে যোগাযোগ করুন।") }}</div>
                 {% elif not periods %}
-                <div class="empty-state">এখনো কোন শ্রেণি মূল্যায়নের ফলাফল প্রকাশিত হয়নি।</div>
+                <div class="empty-state">{{ t("No class assessment results have been published yet.", "এখনো কোন শ্রেণি মূল্যায়নের ফলাফল প্রকাশিত হয়নি।") }}</div>
                 {% else %}
-                <div class="empty-state">Loading...</div>
+                <div class="empty-state">{{ t("Loading...", "লোড হচ্ছে...") }}</div>
                 {% endif %}
             </div>
         </div>
@@ -273,8 +277,8 @@
     const STUDENT_CLASS = {{ student_class | tojson }}
     const LOWER_CLASSES = ["Play", "Nursery", "One", "Two"]
     // Subjects in report order; lower and upper classes use different subject names
-    const SUBJECTS = LOWER_CLASSES.includes(STUDENT_CLASS) ? [["arabic", "আরবী"], ["quran", "কুরআন ও হাদি:, মাসা:"], ["bengali", "বাংলা"], ["english", "ইংরেজী"], ["math", "গণিত"]] : [["quran", "কুরআন ও তাজভিদ"], ["aqaid_and_fiqh", "আকাইদ ও ফিকহ"], ["arabic", "আরবী ১ম, ২য়"], ["bengali", "বাংলা ১ম, ২য়"], ["english", "ইংরেজী ১ম, ২য়"], ["bgs", "বা ও বি"], ["science", "বিজ্ঞান"], ["math", "গণিত"]]
-    const SUMMARY = [["total", "মোট নাম্বার"]]
+    const SUBJECTS = LOWER_CLASSES.includes(STUDENT_CLASS) ? [["arabic", {{ t("Arabic", "আরবী")|tojson }}], ["quran", {{ t("Quran & Hadith, Masail", "কুরআন ও হাদি:, মাসা:")|tojson }}], ["bengali", {{ t("Bangla", "বাংলা")|tojson }}], ["english", {{ t("English", "ইংরেজী")|tojson }}], ["math", {{ t("Math", "গণিত")|tojson }}]] : [["quran", {{ t("Quran & Tajweed", "কুরআন ও তাজভিদ")|tojson }}], ["aqaid_and_fiqh", {{ t("Aqaid & Fiqh", "আকাইদ ও ফিকহ")|tojson }}], ["arabic", {{ t("Arabic 1st, 2nd", "আরবী ১ম, ২য়")|tojson }}], ["bengali", {{ t("Bangla 1st, 2nd", "বাংলা ১ম, ২য়")|tojson }}], ["english", {{ t("English 1st, 2nd", "ইংরেজী ১ম, ২য়")|tojson }}], ["bgs", {{ t("BGS", "বা ও বি")|tojson }}], ["science", {{ t("Science", "বিজ্ঞান")|tojson }}], ["math", {{ t("Math", "গণিত")|tojson }}]]
+    const SUMMARY = [["total", {{ t("Total Marks", "মোট নাম্বার")|tojson }}]]
     const SEARCH_URL = "/api/search-class-result"
     const PERIOD_KEY = "month"
 
@@ -315,7 +319,7 @@
         reportBody.appendChild(summary)
 
         const table = element("table", undefined, "table table-bordered report-table")
-        table.innerHTML = '<thead><tr><th>বিষয়ের নাম</th><th class="col-mark">প্রাপ্ত নাম্বার</th></tr></thead>'
+        table.innerHTML = {{ t("<thead><tr><th>Subject</th><th class=\"col-mark\">Marks Obtained</th></tr></thead>", "<thead><tr><th>বিষয়ের নাম</th><th class=\"col-mark\">প্রাপ্ত নাম্বার</th></tr></thead>")|tojson }}
         const tbody = element("tbody")
         SUBJECTS.filter(([key]) => hasValue(row[key])).forEach(([key, label]) => {
             const tr = element("tr")
@@ -333,7 +337,7 @@
     async function search() {
         const period = document.getElementById("periodSelect").value
         searchBtn.disabled = true
-        searchBtn.textContent = "Loading..."
+        searchBtn.textContent = {{ t("Loading...", "লোড হচ্ছে...")|tojson }}
         try {
             // The server uses the logged-in student's own branch, class and ID
             const response = await fetch(SEARCH_URL, {
@@ -345,16 +349,16 @@
             if (!response.ok || !result.success) throw new Error(result.error || "Request failed: " + response.status)
 
             if (result.data.length === 0) {
-                showMessage("উক্ত মাসে আপনার ফলাফল পাওয়া যায়নি!")
+                showMessage({{ t("No result found for you in this month!", "উক্ত মাসে আপনার ফলাফল পাওয়া যায়নি!")|tojson }})
             } else {
                 render(result.data[0], period)
             }
         } catch (error) {
             console.error(error)
-            showMessage("ফলাফল লোড করা যায়নি: " + error.message)
+            showMessage({{ t("Could not load results: ", "ফলাফল লোড করা যায়নি: ")|tojson }} + error.message)
         } finally {
             searchBtn.disabled = false
-            searchBtn.textContent = "Search"
+            searchBtn.textContent = {{ t("Search", "খুঁজুন")|tojson }}
         }
     }
 

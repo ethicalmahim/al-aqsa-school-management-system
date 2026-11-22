@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>Lesson Syllabus</title>
+    <title>{{ t("Lesson Syllabus", "সিলেবাস") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -138,6 +138,7 @@
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 <body class="kids t-green">
 
@@ -153,9 +154,12 @@
             </a>
 
             <div class="title">
-                Lesson Syllabus
+                {{ t("Lesson Syllabus", "সিলেবাস") }}
             </div>
 
+        </div>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
         </div>
     </div>
 
@@ -174,7 +178,7 @@
             <div id="pdfPages" class="d-flex flex-column align-items-center gap-3"></div>
 
             <div id="noPdfMsg" class="text-center text-muted d-none py-4">
-                No syllabus PDF found for this class
+                {{ t("No syllabus PDF found for this class", "এই শ্রেণীর কোন সিলেবাস PDF পাওয়া যায়নি") }}
             </div>
         </div>
     </div>
@@ -200,14 +204,14 @@
     async function loadSyllabus() {
         card.classList.remove("d-none");
         pagesEl.innerHTML = "";
-        pageInfo.textContent = "Loading...";
+        pageInfo.textContent = {{ t("Loading...", "লোড হচ্ছে...")|tojson }};
         noPdfMsg.classList.add("d-none");
 
         try {
             const loadingTask = pdfjsLib.getDocument(pdfUrl);
             currentPdf = await loadingTask.promise;
 
-            pageInfo.textContent = currentPdf.numPages + " page" + (currentPdf.numPages > 1 ? "s" : "");
+            pageInfo.textContent = currentPdf.numPages + ({% if lang == "bn" %}" পৃষ্ঠা"{% else %}(currentPdf.numPages > 1 ? " pages" : " page"){% endif %});
             await renderAllPages();
         } catch (err) {
             currentPdf = null;
@@ -264,7 +268,7 @@
         } else {
             card.classList.remove("d-none");
             noPdfMsg.classList.remove("d-none");
-            noPdfMsg.textContent = "No class assigned to your account";
+            noPdfMsg.textContent = {{ t("No class assigned to your account", "আপনার অ্যাকাউন্টে কোন শ্রেণী নির্ধারণ করা নেই")|tojson }};
         }
     });
 </script>

@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>Semester Assessment</title>
+    <title>{{ t("Semester Assessment", "সাময়িক মূল্যায়ন") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -188,6 +188,7 @@
         }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 <body class="kids t-red">
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;">
@@ -197,7 +198,7 @@
         <div class="d-flex">
             <div class="toast-body">{{ message }}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
-                    aria-label="Close"></button>
+                    aria-label="{{ t("Close", "বন্ধ করুন") }}"></button>
         </div>
     </div>
     {% endfor %}
@@ -229,16 +230,20 @@
             {% endif %}
 
             <div class="title">
-                Semester Assessment
+                {{ t("Semester Assessment", "সাময়িক মূল্যায়ন") }}
             </div>
         </div>
 
-        {% if current_user.role in ("Admin", "Service Admin") %}
-        <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#uploadModal"
-                aria-label="Upload result">
-            <i class="bi bi-upload"></i><span class="d-none d-sm-inline ms-1">Upload</span>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
+
+            {% if current_user.role in ("Admin", "Service Admin") %}
+            <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#uploadModal"
+                aria-label="{{ t("Upload result", "ফলাফল আপলোড") }}">
+            <i class="bi bi-upload"></i><span class="d-none d-sm-inline ms-1">{{ t("Upload", "আপলোড") }}</span>
         </button>
-        {% endif %}
+            {% endif %}
+        </div>
     </div>
 
     <div class="page">
@@ -247,9 +252,9 @@
             <div class="row g-2 align-items-end">
                 {% if current_user.role == "Admin" %}
                 <div class="col-12 col-md">
-                    <label class="form-label" for="branchSelect">ব্রাঞ্চ</label>
+                    <label class="form-label" for="branchSelect">{{ t("Branch", "ব্রাঞ্চ") }}</label>
                     <select id="branchSelect" class="form-select">
-                        <option value="">Select Branch</option>
+                        <option value="">{{ t("Select Branch", "ব্রাঞ্চ নির্বাচন") }}</option>
                         {% for branch in get_branches() %}
                         <option value="{{ branch.name }}">{{ branch.name }}</option>
                         {% endfor %}
@@ -260,9 +265,9 @@
                 {% endif %}
 
                 <div class="col-12 col-md">
-                    <label class="form-label" for="classSelect">শ্রেণী</label>
+                    <label class="form-label" for="classSelect">{{ t("Class", "শ্রেণী") }}</label>
                     <select id="classSelect" class="form-select">
-                        <option value="">Select Class</option>
+                        <option value="">{{ t("Select Class", "শ্রেণী নির্বাচন") }}</option>
                         {% for class_name in classes %}
                         <option value="{{ class_name }}">{{ class_name }}</option>
                         {% endfor %}
@@ -270,7 +275,7 @@
                 </div>
 
                 <div class="col-7 col-md">
-                    <label class="form-label" for="periodSelect">পরীক্ষা</label>
+                    <label class="form-label" for="periodSelect">{{ t("Exam", "পরীক্ষা") }}</label>
                     <select id="periodSelect" class="form-select">
                         {% for exam in exam_types %}
                         <option value="{{ exam }}">{{ exam }}</option>
@@ -279,7 +284,7 @@
                 </div>
 
                 <div class="col-5 col-md-2">
-                    <label class="form-label" for="yearSelect">বছর</label>
+                    <label class="form-label" for="yearSelect">{{ t("Year", "বছর") }}</label>
                     <select id="yearSelect" class="form-select">
                         {% for year in years %}
                         <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
@@ -288,7 +293,7 @@
                 </div>
 
                 <div class="col-12 col-md-2">
-                    <button type="button" id="searchBtn" class="btn btn-success w-100">Search</button>
+                    <button type="button" id="searchBtn" class="btn btn-success w-100">{{ t("Search", "খুঁজুন") }}</button>
                 </div>
             </div>
         </div>
@@ -315,8 +320,8 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="uploadTitle">Upload Result - Semester Assessment</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="uploadTitle">{{ t("Upload Result - Semester Assessment", "ফলাফল আপলোড - সাময়িক মূল্যায়ন") }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t("Close", "বন্ধ করুন") }}"></button>
                 </div>
 
                 <div class="modal-body">
@@ -324,9 +329,9 @@
 
                         {% if current_user.role == "Admin" %}
                         <div class="mb-3">
-                            <label class="form-label" for="uploadBranch">ব্রাঞ্চ</label>
+                            <label class="form-label" for="uploadBranch">{{ t("Branch", "ব্রাঞ্চ") }}</label>
                             <select id="uploadBranch" name="branch_name" class="form-select" required>
-                                <option value="">Select Branch</option>
+                                <option value="">{{ t("Select Branch", "ব্রাঞ্চ নির্বাচন") }}</option>
                                 {% for branch in get_branches() %}
                                 <option value="{{ branch.name }}">{{ branch.name }}</option>
                                 {% endfor %}
@@ -335,9 +340,9 @@
                         {% endif %}
 
                         <div class="mb-3">
-                            <label class="form-label" for="uploadClass">শ্রেণী</label>
+                            <label class="form-label" for="uploadClass">{{ t("Class", "শ্রেণী") }}</label>
                             <select id="uploadClass" name="class_name" class="form-select" required>
-                                <option value="">Select Class</option>
+                                <option value="">{{ t("Select Class", "শ্রেণী নির্বাচন") }}</option>
                                 {% for class_name in classes %}
                                 <option value="{{ class_name }}">{{ class_name }}</option>
                                 {% endfor %}
@@ -346,7 +351,7 @@
 
                         <div class="row g-2 mb-3">
                             <div class="col-7">
-                                <label class="form-label" for="uploadPeriod">পরীক্ষা</label>
+                                <label class="form-label" for="uploadPeriod">{{ t("Exam", "পরীক্ষা") }}</label>
                                 <select id="uploadPeriod" class="form-select">
                                     {% for exam in exam_types %}
                                     <option value="{{ exam }}">{{ exam }}</option>
@@ -354,7 +359,7 @@
                                 </select>
                             </div>
                             <div class="col-5">
-                                <label class="form-label" for="uploadYear">বছর</label>
+                                <label class="form-label" for="uploadYear">{{ t("Year", "বছর") }}</label>
                                 <select id="uploadYear" class="form-select">
                                     {% for year in years %}
                                     <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
@@ -365,13 +370,13 @@
                         <input type="hidden" name="exam_name" id="uploadPeriodName">
 
                         <div class="mb-3">
-                            <label class="form-label" for="excelFile">Excel ফাইল (.xlsx)</label>
+                            <label class="form-label" for="excelFile">{{ t("Excel file (.xlsx)", "Excel ফাইল (.xlsx)") }}</label>
                             <input type="file" id="excelFile" name="excel_file" accept=".xlsx" class="form-control"
                                    required>
-                            <div class="form-text">আবশ্যক কলাম: 'ID', 'Student Name', 'Total'। অন্যান্য কলাম: 'Merit', 'Arabic', 'Quran', 'Bengali', 'English', 'Math', 'Science', 'BGS', 'Aqaid &amp; Fiqh', 'Class Assessment' (বা 'Class Test'), 'Attendance' (বা 'Presence'), 'Letter Grade'। একই পরীক্ষার আগের আপলোড প্রতিস্থাপিত হবে।</div>
+                            <div class="form-text">{% if lang == "bn" %}আবশ্যক কলাম: 'ID', 'Student Name', 'Total'। অন্যান্য কলাম: 'Merit', 'Arabic', 'Quran', 'Bengali', 'English', 'Math', 'Science', 'BGS', 'Aqaid &amp; Fiqh', 'Class Assessment' (বা 'Class Test'), 'Attendance' (বা 'Presence'), 'Letter Grade'। একই পরীক্ষার আগের আপলোড প্রতিস্থাপিত হবে।{% else %}Required columns: 'ID', 'Student Name', 'Total'. Other columns: 'Merit', 'Arabic', 'Quran', 'Bengali', 'English', 'Math', 'Science', 'BGS', 'Aqaid & Fiqh', 'Class Assessment' (or 'Class Test'), 'Attendance' (or 'Presence'), 'Letter Grade'. Replaces the previous upload for the same exam.{% endif %}</div>
                         </div>
 
-                        <button type="submit" id="uploadBtn" class="btn btn-success w-100">Submit</button>
+                        <button type="submit" id="uploadBtn" class="btn btn-success w-100">{{ t("Submit", "জমা দিন") }}</button>
                     </form>
                 </div>
             </div>
@@ -383,7 +388,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // Every possible column; columns that are empty for the whole class are hidden
-    const COLUMNS = [{"key": "merit", "label": "Merit", "always": true, "className": "col-strong"}, {"key": "ID", "label": "ID", "always": true}, {"key": "student_name", "label": "Student Name", "always": true, "className": "col-name"}, {"key": "arabic", "label": "Arabic"}, {"key": "quran", "label": "Quran"}, {"key": "bengali", "label": "Bengali"}, {"key": "english", "label": "English"}, {"key": "math", "label": "Math"}, {"key": "aqaid_and_fiqh", "label": "Aqaid & Fiqh"}, {"key": "science", "label": "Science"}, {"key": "bgs", "label": "BGS"}, {"key": "class_test", "label": "Class Test"}, {"key": "presence", "label": "Presence"}, {"key": "total", "label": "Total", "always": true, "className": "col-strong"}, {"key": "letter_grade", "label": "Letter Grade", "always": true, "className": "col-strong"}]
+    const COLUMNS = [{"key": "merit", "label": {{ t("Merit", "মেধাক্রম")|tojson }}, "always": true, "className": "col-strong"}, {"key": "ID", "label": {{ t("ID", "আইডি")|tojson }}, "always": true}, {"key": "student_name", "label": {{ t("Student Name", "শিক্ষার্থীর নাম")|tojson }}, "always": true, "className": "col-name"}, {"key": "arabic", "label": {{ t("Arabic", "আরবী")|tojson }}}, {"key": "quran", "label": {{ t("Quran", "কুরআন")|tojson }}}, {"key": "bengali", "label": {{ t("Bengali", "বাংলা")|tojson }}}, {"key": "english", "label": {{ t("English", "ইংরেজী")|tojson }}}, {"key": "math", "label": {{ t("Math", "গণিত")|tojson }}}, {"key": "aqaid_and_fiqh", "label": {{ t("Aqaid & Fiqh", "আকাইদ ও ফিকহ")|tojson }}}, {"key": "science", "label": {{ t("Science", "বিজ্ঞান")|tojson }}}, {"key": "bgs", "label": {{ t("BGS", "বা ও বি")|tojson }}}, {"key": "class_test", "label": {{ t("Class Test", "শ্রেণী মূল্যায়ন")|tojson }}}, {"key": "presence", "label": {{ t("Presence", "উপস্থিতি")|tojson }}}, {"key": "total", "label": {{ t("Total", "মোট")|tojson }}, "always": true, "className": "col-strong"}, {"key": "letter_grade", "label": {{ t("Letter Grade", "লেটার গ্রেড")|tojson }}, "always": true, "className": "col-strong"}]
     const SEARCH_URL = "/api/search-semester-result"
     const PERIOD_KEY = "exam"
 
@@ -406,13 +411,13 @@
 
     function render(rows, period, className) {
         if (rows.length === 0) {
-            showEmpty(`${className} শ্রেণীর ${period} এর ফলাফল পাওয়া যায়নি !`)
+            showEmpty(`{% if lang == "bn" %}${className} শ্রেণীর ${period} এর ফলাফল পাওয়া যায়নি !{% else %}No results found for class ${className} in ${period}!{% endif %}`)
             return
         }
 
         emptyCard.classList.add("d-none")
         card.classList.remove("d-none")
-        document.getElementById("sheetTitle").textContent = `${className} · ${period} · ${rows.length} জন`
+        document.getElementById("sheetTitle").textContent = `{% if lang == "bn" %}${className} · ${period} · ${rows.length} জন{% else %}${className} · ${period} · ${rows.length} students{% endif %}`
 
         const visible = COLUMNS.filter(col => col.always || rows.some(row => row[col.key] !== null && row[col.key] !== ""))
 
@@ -445,7 +450,7 @@
         const period = selectedPeriod("periodSelect", "yearSelect")
 
         if (!branch || !className) {
-            alert("Please select branch and class!")
+            alert({{ t("Please select branch and class!", "অনুগ্রহ করে ব্রাঞ্চ ও শ্রেণী নির্বাচন করুন!")|tojson }})
             return
         }
 
@@ -462,10 +467,10 @@
             render(result.data, period, className)
         } catch (error) {
             console.error(error)
-            showEmpty("ফলাফল লোড করা যায়নি: " + error.message)
+            showEmpty({{ t("Could not load results: ", "ফলাফল লোড করা যায়নি: ")|tojson }} + error.message)
         } finally {
             searchBtn.disabled = false
-            searchBtn.textContent = "Search"
+            searchBtn.textContent = {{ t("Search", "খুঁজুন")|tojson }}
         }
     }
 
@@ -481,5 +486,6 @@
         })
     }
 </script>
+{% include "_excel_export.html" %}
 </body>
 </html>

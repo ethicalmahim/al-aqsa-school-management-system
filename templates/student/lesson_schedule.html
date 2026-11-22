@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>Lesson Schedule</title>
+    <title>{{ t("Lesson Schedule", "পাঠ পরিকল্পনা") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -151,6 +151,7 @@
         }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 <body class="kids t-green">
 <div class="container p-0">
@@ -164,20 +165,23 @@
             </a>
 
             <div class="title">
-               Lesson Schedule
+               {{ t("Lesson Schedule", "পাঠ পরিকল্পনা") }}
             </div>
+        </div>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
         </div>
     </div>
 
     <div class="page">
         <!-- DATE -->
         <div class="filter-card">
-            <label class="form-label" for="dateSelect">তারিখ</label>
+            <label class="form-label" for="dateSelect">{{ t("Date", "তারিখ") }}</label>
             <div class="day-nav">
-                <button type="button" class="btn btn-light border" id="prevDay" aria-label="Previous day">
+                <button type="button" class="btn btn-light border" id="prevDay" aria-label="{{ t("Previous day", "আগের দিন") }}">
                     <i class="bi bi-chevron-left"></i></button>
                 <input id="dateSelect" type="date" class="form-control" value="{{ today }}">
-                <button type="button" class="btn btn-light border" id="nextDay" aria-label="Next day">
+                <button type="button" class="btn btn-light border" id="nextDay" aria-label="{{ t("Next day", "পরের দিন") }}">
                     <i class="bi bi-chevron-right"></i></button>
             </div>
         </div>
@@ -189,8 +193,8 @@
                 <table class="table table-bordered curriculum-table align-middle mb-0">
                     <thead>
                     <tr>
-                        <th style="width:30%;">Subject</th>
-                        <th>Topic</th>
+                        <th style="width:30%;">{{ t("Subject", "বিষয়") }}</th>
+                        <th>{{ t("Topic", "টপিক") }}</th>
                     </tr>
                     </thead>
                     <tbody id="curriculumBody"></tbody>
@@ -226,7 +230,7 @@
             return
         }
         card.classList.remove("d-none")
-        document.getElementById("sheetTitle").textContent = "লোড হচ্ছে..."
+        document.getElementById("sheetTitle").textContent = {{ t("Loading...", "লোড হচ্ছে...")|tojson }}
         tbody.innerHTML = ""
         empty.classList.add("d-none")
         try {
@@ -250,13 +254,13 @@
                 tbody.appendChild(tr)
             })
             if (result.data.length === 0) {
-                empty.textContent = "এই তারিখে কোন পাঠ নেই।"
+                empty.textContent = {{ t("No lesson on this date.", "এই তারিখে কোন পাঠ নেই।")|tojson }}
                 empty.classList.remove("d-none")
             }
         } catch (error) {
             console.error(error)
-            document.getElementById("sheetTitle").textContent = "Lesson Schedule"
-            empty.textContent = "পাঠ সিডিউল লোড করা যায়নি: " + error.message
+            document.getElementById("sheetTitle").textContent = {{ t("Lesson Schedule", "পাঠ পরিকল্পনা")|tojson }}
+            empty.textContent = {{ t("Could not load the lesson schedule: ", "পাঠ সিডিউল লোড করা যায়নি: ")|tojson }} + error.message
             empty.classList.remove("d-none")
         }
     }

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>ব্যালেন্স শীট</title>
+    <title>{{ t("Balance Sheet", "ব্যালেন্স শীট") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -104,8 +104,7 @@
             font-weight: 600;
         }
 
-        .sheet-table tfoot td,
-        .sheet-table .opening-row td {
+        .sheet-table tfoot td {
             font-weight: 600;
             background: #f8f9fc;
         }
@@ -142,6 +141,7 @@
         }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-green">
@@ -174,8 +174,11 @@
             </a>
             {% endif %}
             <div class="title">
-                অভ্যন্তরীণ হিসাব - ব্যালেন্স শীট
+                {{ t("Internal Accounts - Balance Sheet", "অভ্যন্তরীণ হিসাব - ব্যালেন্স শীট") }}
             </div>
+        </div>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
         </div>
     </div>
 
@@ -183,35 +186,49 @@
 
         <!-- NEW ENTRY -->
         <div class="filter-card">
-            <div class="section-title">জমা / উত্তোলন</div>
+            <div class="section-title">{{ t("Deposit / Withdraw", "জমা / উত্তোলন") }}</div>
 
             <div class="row g-2">
+                {% if current_user.role == "Admin" %}
+                <div class="col-12">
+                    <label class="form-label" for="entryBranch">{{ t("Branch", "ব্রাঞ্চ") }}</label>
+                    <select id="entryBranch" class="form-select">
+                        <option value="">{{ t("Select Branch", "ব্রাঞ্চ নির্বাচন") }}</option>
+                        {% for branch in get_branches() %}
+                        <option value="{{ branch.name }}">{{ branch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% else %}
+                <input type="hidden" id="entryBranch" value="{{ current_user.branch.name }}">
+                {% endif %}
+
                 <div class="col-12 col-md-3">
-                    <label class="form-label" for="entryDate">তারিখ</label>
+                    <label class="form-label" for="entryDate">{{ t("Date", "তারিখ") }}</label>
                     <input type="date" id="entryDate" class="form-control">
                 </div>
 
                 <div class="col-5 col-md-3">
-                    <label class="form-label" for="deposit">জমা</label>
-                    <input type="text" id="deposit" class="form-control" placeholder="টাকা" inputmode="decimal">
+                    <label class="form-label" for="deposit">{{ t("Deposit", "জমা") }}</label>
+                    <input type="text" id="deposit" class="form-control" placeholder="{{ t(" Taka", " টাকা") }}" inputmode="decimal">
                 </div>
                 <div class="col-7 col-md-6">
-                    <label class="form-label" for="depositDescription">জমার বিবরণ</label>
-                    <input type="text" id="depositDescription" class="form-control" placeholder="বিবরণ">
+                    <label class="form-label" for="depositDescription">{{ t("Deposit Details", "জমার বিবরণ") }}</label>
+                    <input type="text" id="depositDescription" class="form-control" placeholder="{{ t("Description", "বিবরণ") }}">
                 </div>
 
                 <div class="d-none d-md-block col-md-3"></div>
                 <div class="col-5 col-md-3">
-                    <label class="form-label" for="withdraw">উত্তোলন</label>
-                    <input type="text" id="withdraw" class="form-control" placeholder="টাকা" inputmode="decimal">
+                    <label class="form-label" for="withdraw">{{ t("Withdraw", "উত্তোলন") }}</label>
+                    <input type="text" id="withdraw" class="form-control" placeholder="{{ t(" Taka", " টাকা") }}" inputmode="decimal">
                 </div>
                 <div class="col-7 col-md-6">
-                    <label class="form-label" for="withdrawDescription">উত্তোলনের বিবরণ</label>
-                    <input type="text" id="withdrawDescription" class="form-control" placeholder="বিবরণ">
+                    <label class="form-label" for="withdrawDescription">{{ t("Withdraw Details", "উত্তোলনের বিবরণ") }}</label>
+                    <input type="text" id="withdrawDescription" class="form-control" placeholder="{{ t("Description", "বিবরণ") }}">
                 </div>
 
                 <div class="col-12">
-                    <button type="button" id="saveBtn" class="btn btn-success w-100 mt-2">Save</button>
+                    <button type="button" id="saveBtn" class="btn btn-success w-100 mt-2">{{ t("Save", "সংরক্ষণ") }}</button>
                 </div>
             </div>
         </div>
@@ -219,18 +236,32 @@
         <!-- FILTERS -->
         <div class="filter-card">
             <div class="row g-2 align-items-end">
+                {% if current_user.role == "Admin" %}
+                <div class="col-12 col-md">
+                    <label class="form-label" for="branchSelect">{{ t("Branch", "ব্রাঞ্চ") }}</label>
+                    <select id="branchSelect" class="form-select">
+                        <option value="all">{{ t("All Branches", "সকল ব্রাঞ্চ") }}</option>
+                        {% for branch in get_branches() %}
+                        <option value="{{ branch.name }}">{{ branch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% else %}
+                <input type="hidden" id="branchSelect" value="{{ current_user.branch.name }}">
+                {% endif %}
+
                 <div class="col-6 col-md">
-                    <label class="form-label" for="fromDate">শুরুর তারিখ</label>
+                    <label class="form-label" for="fromDate">{{ t("Start Date", "শুরুর তারিখ") }}</label>
                     <input type="date" id="fromDate" class="form-control">
                 </div>
 
                 <div class="col-6 col-md">
-                    <label class="form-label" for="toDate">শেষ তারিখ</label>
+                    <label class="form-label" for="toDate">{{ t("End Date", "শেষ তারিখ") }}</label>
                     <input type="date" id="toDate" class="form-control">
                 </div>
 
                 <div class="col-12 col-md-3">
-                    <button type="button" id="searchBtn" class="btn btn-success w-100">Search</button>
+                    <button type="button" id="searchBtn" class="btn btn-success w-100">{{ t("Search", "খুঁজুন") }}</button>
                 </div>
             </div>
         </div>
@@ -241,19 +272,19 @@
                 <table class="table table-bordered table-hover sheet-table">
                     <thead>
                     <tr>
-                        <th>তারিখ</th>
-                        <th>মোট আয়</th>
-                        <th>মোট ব্যয়</th>
-                        <th>জমা</th>
-                        <th class="col-text">জমার বিবরণ</th>
-                        <th>উত্তোলন</th>
-                        <th class="col-text">উত্তোলনের বিবরণ</th>
-                        <th class="col-balance">ব্যালেন্স</th>
+                        <th>{{ t("Date", "তারিখ") }}</th>
+                        <th>{{ t("Total Income", "মোট আয়") }}</th>
+                        <th>{{ t("Total Expense", "মোট ব্যয়") }}</th>
+                        <th>{{ t("Deposit", "জমা") }}</th>
+                        <th class="col-text">{{ t("Deposit Details", "জমার বিবরণ") }}</th>
+                        <th>{{ t("Withdraw", "উত্তোলন") }}</th>
+                        <th class="col-text">{{ t("Withdraw Details", "উত্তোলনের বিবরণ") }}</th>
+                        <th class="col-balance">{{ t("Balance", "ব্যালেন্স") }}</th>
                     </tr>
                     </thead>
                     <tbody id="sheetBody">
                     <tr>
-                        <td colspan="8" class="empty-state">Select a date range and press Search</td>
+                        <td colspan="8" class="empty-state">{{ t("Select a date range and press Search", "তারিখের সীমা নির্বাচন করে খুঁজুন চাপুন") }}</td>
                     </tr>
                     </tbody>
                     <tfoot id="sheetFoot"></tfoot>
@@ -323,20 +354,11 @@
     function renderSheet(result) {
         const rows = result.data
         if (rows.length === 0) {
-            showMessage("No records found for this date range")
+            showMessage({{ t("No records found for this date range", "এই তারিখের সীমায় কোন তথ্য পাওয়া যায়নি")|tojson }})
             return
         }
 
         sheetBody.innerHTML = ""
-
-        // Balance carried in from before the start date
-        const opening = document.createElement("tr")
-        opening.className = "opening-row"
-        const label = cell("পূর্বের ব্যালেন্স")
-        label.colSpan = COLUMN_COUNT - 1
-        opening.appendChild(label)
-        opening.appendChild(balanceCell(result.opening_balance))
-        sheetBody.appendChild(opening)
 
         const sums = {total_income: 0, total_expense: 0, deposit: 0, withdraw: 0}
 
@@ -357,7 +379,7 @@
 
         sheetFoot.innerHTML = ""
         const tr = document.createElement("tr")
-        tr.appendChild(cell("সর্বমোট"))
+        tr.appendChild(cell({{ t("Grand Total", "সর্বমোট")|tojson }}))
         tr.appendChild(cell(formatAmount(sums.total_income)))
         tr.appendChild(cell(formatAmount(sums.total_expense)))
         tr.appendChild(cell(formatAmount(sums.deposit)))
@@ -386,42 +408,48 @@
         const to = document.getElementById("toDate").value
 
         if (!from || !to) {
-            alert("Please select both dates!")
+            alert({{ t("Please select both dates!", "অনুগ্রহ করে দুটি তারিখই নির্বাচন করুন!")|tojson }})
             return
         }
         if (from > to) {
-            alert("Start date must be before end date!")
+            alert({{ t("Start date must be before end date!", "শুরুর তারিখ শেষ তারিখের আগে হতে হবে!")|tojson }})
             return
         }
 
         searchBtn.disabled = true
         searchBtn.textContent = "Searching..."
         try {
-            renderSheet(await postJson("/api/search-balance-sheet", {from, to}))
+            renderSheet(await postJson("/api/search-balance-sheet",
+                {from, to, branch: document.getElementById("branchSelect").value}))
         } catch (error) {
             console.error(error)
-            showMessage("Could not load the balance sheet: " + error.message)
+            showMessage({{ t("Could not load the balance sheet: ", "ব্যালেন্স শীট লোড করা যায়নি: ")|tojson }} + error.message)
         } finally {
             searchBtn.disabled = false
-            searchBtn.textContent = "Search"
+            searchBtn.textContent = {{ t("Search", "খুঁজুন")|tojson }}
         }
     }
 
     async function saveEntry() {
+        const branch = document.getElementById("entryBranch").value
         const date = document.getElementById("entryDate").value
         const deposit = parseAmount(document.getElementById("deposit").value)
         const withdraw = parseAmount(document.getElementById("withdraw").value)
 
+        if (!branch) {
+            alert({{ t("Please select a branch!", "অনুগ্রহ করে ব্রাঞ্চ নির্বাচন করুন!")|tojson }})
+            return
+        }
         if (!date) {
-            alert("Please select a date!")
+            alert({{ t("Please select a date!", "অনুগ্রহ করে তারিখ নির্বাচন করুন!")|tojson }})
             return
         }
         if (!Number.isFinite(deposit) || !Number.isFinite(withdraw) || deposit < 0 || withdraw < 0) {
-            alert("Amounts must be positive numbers!")
+            alert({{ t("Amounts must be positive numbers!", "টাকার পরিমাণ ধনাত্মক সংখ্যা হতে হবে!")|tojson }})
             return
         }
         if (deposit === 0 && withdraw === 0) {
-            alert("Please enter a deposit or a withdraw amount!")
+            alert({{ t("Please enter a deposit or a withdraw amount!", "জমা অথবা উত্তোলনের পরিমাণ লিখুন!")|tojson }})
             return
         }
 
@@ -429,6 +457,7 @@
         saveBtn.textContent = "Saving..."
         try {
             const result = await postJson("/api/save-balance", {
+                branch,
                 date,
                 deposit,
                 deposit_description: document.getElementById("depositDescription").value,
@@ -436,17 +465,17 @@
                 withdraw_description: document.getElementById("withdrawDescription").value,
             })
 
-            alert("Saved! Balance on " + formatDate(result.date) + ": " + formatAmount(result.balance, true))
+            alert({{ t("Saved! Balance on ", "সংরক্ষিত হয়েছে! ব্যালেন্স, তারিখ ")|tojson }} + `${result.branch} · ` + formatDate(result.date) + ": " + formatAmount(result.balance, true))
             ;["deposit", "depositDescription", "withdraw", "withdrawDescription"].forEach(id => {
                 document.getElementById(id).value = ""
             })
             loadSheet()
         } catch (error) {
             console.error(error)
-            alert("Could not save: " + error.message)
+            alert({{ t("Could not save: ", "সংরক্ষণ করা যায়নি: ")|tojson }} + error.message)
         } finally {
             saveBtn.disabled = false
-            saveBtn.textContent = "Save"
+            saveBtn.textContent = {{ t("Save", "সংরক্ষণ")|tojson }}
         }
     }
 
@@ -462,5 +491,6 @@
     loadSheet()
 </script>
 
+{% include "_excel_export.html" %}
 </body>
 </html>

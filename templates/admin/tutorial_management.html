@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <title>Tutorial Management</title>
+    <title>{{ t("Tutorial Management", "টিউটোরিয়াল ব্যবস্থাপনা") }}</title>
 
     <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -213,6 +213,7 @@
         }
     </style>
     <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
 </head>
 
 <body class="kids t-orange">
@@ -280,15 +281,19 @@
             {% endif %}
 
             <div class="title">
-                QR Code Management - Tutorial Management
+                {{ t("QR Code Management - Tutorial Management", "কিউআর কোড ব্যবস্থাপনা - টিউটোরিয়াল ব্যবস্থাপনা") }}
             </div>
 
         </div>
 
-        <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#uploadModal"
-                aria-label="Upload tutorial links">
-            <i class="bi bi-upload"></i><span class="d-none d-sm-inline ms-1">Upload</span>
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
+
+            <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#uploadModal"
+                aria-label="{{ t("Upload tutorial links", "টিউটোরিয়াল লিংক আপলোড") }}">
+            <i class="bi bi-upload"></i><span class="d-none d-sm-inline ms-1">{{ t("Upload", "আপলোড") }}</span>
         </button>
+        </div>
 
     </div>
 
@@ -297,16 +302,16 @@
         <div class="filter-card no-print">
             <div class="row g-2 align-items-end">
                 <div class="col-12 col-md">
-                    <label class="form-label" for="classSelect">শ্রেণী</label>
+                    <label class="form-label" for="classSelect">{{ t("Class", "শ্রেণী") }}</label>
                     <select id="classSelect" class="form-select">
-                        <option value="">Select Class</option>
+                        <option value="">{{ t("Select Class", "শ্রেণী নির্বাচন") }}</option>
                         {% for class_name in classes %}
                         <option value="{{ class_name }}">{{ class_name }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="col-12 col-md-3">
-                    <button type="button" id="searchBtn" class="btn btn-success w-100">Search</button>
+                    <button type="button" id="searchBtn" class="btn btn-success w-100">{{ t("Search", "খুঁজুন") }}</button>
                 </div>
             </div>
         </div>
@@ -316,16 +321,16 @@
             <div class="section-title">
                 <span id="sheetTitle"></span>
                 <button type="button" id="printBtn" class="btn btn-outline-success btn-sm">
-                    <i class="bi bi-printer"></i> সব QR প্রিন্ট
+                    <i class="bi bi-printer"></i> {{ t("Print all QR", "সব QR প্রিন্ট") }}
                 </button>
             </div>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover tutorial-table">
                     <thead>
                     <tr>
-                        <th class="col-id">ID</th>
-                        <th>Link</th>
-                        <th class="col-actions">QR / ভিডিও</th>
+                        <th class="col-id">{{ t("ID", "আইডি") }}</th>
+                        <th>{{ t("Link", "লিংক") }}</th>
+                        <th class="col-actions">{{ t("QR / Video", "QR / ভিডিও") }}</th>
                     </tr>
                     </thead>
                     <tbody id="tutorialBody"></tbody>
@@ -346,14 +351,14 @@
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="qrTitle">QR Code</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="qrTitle">{{ t("QR Code", "কিউআর কোড") }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t("Close", "বন্ধ করুন") }}"></button>
                 </div>
                 <div class="modal-body text-center">
                     <div id="qrPreview" class="qr-preview"></div>
                     <div class="fw-semibold mt-2" id="qrLabel"></div>
                     <a id="qrDownload" class="btn btn-success w-100 mt-3" download>
-                        <i class="bi bi-download"></i> Download PNG
+                        <i class="bi bi-download"></i> {{ t("Download PNG", "PNG ডাউনলোড") }}
                     </a>
                 </div>
             </div>
@@ -365,17 +370,17 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="uploadTitle">Upload Tutorial Links</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="uploadTitle">{{ t("Upload Tutorial Links", "টিউটোরিয়াল লিংক আপলোড") }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t("Close", "বন্ধ করুন") }}"></button>
                 </div>
 
                 <div class="modal-body">
                     <form method="POST" action="{{ url_for('upload_videos') }}" enctype="multipart/form-data"
                           id="uploadForm">
                         <div class="mb-3">
-                            <label class="form-label" for="uploadClass">শ্রেণী</label>
+                            <label class="form-label" for="uploadClass">{{ t("Class", "শ্রেণী") }}</label>
                             <select id="uploadClass" name="class_name" class="form-select" required>
-                                <option value="">Select Class</option>
+                                <option value="">{{ t("Select Class", "শ্রেণী নির্বাচন") }}</option>
                                 {% for class_name in classes %}
                                 <option value="{{ class_name }}">{{ class_name }}</option>
                                 {% endfor %}
@@ -383,17 +388,15 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label" for="excelFile">Excel ফাইল (.xlsx)</label>
+                            <label class="form-label" for="excelFile">{{ t("Excel file (.xlsx)", "Excel ফাইল (.xlsx)") }}</label>
                             <input type="file" id="excelFile" name="excel_file" accept=".xlsx" class="form-control"
                                    required>
                             <div class="form-text">
-                                'ID' ও 'Link' কলাম থাকতে হবে। ID শ্রেণীর নম্বর দিয়ে শুরু হবে
-                                (Play = 1, Nursery = 2, One = 3 ... Five = 7)। Link যেকোনো YouTube লিংক হতে পারে।
-                                এই শ্রেণীর আগের লিংকগুলো প্রতিস্থাপিত হবে।
+                                {{ t("Must have 'ID' and 'Link' columns. The ID starts with the class number (Play = 1, Nursery = 2, One = 3 ... Five = 7). The link can be any YouTube link. Replaces this class's previous links.", "'ID' ও 'Link' কলাম থাকতে হবে। ID শ্রেণীর নম্বর দিয়ে শুরু হবে (Play = 1, Nursery = 2, One = 3 ... Five = 7)। Link যেকোনো YouTube লিংক হতে পারে। এই শ্রেণীর আগের লিংকগুলো প্রতিস্থাপিত হবে।") }}
                             </div>
                         </div>
 
-                        <button type="submit" id="uploadBtn" class="btn btn-success w-100">Submit</button>
+                        <button type="submit" id="uploadBtn" class="btn btn-success w-100">{{ t("Submit", "জমা দিন") }}</button>
                     </form>
                 </div>
             </div>
@@ -429,15 +432,15 @@
     function drawQr(container, id, size) {
         container.innerHTML = ""
         if (typeof QRCode === "undefined") {
-            container.textContent = "QR library could not load"
+            container.textContent = {{ t("QR library could not load", "QR লাইব্রেরি লোড করা যায়নি")|tojson }}
             return
         }
         new QRCode(container, {text: String(id), width: size, height: size, correctLevel: QRCode.CorrectLevel.M})
     }
 
     function openQr(id) {
-        document.getElementById("qrTitle").textContent = `QR Code · ${currentClass}`
-        document.getElementById("qrLabel").textContent = `ID ${id}`
+        document.getElementById("qrTitle").textContent = `{% if lang == "bn" %}কিউআর কোড · ${currentClass}{% else %}QR Code · ${currentClass}{% endif %}`
+        document.getElementById("qrLabel").textContent = `{% if lang == "bn" %}আইডি ${id}{% else %}ID ${id}{% endif %}`
         const preview = document.getElementById("qrPreview")
         drawQr(preview, id, 220)
 
@@ -458,13 +461,13 @@
         currentVideos = videos
         currentClass = className
         if (videos.length === 0) {
-            showEmpty(`${className} শ্রেণীর কোন টিউটোরিয়াল লিংক পাওয়া যায়নি !`)
+            showEmpty(`{% if lang == "bn" %}${className} শ্রেণীর কোন টিউটোরিয়াল লিংক পাওয়া যায়নি !{% else %}No tutorial links found for class ${className}!{% endif %}`)
             return
         }
 
         emptyCard.classList.add("d-none")
         card.classList.remove("d-none")
-        document.getElementById("sheetTitle").textContent = `${className} · ${videos.length} টি ভিডিও`
+        document.getElementById("sheetTitle").textContent = `{% if lang == "bn" %}${className} · ${videos.length} টি ভিডিও{% else %}${className} · ${videos.length} videos{% endif %}`
 
         tbody.innerHTML = ""
         videos.forEach(video => {
@@ -477,7 +480,7 @@
             const qrBtn = document.createElement("button")
             qrBtn.type = "button"
             qrBtn.className = "btn btn-light border btn-sm me-1"
-            qrBtn.title = "QR Code"
+            qrBtn.title = {{ t("QR Code", "কিউআর কোড")|tojson }}
             qrBtn.innerHTML = '<i class="bi bi-qr-code"></i>'
             qrBtn.addEventListener("click", () => openQr(video.id))
 
@@ -486,7 +489,7 @@
             open.href = video.url
             open.target = "_blank"
             open.rel = "noopener"
-            open.title = "ভিডিও দেখুন"
+            open.title = {{ t("Watch video", "ভিডিও দেখুন")|tojson }}
             open.innerHTML = '<i class="bi bi-play-circle"></i>'
 
             actions.appendChild(qrBtn)
@@ -499,7 +502,7 @@
     async function search() {
         const className = document.getElementById("classSelect").value
         if (!className) {
-            alert("Please select class!")
+            alert({{ t("Please select class!", "অনুগ্রহ করে শ্রেণী নির্বাচন করুন!")|tojson }})
             return
         }
 
@@ -516,10 +519,10 @@
             render(result.data, className)
         } catch (error) {
             console.error(error)
-            showEmpty("লিংক লোড করা যায়নি: " + error.message)
+            showEmpty({{ t("Could not load links: ", "লিংক লোড করা যায়নি: ")|tojson }} + error.message)
         } finally {
             searchBtn.disabled = false
-            searchBtn.textContent = "Search"
+            searchBtn.textContent = {{ t("Search", "খুঁজুন")|tojson }}
         }
     }
 
@@ -528,7 +531,7 @@
         const area = document.getElementById("printArea")
         area.innerHTML = ""
         const heading = document.createElement("h5")
-        heading.textContent = `আল-আকসা ইসলামী একাডেমী · ${currentClass} · Lesson Tutorial QR`
+        heading.textContent = `{% if lang == "bn" %}আল-আকসা ইসলামী একাডেমী · ${currentClass} · Lesson Tutorial QR{% else %}Al-Aqsa Islami Academy · ${currentClass} · Lesson Tutorial QR{% endif %}`
         area.appendChild(heading)
 
         const grid = document.createElement("div")
@@ -539,7 +542,7 @@
             const qr = document.createElement("div")
             drawQr(qr, video.id, 140)
             const label = document.createElement("div")
-            label.textContent = `ID ${video.id}`
+            label.textContent = `{% if lang == "bn" %}আইডি ${video.id}{% else %}ID ${video.id}{% endif %}`
             item.appendChild(qr)
             item.appendChild(label)
             grid.appendChild(item)
@@ -557,5 +560,6 @@
         btn.textContent = "Uploading..."
     })
 </script>
+{% include "_excel_export.html" %}
 </body>
 </html>
