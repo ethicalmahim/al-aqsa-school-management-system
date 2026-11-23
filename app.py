@@ -1518,6 +1518,32 @@ def delete_user(id):
         return {"success": False, "error": str(e)}
 
 
+@app.route("/api/delete-users", methods=["POST"])
+@login_required
+@roles_required(ADMIN_ROLE)
+def delete_users():
+    """Delete several users at once (the rows selected on a user management page).
+
+    Only users of the given role are deleted, and never the Admin who is logged in.
+    """
+    data = request.get_json(silent=True) or {}
+    role = data.get("role")
+    try:
+        ids = {int(user_id) for user_id in data.get("ids") or []}
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "error": "Invalid user list"}), 400
+    if not ids or not role:
+        return jsonify({"success": False, "error": "No users selected"}), 400
+
+    users = db.session.execute(
+        db.select(User).where(User.id.in_(ids), User.role == role, User.id != current_user.id)
+    ).scalars().all()
+    for user in users:
+        db.session.delete(user)
+    db.session.commit()
+    return jsonify({"success": True, "deleted": len(users)})
+
+
 MIN_PASSWORD_LENGTH = 6
 
 

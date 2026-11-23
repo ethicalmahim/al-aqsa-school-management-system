@@ -195,12 +195,23 @@
         <div id="tableSection" class="table-card d-none">
             <div class="section-title">
                 <span>{{ t("Teacher List", "শিক্ষক তালিকা") }} <span id="userCount" class="badge text-bg-light border"></span></span>
+                <div class="d-flex gap-2">
+                    <button type="button" id="deleteSelectedBtn" class="btn btn-outline-danger btn-sm" disabled>
+                        <i class="bi bi-trash3"></i> {{ t("Delete Selected", "নির্বাচিত মুছুন") }} (<span id="selectedCount">0</span>)
+                    </button>
+                    <button type="button" id="deleteAllBtn" class="btn btn-danger btn-sm" disabled>
+                        <i class="bi bi-trash3-fill"></i> {{ t("Delete All", "সব মুছুন") }}
+                    </button>
+                </div>
             </div>
 
             <div class="table-responsive">
                 <table class="table table-bordered table-hover user-table">
                     <thead>
                     <tr>
+                        <th class="col-select no-export">
+                            <input type="checkbox" id="selectAll" class="form-check-input" aria-label="{{ t("Select all", "সব নির্বাচন") }}">
+                        </th>
                         <th>{{ t("ID", "আইডি") }}</th>
                         <th>{{ t("Username", "ইউজারনেম") }}</th>
                         <th>{{ t("Branch", "ব্রাঞ্চ") }}</th>
@@ -492,6 +503,7 @@
             table.innerHTML += `
 
     <tr>
+        <td class="col-select no-export"><input type="checkbox" class="form-check-input row-select" value="${escapeHtml(u.db_id)}"></td>
         <td>${escapeHtml(u.id)}</td>
         <td>${escapeHtml(u.username)}</td>
         <td>${escapeHtml(u.branch)}</td>
@@ -517,8 +529,9 @@
         document.getElementById("userCount").textContent = data.users.length
 
         if (data.users.length === 0) {
-            table.innerHTML = `{% if lang == "bn" %}<tr><td colspan="4" class="text-center text-muted py-4">কোন ব্যবহারকারী পাওয়া যায়নি।</td></tr>{% else %}<tr><td colspan="4" class="text-center text-muted py-4">No users found.</td></tr>{% endif %}`
+            table.innerHTML = `{% if lang == "bn" %}<tr><td colspan="5" class="text-center text-muted py-4">কোন ব্যবহারকারী পাওয়া যায়নি।</td></tr>{% else %}<tr><td colspan="5" class="text-center text-muted py-4">No users found.</td></tr>{% endif %}`
         }
+        userSelectionReset()
 
     })
 
@@ -671,6 +684,7 @@
 
 </script>
 
+{% include "admin/_user_selection.html" %}
 {% include "_excel_export.html" %}
 </body>
 </html>
