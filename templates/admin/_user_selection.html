@@ -1,0 +1,102 @@
+{# Row selection and bulk delete for the user management tables (service admin / teacher / student).
+   Include once, before </body>: {% include "admin/_user_selection.html" %}
+   The page needs: a #selectAll checkbox in the table head, a .row-select checkbox (value = db id)
+   in each row, #deleteSelectedBtn / #deleteAllBtn / #selectedCount, a #roleFilter holding the
+   role, and a #searchBtn that reloads the table. Call userSelectionReset() after drawing rows. #}
+<style>
+    .user-table .col-select {
+        width: 1%;
+        text-align: center;
+    }
+
+    .user-table tbody tr.selectable {
+        cursor: pointer;
+    }
+
+    .user-table tbody tr.row-selected > td {
+        background: #e8f0fe;
+    }
+</style>
+<script>
+    (function () {
+        const table = document.getElementById("userTable")
+        const selectAll = document.getElementById("selectAll")
+        const deleteSelectedBtn = document.getElementById("deleteSelectedBtn")
+        const deleteAllBtn = document.getElementById("deleteAllBtn")
+        const selectedCount = document.getElementById("selectedCount")
+
+        function rowBoxes() {
+            return Array.from(table.querySelectorAll(".row-select"))
+        }
+
+        function selectedIds() {
+            return rowBoxes().filter(box => box.checked).map(box => box.value)
+        }
+
+        // Keep the highlight, the header checkbox and the buttons in step with the row checkboxes
+        function refresh() {
+            const boxes = rowBoxes()
+            const checked = boxes.filter(box => box.checked).length
+            boxes.forEach(box => box.closest("tr").classList.toggle("row-selected", box.checked))
+            selectAll.checked = boxes.length > 0 && checked === boxes.length
+            selectAll.indeterminate = checked > 0 && checked < boxes.length
+            selectAll.disabled = boxes.length === 0
+            selectedCount.textContent = checked
+            deleteSelectedBtn.disabled = checked === 0
+            deleteAllBtn.disabled = boxes.length === 0
+        }
+
+        window.userSelectionReset = function () {
+            rowBoxes().forEach(box => box.closest("tr").classList.add("selectable"))
+            refresh()
+        }
+
+        selectAll.addEventListener("change", () => {
+            rowBoxes().forEach(box => box.checked = selectAll.checked)
+            refresh()
+        })
+
+        table.addEventListener("change", event => {
+            if (event.target.classList.contains("row-select")) refresh()
+        })
+
+        // Clicking anywhere on a row (except its buttons and checkbox) selects or unselects it
+        table.addEventListener("click", event => {
+            if (event.target.closest("button, a, input")) return
+            const box = event.target.closest("tr")?.querySelector(".row-select")
+            if (!box) return
+            box.checked = !box.checked
+            refresh()
+        })
+
+        async function deleteUsers(ids, question) {
+            if (ids.length === 0 || !confirm(question)) return
+            try {
+                const res = await fetch("/api/delete-users", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({ids, role: document.getElementById("roleFilter").value})
+                })
+                const data = await res.json().catch(() => ({}))
+                if (!res.ok || !data.success) throw new Error(data.error || "Request failed: " + res.status)
+                alert({{ t("Users deleted: ", "মুছে ফেলা ইউজার: ")|tojson }} + data.deleted)
+            } catch (err) {
+                console.error(err)
+                alert({{ t("Could not delete: ", "মুছে ফেলা যায়নি: ")|tojson }} + err.message)
+            }
+            document.getElementById("searchBtn").click()
+        }
+
+        deleteSelectedBtn.addEventListener("click", () => {
+            const ids = selectedIds()
+            deleteUsers(ids, {% if lang == "bn" %}`নির্বাচিত ${ids.length} জন ইউজার মুছে ফেলবেন?`{% else %}`Delete the ${ids.length} selected user(s)?`{% endif %})
+        })
+
+        deleteAllBtn.addEventListener("click", () => {
+            const ids = rowBoxes().map(box => box.value)
+            deleteUsers(ids, {% if lang == "bn" %}`তালিকার সব ${ids.length} জন ইউজার মুছে ফেলবেন? এটি আর ফেরানো যাবে না।`{% else %}`Delete all ${ids.length} user(s) in this list? This cannot be undone.`{% endif %})
+        })
+
+        refresh()
+    })()
+</script>

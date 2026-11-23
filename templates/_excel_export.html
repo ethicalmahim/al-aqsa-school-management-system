@@ -1,0 +1,105 @@
+{# Excel download for every table on the page, for Admin and Service Admin only.
+   Include once, just before </body>: {% include "_excel_export.html" %}
+   Tables drawn later by JavaScript get the button too. Add class "no-export" to a table (or to
+   a row/cell) to leave it out. #}
+{% if current_user.is_authenticated and current_user.role in ("Admin", "Service Admin") %}
+<style>
+    .excel-export-bar {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 8px;
+    }
+</style>
+<script>
+    (function () {
+        const LABEL = {{ t("Excel", "এক্সেল")|tojson }}
+        const FAILED = {{ t("Could not create the Excel file. Please check the internet connection and try again.", "এক্সেল ফাইল তৈরি করা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।")|tojson }}
+        const LIBRARY = "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"
+        let libraryLoading = null
+
+        // The Excel library is only downloaded the first time someone clicks the button
+        function loadLibrary() {
+            if (window.XLSX) return Promise.resolve()
+            if (!libraryLoading) {
+                libraryLoading = new Promise((resolve, reject) => {
+                    const script = document.createElement("script")
+                    script.src = LIBRARY
+                    script.onload = resolve
+                    script.onerror = () => {
+                        libraryLoading = null
+                        reject(new Error("Excel library failed to load"))
+                    }
+                    document.head.appendChild(script)
+                })
+            }
+            return libraryLoading
+        }
+
+        // A copy of the table as it is shown: typed values instead of input boxes, no buttons
+        function exportCopy(table) {
+            const copy = table.cloneNode(true)
+            const originals = table.querySelectorAll("input, select, textarea")
+            copy.querySelectorAll("input, select, textarea").forEach((field, index) => {
+                const original = originals[index]
+                let text = original.value
+                if (original.tagName === "SELECT") {
+                    text = original.selectedOptions[0] ? original.selectedOptions[0].text : ""
+                } else if (original.type === "checkbox" || original.type === "radio") {
+                    text = original.checked ? "✓" : ""
+                }
+                field.replaceWith(document.createTextNode(text))
+            })
+            copy.querySelectorAll("button, .no-export, .btn").forEach(el => el.remove())
+            return copy
+        }
+
+        function fileName(table) {
+            const card = table.closest(".accounts-card, .card, .filter-card, section")
+            const heading = card && card.querySelector(".section-title, .card-title, h1, h2, h3, h4, h5")
+            const name = (heading && heading.textContent.trim()) || document.title || "table"
+            const today = new Date().toISOString().slice(0, 10)
+            return `${name} ${today}`.replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim() + ".xlsx"
+        }
+
+        async function download(table, button) {
+            button.disabled = true
+            try {
+                await loadLibrary()
+                const book = XLSX.utils.table_to_book(exportCopy(table), {sheet: "Sheet1"})
+                XLSX.writeFile(book, fileName(table))
+            } catch (error) {
+                console.error(error)
+                alert(FAILED)
+            } finally {
+                button.disabled = false
+            }
+        }
+
+        function addButton(table) {
+            if (table.dataset.excelReady || table.classList.contains("no-export")) return
+            table.dataset.excelReady = "1"
+
+            const bar = document.createElement("div")
+            bar.className = "excel-export-bar"
+            const button = document.createElement("button")
+            button.type = "button"
+            button.className = "btn btn-sm btn-outline-success"
+            button.innerHTML = '<i class="bi bi-file-earmark-excel"></i> '
+            button.appendChild(document.createTextNode(LABEL))
+            button.addEventListener("click", () => download(table, button))
+            bar.appendChild(button)
+
+            // Put the button above the scrolling wrapper, so it stays visible on phones
+            const wrapper = table.closest(".table-responsive") || table
+            wrapper.parentNode.insertBefore(bar, wrapper)
+        }
+
+        function scan() {
+            document.querySelectorAll("table").forEach(addButton)
+        }
+
+        scan()
+        new MutationObserver(scan).observe(document.body, {childList: true, subtree: true})
+    })()
+</script>
+{% endif %}

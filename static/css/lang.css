@@ -1,0 +1,91 @@
+/* EN | বাং language switch (templates/_lang_switch.html) */
+.lang-switch {
+    display: inline-flex;
+    flex-shrink: 0;
+    padding: 3px;
+    border-radius: 999px;
+    background: #f1f3f9;
+    border: 1px solid #e3e6ef;
+}
+
+.lang-option {
+    min-width: 40px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-family: "Baloo Da 2", Inter, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+    text-decoration: none;
+    color: #6b7280;
+    transition: background .2s ease, color .2s ease;
+}
+
+.lang-option:hover {
+    color: #059669;
+}
+
+.lang-option.active {
+    color: white;
+    background: linear-gradient(135deg, #34d399, #059669);
+    box-shadow: 0 2px 6px rgba(5, 150, 105, .35);
+}
+
+.lang-option:focus-visible {
+    outline: 2px solid #059669;
+    outline-offset: 2px;
+}
+
+/* Header right side: language switch + profile menu */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+@media (max-width: 380px) {
+    .lang-option {
+        min-width: 32px;
+        padding: 2px 7px;
+        font-size: 12px;
+    }
+}
+
+/* ONE HEADER SIZE ON EVERY PAGE
+   Each page styles its own .header with different padding, and kids.css enlarges the title, so the
+   bars ended up different heights. This file is loaded last on every page, and the extra "html body"
+   in the selectors outranks those rules, so every header is the same height with the same title. */
+html body .header {
+    box-sizing: border-box;
+    height: 64px;
+    padding: 0 16px;
+    gap: 10px;
+}
+
+html body .header .title {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.2;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Home button and title stay on one line, and the title shrinks instead of pushing the right side off */
+html body .header > div:first-child {
+    min-width: 0;
+}
+
+@media (max-width: 768px) {
+    html body .header {
+        height: 58px;
+        padding: 0 12px;
+    }
+
+    html body .header .title {
+        font-size: 16px;
+    }
+}

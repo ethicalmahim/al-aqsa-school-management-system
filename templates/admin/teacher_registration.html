@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+    <title>{{ t("Teacher Registration", "শিক্ষক নিবন্ধন") }}</title>
+
+    <link href="{{url_for('static', filename='img/al-aqsa-icon.jpg')}}" rel="icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Baloo+Da+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background: #f4f6fb;
+            font-family: Inter, sans-serif;
+            margin: 0;
+        }
+
+        /* HEADER */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 16px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .title {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        /* PAGE */
+        .page {
+            margin-top: 70px;
+            padding: 14px;
+            max-width: 1100px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* CARD */
+        .filter-card,
+        .table-card {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, .05);
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eef0f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        /* SALARY SUMMARY: the monthly amounts at a glance */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .summary-tile {
+            background: white;
+            border-radius: 16px;
+            padding: 14px 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, .05);
+            border-left: 5px solid #20c997;
+        }
+
+        .summary-tile.salary {
+            border-left-color: #fd7e14;
+        }
+
+        .summary-tile.yearly {
+            border-left-color: #6f42c1;
+        }
+
+        .summary-label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .summary-value {
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-top: 4px;
+            word-break: break-word;
+        }
+
+        .summary-value small {
+            font-size: 14px;
+            font-weight: 600;
+            color: #888;
+        }
+
+        /* TABLE */
+        .teacher-table {
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+
+        .teacher-table thead th {
+            background: #f8f9fc;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .teacher-table td {
+            vertical-align: middle;
+        }
+
+        .teacher-table .col-serial {
+            width: 56px;
+            text-align: center;
+        }
+
+        .teacher-table .col-nowrap {
+            white-space: nowrap;
+        }
+
+        .teacher-table .col-salary {
+            white-space: nowrap;
+            text-align: end;
+            font-weight: 700;
+            color: #c05600;
+        }
+
+        .teacher-table .col-action {
+            white-space: nowrap;
+            text-align: center;
+            width: 136px;
+        }
+
+        /* 12-MONTH SALARY HISTORY */
+        .salary-table {
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+
+        .salary-table thead th {
+            background: #f8f9fc;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .salary-table .unpaid td {
+            color: #999;
+        }
+
+        .salary-table tfoot td {
+            background: #f8f9fc;
+            font-weight: 700;
+        }
+
+        .salary-due {
+            color: #dc2626;
+        }
+
+        /* One heading row per branch, with that branch's monthly salary total */
+        .teacher-table .branch-row td {
+            background: #fff4e6;
+            font-weight: 700;
+        }
+
+        .teacher-table tfoot td {
+            background: #f8f9fc;
+            font-weight: 700;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 24px 0;
+        }
+
+        /* MOBILE IMPROVEMENTS */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px;
+            }
+
+            .title {
+                font-size: 16px;
+            }
+
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .summary-tile.yearly {
+                grid-column: span 2;
+            }
+
+            .summary-value {
+                font-size: 20px;
+            }
+        }
+
+        /* WIDE SCREENS */
+        @media (min-width: 1200px) {
+            .page {
+                max-width: none;
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+        }
+    </style>
+    <link href="{{ url_for('static', filename='css/kids.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/lang.css') }}" rel="stylesheet">
+</head>
+
+<body class="kids t-orange">
+<div class="container-fluid p-0">
+    <!-- HEADER -->
+    <div class="header">
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-light border rounded-3">
+                <i class="bi bi-house-door-fill"></i>
+            </a>
+
+            <div class="title">
+                {{ t("Teacher Registration", "শিক্ষক নিবন্ধন") }}
+            </div>
+        </div>
+
+        <div class="header-actions">
+            {% include "_lang_switch.html" %}
+
+            <button type="button" id="openAddBtn" class="btn btn-success" aria-label="{{ t("New Teacher", "নতুন শিক্ষক") }}">
+            <i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline ms-1">{{ t("New Teacher", "নতুন শিক্ষক") }}</span>
+        </button>
+        </div>
+    </div>
+
+    <div class="page">
+
+        <!-- FILTERS -->
+        <div class="filter-card">
+            <div class="row g-2 align-items-end">
+                <div class="col-6 col-md">
+                    <label class="form-label" for="branchFilter">{{ t("Branch", "ব্রাঞ্চ") }}</label>
+                    <select id="branchFilter" class="form-select">
+                        <option value="">{{ t("All Branches", "সকল ব্রাঞ্চ") }}</option>
+                        {% for branch in get_branches() %}
+                        <option value="{{ branch.name }}">{{ branch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-6 col-md">
+                    <label class="form-label" for="textFilter">{{ t("Name / Staff ID", "নাম / স্টাফ আইডি") }}</label>
+                    <input id="textFilter" type="text" placeholder="{{ t("Search", "খুঁজুন") }}" class="form-control">
+                </div>
+
+                <div class="col-12 col-md-3">
+                    <button type="button" id="searchBtn" class="btn btn-success w-100">{{ t("Search", "খুঁজুন") }}</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SALARY SUMMARY -->
+        <div class="summary-grid">
+            <div class="summary-tile">
+                <div class="summary-label"><i class="bi bi-people-fill"></i> {{ t("Total Teachers", "মোট শিক্ষক") }}</div>
+                <div class="summary-value" id="teacherCount">0</div>
+            </div>
+            <div class="summary-tile salary">
+                <div class="summary-label"><i class="bi bi-cash-coin"></i> {{ t("Total Monthly Salary", "মাসিক মোট বেতন") }}</div>
+                <div class="summary-value"><span id="monthlyTotal">0</span> <small>{{ t(" Taka", " টাকা") }}</small></div>
+            </div>
+            <div class="summary-tile yearly">
+                <div class="summary-label"><i class="bi bi-calendar3"></i> {{ t("Total Yearly Salary", "বার্ষিক মোট বেতন") }}</div>
+                <div class="summary-value"><span id="yearlyTotal">0</span> <small>{{ t(" Taka", " টাকা") }}</small></div>
+            </div>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-card">
+            <div class="section-title">
+                <span>{{ t("Teacher List", "শিক্ষক তালিকা") }}</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover teacher-table">
+                    <thead>
+                    <tr>
+                        <th class="col-serial">{{ t("Serial", "ক্রমিক") }}</th>
+                        <th>{{ t("Staff ID", "স্টাফ আইডি") }}</th>
+                        <th>{{ t("Name", "নাম") }}</th>
+                        <th>{{ t("Designation", "পদবী") }}</th>
+                        <th>{{ t("Mobile", "মোবাইল") }}</th>
+                        <th>{{ t("Joining Date", "যোগদানের তারিখ") }}</th>
+                        <th class="text-end">{{ t("Monthly Salary", "মাসিক বেতন") }}</th>
+                        <th class="col-action"><span class="visually-hidden">{{ t("Actions", "অ্যাকশন") }}</span></th>
+                    </tr>
+                    </thead>
+                    <tbody id="teacherTable">
+                    <tr>
+                        <td colspan="8" class="empty-state">{{ t("Loading...", "লোড হচ্ছে...") }}</td>
+                    </tr>
+                    </tbody>
+                    <tfoot id="teacherFoot" class="d-none">
+                    <tr>
+                        <td colspan="6" class="text-end">{{ t("Total Monthly Salary", "মাসিক মোট বেতন") }}</td>
+                        <td class="text-end col-nowrap" id="footTotal"></td>
+                        <td></td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ADD / EDIT TEACHER MODAL -->
+<!-- 12-MONTH SALARY PAYMENT HISTORY -->
+<div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="historyModalTitle">{{ t("Salary Payment History", "বেতন পরিশোধের ইতিহাস") }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t("Close", "বন্ধ করুন") }}"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2 align-items-end mb-3">
+                    <div class="col">
+                        <div class="fw-semibold" id="historyTeacher"></div>
+                        <div class="small text-muted" id="historyInfo"></div>
+                    </div>
+                    <div class="col-5 col-md-3">
+                        <label class="form-label" for="historyYear">{{ t("Year", "বছর") }}</label>
+                        <select id="historyYear" class="form-select"></select>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered salary-table">
+                        <thead>
+                        <tr>
+                            <th>{{ t("Month", "মাস") }}</th>
+                            <th class="text-end">{{ t("Salary", "বেতন") }}</th>
+                            <th class="text-end">{{ t("Paid", "পরিশোধ") }}</th>
+                            <th class="text-end">{{ t("Payments", "পরিশোধ সংখ্যা") }}</th>
+                            <th>{{ t("Last Paid", "সর্বশেষ পরিশোধ") }}</th>
+                        </tr>
+                        </thead>
+                        <tbody id="historyBody"></tbody>
+                        <tfoot id="historyFoot"></tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="teacherModal" tabindex="-1" aria-labelledby="teacherModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="teacherModalTitle">{{ t("Teacher Registration", "শিক্ষক নিবন্ধন") }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t("Close", "বন্ধ করুন") }}"></button>
+            </div>
+
+            <div class="modal-body">
+                <form id="teacherForm" novalidate>
+                    <div class="row g-2">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="teacherName">{{ t("Teacher Name", "শিক্ষকের নাম") }}</label>
+                            <input id="teacherName" name="teacher_name" class="form-control" required>
+                        </div>
+
+                        <div class="col-6 col-md-3">
+                            <label class="form-label" for="staffId">{{ t("Staff ID", "স্টাফ আইডি") }}</label>
+                            <input id="staffId" name="staff_id" class="form-control" required>
+                        </div>
+
+                        <div class="col-6 col-md-3">
+                            <label class="form-label" for="branch">{{ t("Branch", "ব্রাঞ্চ") }}</label>
+                            <select id="branch" name="branch" class="form-select" required>
+                                <option value="">{{ t("Select", "নির্বাচন") }}</option>
+                                {% for branch in get_branches() %}
+                                <option value="{{ branch.name }}">{{ branch.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-6 col-md-4">
+                            <label class="form-label" for="designation">{{ t("Designation", "পদবী") }}</label>
+                            <input id="designation" name="designation" placeholder="{{ t("e.g. Assistant Teacher", "যেমন: সহকারী শিক্ষক") }}"
+                                   class="form-control">
+                        </div>
+
+                        <div class="col-6 col-md-4">
+                            <label class="form-label" for="phone">{{ t("Mobile Number", "মোবাইল নাম্বার") }}</label>
+                            <input id="phone" name="phone" type="tel" inputmode="tel" placeholder="{{ t("01XXXXXXXXX", "01XXXXXXXXX") }}"
+                                   class="form-control">
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label class="form-label" for="joiningDate">{{ t("Joining Date", "যোগদানের তারিখ") }}</label>
+                            <input id="joiningDate" name="joining_date" type="date" class="form-control">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" for="monthlySalary">
+                                <i class="bi bi-cash-coin"></i> {{ t("Monthly Salary", "মাসিক বেতন") }}
+                            </label>
+                            <div class="input-group input-group-lg">
+                                <input id="monthlySalary" name="monthly_salary" inputmode="decimal"
+                                       placeholder="{{ t(" Taka", " টাকা") }}" class="form-control" required>
+                                <span class="input-group-text">{{ t("Taka / month", "টাকা / মাস") }}</span>
+                            </div>
+                            <div class="form-text">{{ t("This amount is filled in automatically in the staff salary section of the expense page.", "ব্যয় পাতার স্টাফ বেতন অংশে এই পরিমাণটি স্বয়ংক্রিয়ভাবে বসবে।") }}</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label" for="address">{{ t("Address", "ঠিকানা") }}</label>
+                            <textarea id="address" name="address" rows="2" class="form-control"></textarea>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="saveTeacherBtn" class="btn btn-success w-100 mt-3">{{ t("Save", "সংরক্ষণ") }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const COLUMN_COUNT = 8
+    const searchBtn = document.getElementById("searchBtn")
+    const teacherTable = document.getElementById("teacherTable")
+    const teacherFoot = document.getElementById("teacherFoot")
+
+    const teacherForm = document.getElementById("teacherForm")
+    const saveBtn = document.getElementById("saveTeacherBtn")
+    const modalEl = document.getElementById("teacherModal")
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl)
+
+    let editingId = null  // null = adding a new teacher
+
+    // 12-MONTH SALARY HISTORY: what the teacher was paid for each month of a year (from the expense page)
+    const MONTH_NAMES = {{ (["জানুয়ারী", "ফেব্রুয়ারী", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"] if lang == "bn" else ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"])|tojson }}
+    const historyModal = bootstrap.Modal.getOrCreateInstance(document.getElementById("historyModal"))
+    const historyYear = document.getElementById("historyYear")
+    const historyBody = document.getElementById("historyBody")
+    const historyFoot = document.getElementById("historyFoot")
+    let historyTeacher = null
+
+    function historyMessage(text) {
+        historyBody.innerHTML = ""
+        historyFoot.innerHTML = ""
+        const tr = document.createElement("tr")
+        const td = cell(text, "empty-state")
+        td.colSpan = 5
+        tr.appendChild(td)
+        historyBody.appendChild(tr)
+    }
+
+    async function loadHistory(year) {
+        const teacher = historyTeacher
+        historyMessage({{ t("Loading...", "লোড হচ্ছে...")|tojson }})
+        try {
+            const response = await fetch("/api/staff-salary-info", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({teacher_id: teacher.id, year})
+            })
+            const result = await response.json().catch(() => ({}))
+            if (!response.ok || !result.success) throw new Error(result.error || "Request failed: " + response.status)
+            if (historyTeacher !== teacher) return  // another teacher was opened meanwhile
+            renderHistory(result)
+        } catch (error) {
+            console.error(error)
+            historyMessage({{ t("Could not load the payment history: ", "পরিশোধের ইতিহাস লোড করা যায়নি: ")|tojson }} + error.message)
+        }
+    }
+
+    function renderHistory(result) {
+        historyYear.innerHTML = ""
+        result.years.forEach(year => historyYear.add(new Option(String(year), year)))
+        historyYear.value = String(result.year)
+
+        const due = Number(result.due) || 0
+        const info = document.getElementById("historyInfo")
+        info.textContent = `{{ t("Monthly salary", "মাসিক বেতন") }}: ${formatMoney(result.teacher.monthly_salary)} · {{ t("Current due", "বর্তমান বকেয়া") }}: ${formatMoney(due)}`
+        info.classList.toggle("salary-due", due > 0)
+
+        historyBody.innerHTML = ""
+        let totalPaid = 0
+        let totalCount = 0
+        result.month_details.forEach((month, index) => {
+            totalPaid += month.paid
+            totalCount += month.count
+            const tr = document.createElement("tr")
+            if (month.count === 0) tr.className = "unpaid"
+            tr.appendChild(cell(MONTH_NAMES[index]))
+            tr.appendChild(cell(formatMoney(result.teacher.monthly_salary), "text-end"))
+            tr.appendChild(cell(month.count ? formatMoney(month.paid) : "-", "text-end"))
+            tr.appendChild(cell(month.count || "-", "text-end"))
+            tr.appendChild(cell(month.last_date ? formatDate(month.last_date) : "-", "col-nowrap"))
+            historyBody.appendChild(tr)
+        })
+
+        historyFoot.innerHTML = ""
+        const tr = document.createElement("tr")
+        tr.appendChild(cell({{ t("Total", "মোট")|tojson }}))
+        tr.appendChild(cell(formatMoney(Number(result.teacher.monthly_salary || 0) * 12), "text-end"))
+        tr.appendChild(cell(formatMoney(totalPaid), "text-end"))
+        tr.appendChild(cell(totalCount, "text-end"))
+        tr.appendChild(cell(""))
+        historyFoot.appendChild(tr)
+    }
+
+    function openHistory(t) {
+        historyTeacher = t
+        document.getElementById("historyTeacher").textContent = `${t.teacher_name} (${t.staff_id}) · ${t.branch}`
+        document.getElementById("historyInfo").textContent = ""
+        historyYear.innerHTML = ""
+        historyModal.show()
+        loadHistory(null)
+    }
+
+    historyYear.addEventListener("change", () => loadHistory(Number(historyYear.value)))
+
+    // Bengali digits -> English digits
+    function toEnglishDigits(text) {
+        return String(text ?? "").trim().replace(/[০-৯]/g, digit => "০১২৩৪৫৬৭৮৯".indexOf(digit))
+    }
+
+    function formatMoney(value) {
+        return Number(value || 0).toLocaleString("en-IN", {maximumFractionDigits: 2})
+    }
+
+    function formatDate(iso) {
+        if (!iso) return "-"
+        const [year, month, day] = iso.split("-")
+        return `${day}/${month}/${year}`
+    }
+
+    function cell(text, className) {
+        const td = document.createElement("td")
+        td.textContent = text ?? ""
+        if (className) td.className = className
+        return td
+    }
+
+    function setSummary(teachers) {
+        const monthly = teachers.reduce((sum, t) => sum + Number(t.monthly_salary || 0), 0)
+        document.getElementById("teacherCount").textContent = teachers.length
+        document.getElementById("monthlyTotal").textContent = formatMoney(monthly)
+        document.getElementById("yearlyTotal").textContent = formatMoney(monthly * 12)
+        document.getElementById("footTotal").textContent = formatMoney(monthly) + {{ t(" Taka", " টাকা")|tojson }}
+        teacherFoot.classList.toggle("d-none", teachers.length === 0)
+    }
+
+    function showMessage(text) {
+        teacherTable.innerHTML = ""
+        setSummary([])
+        const tr = document.createElement("tr")
+        const td = cell(text, "empty-state")
+        td.colSpan = COLUMN_COUNT
+        tr.appendChild(td)
+        teacherTable.appendChild(tr)
+    }
+
+    function branchRow(branch, teachers) {
+        const total = teachers.reduce((sum, t) => sum + Number(t.monthly_salary || 0), 0)
+        const tr = document.createElement("tr")
+        tr.className = "branch-row"
+
+        const name = cell("", "")
+        name.colSpan = 6
+        name.innerHTML = `<i class="bi bi-geo-alt-fill"></i> `
+        name.append(`{% if lang == "bn" %}${branch} (${teachers.length} জন){% else %}${branch} (${teachers.length}){% endif %}`)
+        tr.appendChild(name)
+
+        tr.appendChild(cell(formatMoney(total), "text-end col-nowrap"))
+        tr.appendChild(cell(""))
+        return tr
+    }
+
+    function teacherRow(t, serial) {
+        const tr = document.createElement("tr")
+        tr.appendChild(cell(serial, "col-serial"))
+        tr.appendChild(cell(t.staff_id, "col-nowrap"))
+        tr.appendChild(cell(t.teacher_name))
+        tr.appendChild(cell(t.designation || "-"))
+        tr.appendChild(cell(t.phone || "-", "col-nowrap"))
+        tr.appendChild(cell(formatDate(t.joining_date), "col-nowrap"))
+        tr.appendChild(cell(formatMoney(t.monthly_salary), "col-salary"))
+
+        const actions = cell("", "col-action")
+        actions.innerHTML = `
+            <button type="button" class="btn btn-sm btn-outline-success history-btn"
+                    aria-label="{{ t("Salary payment history", "বেতন পরিশোধের ইতিহাস") }}"
+                    title="{{ t("Salary payment history", "বেতন পরিশোধের ইতিহাস") }}">
+                <i class="bi bi-clock-history"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary edit-btn" aria-label="Edit">
+                <i class="bi bi-pencil-fill"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger delete-btn" aria-label="Delete">
+                <i class="bi bi-trash-fill"></i>
+            </button>`
+        actions.querySelector(".history-btn").addEventListener("click", () => openHistory(t))
+        actions.querySelector(".edit-btn").addEventListener("click", () => openEdit(t))
+        actions.querySelector(".delete-btn").addEventListener("click", () => deleteTeacher(t))
+        tr.appendChild(actions)
+        return tr
+    }
+
+    function renderTeachers(teachers) {
+        if (teachers.length === 0) {
+            showMessage({{ t("No teachers found", "কোনো শিক্ষক পাওয়া যায়নি")|tojson }})
+            return
+        }
+
+        teacherTable.innerHTML = ""
+        setSummary(teachers)
+
+        // Group by branch so each branch's monthly salary total is visible
+        const groups = new Map()
+        teachers.forEach(t => {
+            if (!groups.has(t.branch)) groups.set(t.branch, [])
+            groups.get(t.branch).push(t)
+        })
+
+        let serial = 1
+        groups.forEach((list, branch) => {
+            teacherTable.appendChild(branchRow(branch, list))
+            list.forEach(t => teacherTable.appendChild(teacherRow(t, serial++)))
+        })
+    }
+
+    async function searchTeachers() {
+        const branch = document.getElementById("branchFilter").value
+        const q = toEnglishDigits(document.getElementById("textFilter").value)
+
+        searchBtn.disabled = true
+        searchBtn.textContent = "Searching..."
+
+        try {
+            const res = await fetch("/api/search-teachers", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({branch, q})
+            })
+            if (!res.ok) throw new Error("Request failed: " + res.status)
+
+            const data = await res.json()
+            renderTeachers(data.teachers || [])
+        } catch (err) {
+            console.error(err)
+            showMessage({{ t("Could not load teachers. Please try again.", "শিক্ষকদের তথ্য লোড করা যায়নি। আবার চেষ্টা করুন।")|tojson }})
+        } finally {
+            searchBtn.disabled = false
+            searchBtn.textContent = {{ t("Search", "খুঁজুন")|tojson }}
+        }
+    }
+
+    searchBtn.addEventListener("click", searchTeachers)
+    document.getElementById("branchFilter").addEventListener("change", searchTeachers)
+    document.getElementById("textFilter").addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+            event.preventDefault()
+            searchTeachers()
+        }
+    })
+
+    // ADD / EDIT
+    function clearErrors() {
+        teacherForm.querySelectorAll(".is-invalid").forEach(el => el.classList.remove("is-invalid"))
+    }
+
+    document.getElementById("openAddBtn").addEventListener("click", () => {
+        editingId = null
+        teacherForm.reset()
+        clearErrors()
+        // New teachers default to the branch being viewed
+        teacherForm.branch.value = document.getElementById("branchFilter").value
+        document.getElementById("teacherModalTitle").textContent = {{ t("Teacher Registration", "শিক্ষক নিবন্ধন")|tojson }}
+        modal.show()
+    })
+
+    function openEdit(t) {
+        editingId = t.id
+        clearErrors()
+        teacherForm.teacher_name.value = t.teacher_name
+        teacherForm.staff_id.value = t.staff_id
+        teacherForm.branch.value = t.branch
+        teacherForm.designation.value = t.designation
+        teacherForm.phone.value = t.phone
+        teacherForm.joining_date.value = t.joining_date
+        teacherForm.monthly_salary.value = t.monthly_salary
+        teacherForm.address.value = t.address
+        document.getElementById("teacherModalTitle").textContent = {{ t("Edit Teacher", "শিক্ষকের তথ্য সম্পাদনা")|tojson }}
+        modal.show()
+    }
+
+    modalEl.addEventListener("shown.bs.modal", () => teacherForm.teacher_name.focus())
+    teacherForm.addEventListener("input", event => event.target.classList.remove("is-invalid"))
+
+    teacherForm.addEventListener("submit", async function (e) {
+        e.preventDefault()
+
+        const payload = {
+            teacher_name: teacherForm.teacher_name.value.trim(),
+            staff_id: toEnglishDigits(teacherForm.staff_id.value),
+            branch: teacherForm.branch.value,
+            designation: teacherForm.designation.value.trim(),
+            phone: toEnglishDigits(teacherForm.phone.value).replace(/[\s-]/g, ""),
+            joining_date: teacherForm.joining_date.value,
+            monthly_salary: toEnglishDigits(teacherForm.monthly_salary.value).replace(/,/g, ""),
+            address: teacherForm.address.value.trim(),
+        }
+
+        const invalid = ["teacher_name", "staff_id", "branch", "monthly_salary"].filter(key => !payload[key])
+        if (payload.phone && !/^\+?\d{10,14}$/.test(payload.phone)) invalid.push("phone")
+        if (payload.monthly_salary && !/^\d+(\.\d{1,2})?$/.test(payload.monthly_salary)) invalid.push("monthly_salary")
+
+        invalid.forEach(name => teacherForm[name].classList.add("is-invalid"))
+        if (invalid.length) {
+            alert({{ t("Please fill in all the information correctly!", "অনুগ্রহ করে সবগুলো তথ্য সঠিকভাবে পূরণ করুন!")|tojson }})
+            teacherForm[invalid[0]].focus()
+            return
+        }
+
+        saveBtn.disabled = true
+        saveBtn.textContent = "Saving..."
+
+        try {
+            const url = editingId === null ? "/api/add-teacher" : `/api/update-teacher/${editingId}`
+            const res = await fetch(url, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(payload)
+            })
+            const data = await res.json().catch(() => ({}))
+
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || {{ t("Could not save teacher", "শিক্ষকের তথ্য সংরক্ষণ করা যায়নি")|tojson }})
+            }
+
+            modal.hide()
+            teacherForm.reset()
+            searchTeachers()
+        } catch (err) {
+            console.error(err)
+            alert({{ t("Error: ", "ত্রুটি: ")|tojson }} + err.message)
+        } finally {
+            saveBtn.disabled = false
+            saveBtn.textContent = {{ t("Save", "সংরক্ষণ")|tojson }}
+        }
+    })
+
+    async function deleteTeacher(t) {
+        if (!confirm(`{% if lang == "bn" %}${t.teacher_name} (${t.staff_id}) কে মুছে ফেলতে চান?{% else %}Delete ${t.teacher_name} (${t.staff_id})?{% endif %}`)) return
+
+        try {
+            const res = await fetch(`/api/delete-teacher/${t.id}`, {method: "DELETE"})
+            const data = await res.json().catch(() => ({}))
+            if (!res.ok || !data.success) throw new Error(data.error || {{ t("Could not delete teacher", "শিক্ষক মুছে ফেলা যায়নি")|tojson }})
+            searchTeachers()
+        } catch (err) {
+            console.error(err)
+            alert({{ t("Error: ", "ত্রুটি: ")|tojson }} + err.message)
+        }
+    }
+
+    // Show every teacher as soon as the page opens
+    searchTeachers()
+</script>
+
+{% include "_excel_export.html" %}
+</body>
+</html>

@@ -1,0 +1,9 @@
+{# Language switch, shared by every page: {% include "_lang_switch.html" %} (needs css/lang.css) #}
+<div class="lang-switch" role="group" aria-label="{{ t('Language', 'ভাষা') }}">
+    <a href="{{ url_for('set_language', lang='en') }}" lang="en"
+       class="lang-option{% if lang == 'en' %} active{% endif %}"
+       {% if lang == 'en' %}aria-current="true"{% endif %}>EN</a>
+    <a href="{{ url_for('set_language', lang='bn') }}" lang="bn"
+       class="lang-option{% if lang == 'bn' %} active{% endif %}"
+       {% if lang == 'bn' %}aria-current="true"{% endif %}>বাং</a>
+</div>
