@@ -37,7 +37,7 @@ Sign in with any of these accounts. Every account uses the password **`123456`**
 | 👩‍🏫 Teacher | `teacher.ruma` | Lesson schedule, syllabus, attendance and results |
 | 🎒 Student | `ayaan` | A Class One student's attendance, results, fees and lessons |
 
-> All names and records are fictional, and the demo data resets regularly, so feel free to click around and change things.
+> All names and records are fictional, so feel free to click around and change things.
 
 ---
 
