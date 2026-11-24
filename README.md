@@ -10,6 +10,7 @@
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-7952B3?logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
 [![pandas](https://img.shields.io/badge/pandas-Excel%20Import-150458?logo=pandas&logoColor=white)](https://pandas.pydata.org/)
 
+[Live Demo](#-live-demo) •
 [Features](#-features) •
 [Screenshots](#-screenshots) •
 [Roles](#-who-uses-it) •
@@ -19,6 +20,24 @@
 [Project Structure](#-project-structure)
 
 </div>
+
+---
+
+## 🌐 Live Demo
+
+**👉 [Open the demo](https://your-demo-url.com)**
+
+Sign in with any of these accounts. Every account uses the password **`123456`**.
+
+| Role | Username | What you'll see |
+|------|----------|-----------------|
+| 🛡️ Admin | `admin` | Everything: all branches, users, accounts, results, logs |
+| 🧑‍💼 Service Admin | `office.mirpur` | Mirpur branch office with all modules enabled |
+| 🧑‍💼 Service Admin | `office.uttara` | Uttara branch office with **Accounts turned off** (permissions demo) |
+| 👩‍🏫 Teacher | `teacher.ruma` | Lesson schedule, syllabus, attendance and results |
+| 🎒 Student | `ayaan` | A Class One student's attendance, results, fees and lessons |
+
+> All names and records are fictional, and the demo data resets regularly, so feel free to click around and change things.
 
 ---
 
@@ -168,7 +187,7 @@ Every route is protected by a `@roles_required(...)` decorator, and logged-in us
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/mahim02580/al-aqsa-school-management-system.git
+git clone https://github.com/ethicalmahim/al-aqsa-school-management-system.git
 cd al-aqsa-school-management-system
 
 # 2. Create and activate a virtual environment
@@ -251,8 +270,6 @@ al-aqsa-school-management-system/
 
 ## 🗺️ Roadmap
 
-- [x] Screenshots
-- [ ] Live demo
 - [ ] SMS/WhatsApp notifications for guardians
 - [ ] Downloadable PDF report cards
 - [ ] Dedicated video hosting (Bunny Stream / Cloudflare Stream)
