@@ -43,7 +43,7 @@ Sign in with any of these accounts. Every account uses the password **`123456`**
 
 ## ✨ Overview
 
-**Al-Aqsa School Management System** is a real-world web application built for a coaching/school network with **multiple branches**. It replaces paper registers and scattered spreadsheets with one place where admins, office staff, teachers and students each get their own dashboard and see only what they're allowed to see.
+**Al-Aqsa School Management System** is a real-world web application built for a school network with **multiple branches**. It replaces paper registers and scattered spreadsheets with one place where admins, office staff, teachers and students each get their own dashboard and see only what they're allowed to see.
 
 Staff keep working in **Excel** the way they're used to: attendance, results, accounts, curriculum and video lists are uploaded as `.xlsx` files and turned into searchable records. Legacy **Bijoy-encoded Bangla text** is automatically converted to Unicode on import.
 
@@ -170,7 +170,7 @@ Every route is protected by a `@roles_required(...)` decorator, and logged-in us
 | Layer | Technology |
 |-------|------------|
 | Backend | Python, **Flask**, Flask-Login |
-| Database | **SQLAlchemy 2.0** (typed `Mapped` models), SQLite by default, any SQLAlchemy URL supported |
+| Database | **SQLAlchemy 2.0** (typed `Mapped` models), any SQLAlchemy URL supported |
 | Data import | **pandas** + **openpyxl** for Excel uploads, `bijoy2unicode` for Bangla text |
 | Security | Werkzeug password hashing, signed time-limited video tokens (`itsdangerous`), role-based access |
 | Frontend | Jinja2 templates, **Bootstrap 5.3**, Bootstrap Icons, vanilla JavaScript |
@@ -223,10 +223,9 @@ Create a `.env` file in the project root. It is git-ignored, so never commit it.
 
 ```env
 # Required for production: a long random string
-# python -c "import secrets; print(secrets.token_hex(32))"
 SECRET_KEY=
 
-# Database (default: sqlite:///school.db inside instance/)
+# Database
 DB_URI=
 
 # First run only: used to create the first Admin and branch
@@ -268,13 +267,6 @@ al-aqsa-school-management-system/
 
 ---
 
-## 🗺️ Roadmap
-
-- [ ] SMS/WhatsApp notifications for guardians
-- [ ] Downloadable PDF report cards
-- [ ] Dedicated video hosting (Bunny Stream / Cloudflare Stream)
-
----
 
 ## 🤝 Contributing
 

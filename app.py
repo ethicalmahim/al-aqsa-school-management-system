@@ -3681,5 +3681,5 @@ with app.app_context():
 
 
 if __name__ == "__main__":
-    app.run(debug=env_flag("FLASK_DEBUG", True), host=os.getenv("HOST", "0.0.0.0"),
+    app.run(debug=env_flag("FLASK_DEBUG", False), host=os.getenv("HOST", "0.0.0.0"),
             port=int(os.getenv("PORT") or 5000))
