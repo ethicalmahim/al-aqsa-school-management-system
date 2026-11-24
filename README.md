@@ -11,6 +11,7 @@
 [![pandas](https://img.shields.io/badge/pandas-Excel%20Import-150458?logo=pandas&logoColor=white)](https://pandas.pydata.org/)
 
 [Features](#-features) •
+[Screenshots](#-screenshots) •
 [Roles](#-who-uses-it) •
 [Tech Stack](#-tech-stack) •
 [Getting Started](#-getting-started) •
@@ -75,6 +76,60 @@ Staff keep working in **Excel** the way they're used to: attendance, results, ac
 </table>
 
 🎨 **Kid-friendly UI**: a bright, playful, responsive theme that works on phones, tablets and desktops.
+
+---
+
+## 📸 Screenshots
+
+> All names, numbers and records shown are demo data.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/01-login-en.png" alt="Login"><p align="center"><b>Login</b> (English / বাংলা)</p></td>
+<td width="50%"><img src="docs/screenshots/02-admin-dashboard.png" alt="Admin dashboard"><p align="center"><b>Admin dashboard</b></p></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/07-attendance.png" alt="Attendance"><p align="center"><b>Attendance</b>: monthly register per class</p></td>
+<td><img src="docs/screenshots/09-semester-result.png" alt="Semester results"><p align="center"><b>Semester results</b> with merit position</p></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/08-student-accounts-admin.png" alt="Student accounts"><p align="center"><b>Student fees</b>: paid months and dues</p></td>
+<td><img src="docs/screenshots/15-datasheet.png" alt="Data sheet"><p align="center"><b>Data sheet</b>: daily income and expense</p></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/16-balance-sheet.png" alt="Balance sheet"><p align="center"><b>Balance sheet</b>: running balance per branch</p></td>
+<td><img src="docs/screenshots/06-student-registration.png" alt="Student registration"><p align="center"><b>Student registration</b> with admin approval</p></td>
+</tr>
+</table>
+
+### 🎒 Student portal and 📱 mobile
+
+<table>
+<tr>
+<td width="33%"><img src="docs/screenshots/28-mobile-student-dashboard.png" alt="Student dashboard on mobile"><p align="center"><b>Student dashboard</b></p></td>
+<td width="33%"><img src="docs/screenshots/29-mobile-student-attendance.png" alt="Student attendance on mobile"><p align="center"><b>My attendance</b></p></td>
+<td width="33%"><img src="docs/screenshots/30-mobile-admin-dashboard.png" alt="Admin dashboard on mobile"><p align="center"><b>Admin on the go</b></p></td>
+</tr>
+</table>
+
+<details>
+<summary><b>More screenshots</b> (click to expand)</summary>
+<br>
+
+| | |
+|---|---|
+| ![Login in Bangla](docs/screenshots/01-login-bn.png)<br>**Login in Bangla** | ![Branch management](docs/screenshots/03-branch-management.png)<br>**Branch management** |
+| ![User management](docs/screenshots/04-user-management.png)<br>**User management** | ![Student users](docs/screenshots/05-student-users.png)<br>**Student accounts list** |
+| ![Class assessment](docs/screenshots/10-class-assessment.png)<br>**Class assessment** | ![Lesson schedule](docs/screenshots/11-lesson-schedule.png)<br>**Lesson schedule** |
+| ![Internal accounts](docs/screenshots/12-internal-accounts.png)<br>**Internal accounts** | ![Income](docs/screenshots/13-income.png)<br>**Fee collection** |
+| ![Expense](docs/screenshots/14-expense.png)<br>**Expenses and staff salary** | ![Activity log](docs/screenshots/17-activity-log.png)<br>**Login activity log** |
+| ![Comments](docs/screenshots/18-feedback-comments.png)<br>**Guardian feedback and replies** | ![Call services](docs/screenshots/19-call-services.png)<br>**Call services with WhatsApp** |
+| ![QR tutorials](docs/screenshots/20-qr-tutorials.png)<br>**QR code management** | ![Teacher dashboard](docs/screenshots/22-teacher-dashboard.png)<br>**Teacher dashboard** |
+| ![Student dashboard](docs/screenshots/23-student-dashboard.png)<br>**Student dashboard** | ![Student attendance](docs/screenshots/24-student-attendance.png)<br>**Student attendance report** |
+| ![Student result](docs/screenshots/25-student-result.png)<br>**Student progress report** | ![Student fees](docs/screenshots/26-student-fees.png)<br>**Student fee card** |
+| ![Student lessons](docs/screenshots/27-student-lessons.png)<br>**Student lesson schedule** | |
+
+</details>
 
 ---
 
@@ -196,7 +251,8 @@ al-aqsa-school-management-system/
 
 ## 🗺️ Roadmap
 
-- [ ] Screenshots and a live demo
+- [x] Screenshots
+- [ ] Live demo
 - [ ] SMS/WhatsApp notifications for guardians
 - [ ] Downloadable PDF report cards
 - [ ] Dedicated video hosting (Bunny Stream / Cloudflare Stream)
