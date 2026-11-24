@@ -25,7 +25,7 @@
 
 ## 🌐 Live Demo
 
-**👉 [Open the demo](https://your-demo-url.com)**
+**👉 [Open the demo](https://alaqsaacademydemo.pythonanywhere.com/)**
 
 Sign in with any of these accounts. Every account uses the password **`123456`**.
 
